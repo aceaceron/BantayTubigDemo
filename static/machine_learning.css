@@ -1,0 +1,196 @@
+/* static/machine_learning.css */
+
+/* --- Tab Navigation (From user_management.css for consistency) --- */
+/* This section styles the tab buttons for navigating the page's features. */
+.tabs-container {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.tab-link {
+    padding: 10px 20px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1em;
+    font-weight: 600;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.tab-link.active {
+    color: white;
+    border-bottom-color: #00aaff;
+}
+
+/* --- Tab Content (From user_management.css for consistency) --- */
+/* This section controls the visibility and animation of the content panes. */
+.tab-content {
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Page Specific Styles --- */
+/* These styles are unique to the Machine Learning page. */
+.ml-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.card-subtitle {
+    text-align: center;
+    margin-top: -15px;
+    margin-bottom: 20px;
+    color: #555;
+}
+
+/* Styles for the 2x2 forecast chart grid. */
+.forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.chart-container {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+/* Styles for the container holding annotation cards. */
+.annotation-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Styles for individual anomaly cards that require user feedback. */
+.annotation-card {
+    border: 1px solid #ddd;
+    border-left: 5px solid #ffc107; /* Yellow for pending */
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #fff;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+}
+
+.annotation-details h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.detail-item {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.rca-list {
+    list-style-type: '👉';
+    padding-left: 20px;
+    margin: 5px 0;
+}
+
+/* Styles for the feedback form within an annotation card. */
+.annotation-form .form-group {
+    margin-bottom: 10px;
+}
+
+.annotation-form select, .annotation-form textarea {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.annotation-form .action-button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+}
+
+/* Styles for the "Live Analysis" display grid. */
+.analysis-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    text-align: left;
+}
+.analysis-container h4 {
+    border-bottom: 2px solid #00aaff;
+    padding-bottom: 5px;
+    margin-top: 0;
+}
+.analysis-container p {
+    font-size: 0.95em;
+    color: #333;
+}
+
+/* Styles for the date picker and button in the "Historical Summary" tab. */
+.historical-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+.historical-form input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+/* Container for the AI-generated historical text. */
+.reasoning-container {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #eee;
+    min-height: 100px;
+}
+.reasoning-container p {
+    margin: 0;
+}
+
+/* --- Responsive Adjustments --- */
+/* Ensures the layout adapts to smaller screens like tablets and phones. */
+@media (max-width: 768px) {
+    .tabs-container {
+        max-width: 90vw;
+        overflow-x: scroll;
+    }
+    .tab-link {
+        font-size: 12px;
+    }
+    .forecast-grid {
+        grid-template-columns: 1fr;
+    }
+    .annotation-card {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- // META AND DOCUMENT SETUP // -->
+    <!-- This section contains metadata, links to stylesheets, and the page title. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device & Sensor - BantayTubig</title>
+
+    <!-- // STYLESHEETS // -->
+    <!-- Links to the CSS files that style this page. -->
+    <!-- 'main.css' is for styles that apply to all pages. -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <!-- 'devices.css' is for styles specific to this device management page. -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='devices.css') }}">
+    
+    <!-- // FONTS & EXTERNAL LIBRARIES // -->
+    <!-- Imports the 'Poppins' font from Google Fonts. -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Stylesheet for the Leaflet.js map library, used for location picking. -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+
+    <!-- // BACKGROUND VIDEO // -->
+    <!-- A video that autoplays on a loop in the background of the entire page. -->
+    <video autoplay muted loop id="backgroundVideo">
+        <source src="{{ url_for('static', filename='BantayTubig.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <!-- // UNIVERSAL HEADER & SIDEBAR NAVIGATION // -->
+    <!-- This structure is consistent across all pages for navigation. -->
+    
+    <!-- Top-Left Header: Contains the menu icon to toggle the sidebar. -->
+    <div class="header-top-left">
+        <div class="menu-icon">
+            &#9776; <!-- HTML entity for the hamburger menu icon (☰). -->
+        </div>
+    </div>
+
+    <!-- Sidebar Menu: A slide-out navigation panel. -->
+    <div id="sidebarMenu" class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/">DASHBOARD</a></li>
+            <li><a href="/analytics">ANALYTICS & REPORTS</a></li>
+            <li><a href="/devices" class="active">DEVICE & SENSOR</a></li>
+            <li><a href="/alerts">ALERTS & NOTIFICATION</a></li>
+            <li><a href="/machine-learning">MACHINE LEARNING</a></li>
+            <li><a href="/users">USER MANAGEMENT</a></li>
+            <li><a href="/settings">SYSTEM SETTINGS</a></li>
+            <li><a href="#">ABOUT/HELP</a></li>
+        </ul>
+        <div class="sidebar-footer"><span class="footer-title">BantayTubig</span><br><span class="footer-subtext">Smart
+                Water Quality Monitoring System</span></div>
+    </div>
+
+    <!-- Top-Right Header: Displays the main page title and a subtitle. -->
+    <div class="header-top-right">
+        <h1>Device & Sensor Management</h1>
+        <div id="timestamp">I-monitor ang status ng hardware at i-calibrate ang mga sensor</div>
+    </div>
+
+    <!-- // MAIN PAGE CONTENT // -->
+    <!-- This is the primary container for all content specific to the device page. -->
+    <div class="main-content devices-page">
+        
+        <div class="tabs-container">
+            <button class="tab-link active" data-tab="status">System Status</button>
+            <button class="tab-link" data-tab="sensors">Sensor Calibration</button>
+            <button class="tab-link" data-tab="maintenance">Maintenance Log</button>
+        </div>
+
+
+            <!-- Card 1: System Details -->
+            <div id="status" class="tab-content active">
+                <div class="content-card">
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>Ipinapakita rito ang mga pangunahing detalye ng device tulad ng ID, pangalan, at lokasyon.</p>
+                            <p><em>This shows the main details of the device such as ID, name, and location.</em></p>
+                        </div>
+                    </div>
+                    <div class="card-header">
+                        <h2>System Details</h2>
+                        <button id="editDeviceBtn" class="action-button small">Edit</button>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Device ID:</strong> <span id="deviceIdDisplay">Loading...</span></p>
+                        <p><strong>Name:</strong> <span id="deviceNameDisplay">Loading...</span></p>
+                        <p><strong>Location:</strong> <span id="deviceLocationDisplay">Loading...</span></p>
+                        <p style="display: none;"><strong>Firmware:</strong> <span id="deviceFirmwareDisplay">Loading...</span></p>
+                        <p><strong>Water Source:</strong> <span id="deviceWaterSourceDisplay">Loading...</span></p>
+                        <p><strong>Status:</strong> <span id="deviceStatusDisplay" class="status-indicator">Loading...</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Maintenance Log -->
+            <div id="sensors" class="tab-content">
+                <div class="content-card">
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>Nagpapakita ng data mula sa bawat sensor. Dito rin maaaring i-calibrate o i-restore sa default ang mga sensor.</p>
+                            <p><em>Displays data from each sensor. You can also calibrate or restore sensors to default here.</em></p>
+                        </div>
+                    </div>
+                    <div class="card-header">
+                        <h2>Sensor Status & Calibration</h2>
+                    </div>
+                    <div id="sensorList" class="card-body sensor-list">
+                        <p>Loading sensor data...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card 3: Sensor Status & Calibration -->
+            <div id="maintenance" class="tab-content">
+                <div class="content-card">
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>Isang talaan ng lahat ng maintenance na isinagawa sa device.</p>
+                            <p><em>A log of all maintenance activities performed on the device.</em></p>
+                        </div>
+                    </div>
+                    <div class="card-header">
+                        <h2>Maintenance Log</h2>
+                        <button id="addLogBtn" class="action-button small">Add Entry</button>
+                    </div>
+                    <div id="maintenanceLog" class="card-body maintenance-log"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- // MODALS (POP-UP DIALOGS) // -->
+    <!-- These sections are hidden by default and shown by JavaScript when a button is clicked. -->
+
+    <!-- Modal 1: Edit System Details -->
+    <div id="deviceModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit System Details</h2>
+                <button id="closeDeviceModalBtn" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="deviceForm">
+                    <!-- Form fields for editing device details. -->
+                    <div class="form-group">
+                        <label for="deviceId">Device ID (Read-only)</label>
+                        <input type="text" id="deviceId" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="deviceName">Device Name</label>
+                        <input type="text" id="deviceName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="deviceWaterSource">Water Source</label>
+                        <select id="deviceWaterSource" required>
+                            <option value="Water Service Provider">Water Service Provider (Gripo)</option>
+                            <option value="Deep Well">Deep Well (Balon)</option>
+                            <option value="Spring">Spring (Bakal)</option>
+                            <option value="River">River (Ilog)</option>
+                            <option value="Lake">Lake (Lawa)</option>
+                            <option value="Stream">Stream (Sapa)</option>
+                            <option value="Rainwater">Rainwater (Tubig-Ulan)</option>
+                        </select>
+                    </div>
+                    <!-- Location selection with dependent dropdowns. -->
+                    <div class="form-group">
+                        <label for="deviceProvince">Province</label>
+                        <select id="deviceProvince" required>
+                            <option value="">Loading provinces...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="deviceMunicipality">Municipality</label>
+                        <select id="deviceMunicipality" required disabled>
+                            <option value="">Select a province first</option>
+                        </select>
+                    </div>
+                    <!-- Map for picking coordinates. -->
+                    <div class="form-group">
+                        <label for="deviceLocation">Coordinates (Latitude, Longitude)</label>
+                        <input type="text" id="deviceLocation">
+                        <div id="map-container"></div> <!-- Leaflet map will be initialized here. -->
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="action-button">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal 2: Add Maintenance Log Entry -->
+    <div id="maintenanceLogModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Maintenance Log Entry</h2>
+                <button id="closeLogModalBtn" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="maintenanceLogForm">
+                    <div class="form-group">
+                        <label for="technicianSelect">Technician / Administrator</label>
+                        <select id="technicianSelect" required>
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="logNotesSelect">Log Type</label>
+                        <select id="logNotesSelect" required>
+                            <option value="" hidden>Select a common task...</option>
+                            <option value="Sensor Cleaning">Sensor Cleaning</option>
+                            <option value="Sensor Calibration Check">Sensor Calibration Check</option>
+                            <option value="System Restart">System Restart</option>
+                            <option value="Water Change">Water Change</option>
+                            <option value="Replaced Sensor Probe">Replaced Sensor Probe</option>
+                            <option value="Other">Other (Please specify below)</option>
+                        </select>
+                    </div>
+                    <!-- Text area for 'Other' log type, hidden by default. -->
+                    <div class="form-group" id="logNotesOtherWrapper" style="display: none;">
+                        <label for="logNotes">Other Details</label>
+                        <textarea id="logNotes" rows="4"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="action-button">Add Log</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Sensor Calibration -->
+    <div id="calibrationModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="calibrationModalTitle">Calibrate Sensor</h2>
+                <button id="closeCalibrationModalBtn" class="modal-close-btn">&times;</button>
+            </div>
+            <!-- The body of this modal is likely populated by JavaScript based on which sensor is being calibrated. -->
+            <div class="modal-body">
+            </div>
+        </div>
+    </div>
+
+     <!-- // MODAL for TOAST NOTIFICATIONS (SUCCESS/INFO) // -->
+    <div id="toastModal" class="toast-modal">
+        <div class="toast-content">
+            <div id="toastIcon" class="toast-icon">
+                <!-- SVG Icon will be inserted here by JavaScript -->
+            </div>
+            <p id="toastMessage" class="toast-message"></p>
+        </div>
+    </div>
+    
+    <div id="liveAlertBanner" class="live-alert-banner">
+        <div class="live-alert-icon">🔔</div>
+        <div class="live-alert-content">
+            <p id="liveAlertTitle" class="live-alert-title">New Alert</p>
+            <p id="liveAlertDetails" class="live-alert-details">Details of the alert...</p>
+        </div>
+        <div id="liveAlertActions" class="live-alert-actions">
+            <button id="snoozeLiveAlertBtn">Snooze</button>
+            <button id="ackLiveAlertBtn">Acknowledge</button>
+        </div>
+        <button id="closeLiveAlertBtn" class="close-live-alert-btn">&times;</button>
+    </div>
+
+    <div id="networkStatusBanner" class="network-status-banner">
+        <span id="networkStatusIcon">⚠️</span>
+        <span id="networkStatusText">No network connection. Displayed data may not be live.</span>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='global_alerter.js') }}"></script>
+
+    <!-- // JAVASCRIPT LIBRARIES & SCRIPTS // -->
+    <!-- Scripts are placed at the end of the body for faster page loading. -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='devices.js') }}"></script>
+</body>
+</html>

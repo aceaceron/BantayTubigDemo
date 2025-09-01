@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- // META AND DOCUMENT SETUP // -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Setup - BantayTubig</title>
+
+    <!-- // STYLESHEETS & FONTS // -->
+    <!-- Reusing the same styles as the main application for a consistent look -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='system_settings.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- // BACKGROUND VIDEO & UNIVERSAL UI ELEMENTS // -->
+    <video autoplay muted loop id="backgroundVideo">
+        <source src="{{ url_for('static', filename='BantayTubig.mp4') }}" type="video/mp4">
+    </video>
+    
+    <!-- Header section, styled like the other pages but without the sidebar menu -->
+    <div class="header-top-right">
+        <h1>BantayTubig Setup</h1>
+        <div id="timestamp">I-konek sa local network o WiFi ang device para sa setup</div>
+    </div>
+
+    <!-- // MAIN PAGE CONTENT // -->
+    <div class="main-content settings-page">
+
+        <!-- A single content panel for the setup process -->
+        <div class="settings-accordion-item">
+            <div class="settings-content-panel" style="max-height: 100vh; border-radius: 15px; border: 2px solid rgba(255, 255, 255, 0.4);">
+                <div class="content-card">
+                    <!-- New Tooltip with instructions -->
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>To connect your BantayTubig device to the internet, please select your local WiFi network from the list and enter the password.</p>
+                            <p><em>Para maikonekta ang iyong BantayTubig device sa internet, piliin ang iyong local WiFi network mula sa listahan at ilagay ang password.</em></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Network scanning and list section -->
+                    <div class="available-networks-card">
+                        <div class="card-header">
+                            <h3>Available Wi-Fi Networks</h3>
+                            <button id="scanWifiBtn" class="action-button small">
+                                <span class="button-icon-placeholder"></span> Scan
+                            </button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="wifiListTable">
+                                <thead>
+                                    <tr>
+                                        <th>SSID</th>
+                                        <th>Signal</th>
+                                        <th>Security</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wifiListBody">
+                                    <tr>
+                                        <td colspan="4">Click 'Scan' to find networks.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- // MODAL for WIFI PASSWORD // -->
+    <div id="wifiPasswordModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="wifiModalTitle">Connect to Network</h2>
+                <button id="closeWifiModalBtn" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="wifiConnectForm">
+                    <input type="hidden" id="wifiSsidInput">
+                    <div class="form-group">
+                        <label for="wifiPasswordInput">Password for <strong id="ssidNameLabel"></strong></label>
+                        <input type="password" id="wifiPasswordInput" placeholder="Enter network password" autocomplete="current-password">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="action-button">Connect</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final status message container -->
+    <div id="statusMessageContainer" class="modal-overlay" style="display: none;">
+         <div class="modal-content">
+            <h2 id="statusTitle">Connecting...</h2>
+            <p id="statusText">The hotspot will now disconnect. Please follow the final instructions.</p>
+        </div>
+    </div>
+
+    <!-- // MODAL for TOAST NOTIFICATIONS (SUCCESS/INFO) // -->
+    <div id="toastModal" class="toast-modal">
+        <div class="toast-content">
+            <div id="toastIcon" class="toast-icon">
+                <!-- SVG Icon will be inserted here by JavaScript -->
+            </div>
+            <p id="toastMessage" class="toast-message"></p>
+        </div>
+    </div>
+    
+    <div id="liveAlertBanner" class="live-alert-banner">
+        <div class="live-alert-icon">🔔</div>
+        <div class="live-alert-content">
+            <p id="liveAlertTitle" class="live-alert-title">New Alert</p>
+            <p id="liveAlertDetails" class="live-alert-details">Details of the alert...</p>
+        </div>
+        <div id="liveAlertActions" class="live-alert-actions">
+            <button id="snoozeLiveAlertBtn">Snooze</button>
+            <button id="ackLiveAlertBtn">Acknowledge</button>
+        </div>
+        <button id="closeLiveAlertBtn" class="close-live-alert-btn">&times;</button>
+    </div>
+
+    <div id="networkStatusBanner" class="network-status-banner">
+        <span id="networkStatusIcon">⚠️</span>
+        <span id="networkStatusText">No network connection. Displayed data may not be live.</span>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='global_alerter.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='setup.js') }}"></script>
+</body>
+
+</html>

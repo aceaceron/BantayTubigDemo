@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts & Notification - BantayTubig</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='alerts.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+<body>
+
+    <video autoplay muted loop id="backgroundVideo">
+        <source src="{{ url_for('static', filename='BantayTubig.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="header-top-left">
+        <div class="menu-icon">&#9776;</div>
+    </div>
+
+    <div id="sidebarMenu" class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/">DASHBOARD</a></li>
+            <li><a href="/analytics">ANALYTICS & REPORTS</a></li>
+            <li><a href="/devices">DEVICE & SENSOR</a></li>
+            <li><a href="/alerts" class="active">ALERTS & NOTIFICATION</a></li>
+            <li><a href="/machine-learning">MACHINE LEARNING</a></li>
+            <li><a href="/users">USER MANAGEMENT</a></li>
+            <li><a href="/settings">SYSTEM SETTINGS</a></li>
+            <li><a href="#">ABOUT/HELP</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <span class="footer-title">BantayTubig</span><br>
+            <span class="footer-subtext">Smart Water Quality Monitoring System</span>
+        </div>
+    </div>
+
+    <div class="header-top-right">
+        <h1>Alerts & Notification</h1>
+        <div id="timestamp">I-configure ang mga alert, grupo ng notipikasyon, at tingnan ang history</div>
+    </div>
+
+    <div class="main-content alerts-page">
+        
+         <div class="tabs-container">
+            <button class="tab-link active" data-tab="rules">Alert Rules</button>
+            <button class="tab-link" data-tab="settings">Notification Settings</button>
+            <button class="tab-link" data-tab="thresholds">Thresholds</button> 
+            <button class="tab-link" data-tab="history">Alert History</button>
+        </div>
+
+        <div id="rules" class="tab-content active">
+            <div class="content-card">
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Dito ka maaaring gumawa ng mga kumplikadong rule para mag-trigger ng alert. Halimbawa: "Mag-alert kung ang Turbidity ay > 50 NTU sa loob ng 10 minuto."</p>
+                        <p><em>Here you can create complex rules to trigger alerts. For example: "Alert if Turbidity > 50 NTU for more than 10 minutes."</em></p>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <h2>Alert Rules</h2>
+                    <div> <button id="restoreDefaultRulesBtn" class="action-button secondary small">Restore Defaults</button>
+                        <button id="addNewRuleBtn" class="action-button">Add New Rule</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="alertRulesTable">
+                        <thead>
+                            <tr>
+                                <th>Rule Name</th>
+                                <th>Conditions</th>
+                                <th>Notify Group</th>
+                                <th>Enabled</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings" class="tab-content">
+            <div class="content-card">
+                 <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Ayusin ang mga user sa mga grupo para madaling mapadala ang mga alert. Halimbawa, isang grupo para sa lahat ng "On-Call Technicians."</p>
+                        <p><em>Organize users into groups for easy alert delivery. For example, a group for all "On-Call Technicians."</em></p>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <h2>Notification Groups</h2>
+                    <button id="addNewGroupBtn" class="action-button">Add New Group</button>
+                </div>
+                <div class="table-wrapper">
+                    <table id="notificationGroupsTable">
+                        <thead>
+                            <tr>
+                                <th>Group Name</th>
+                                <th>Members</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="content-card" style="margin-top: 20px;">
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Mag-set up ng mga workflow para kung hindi ma-acknowledge ang isang alert, awtomatiko itong ipapasa sa susunod na grupo.</p>
+                        <p><em>Set up workflows so that if an alert is not acknowledged, it is automatically escalated to the next group.</em></p>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <h2>Escalation Policies</h2>
+                    <button id="addNewPolicyBtn" class="action-button">Add New Policy</button>
+                </div>
+                <div class="table-wrapper">
+                     <table id="escalationPoliciesTable">
+                        <thead>
+                            <tr>
+                                <th>Policy Name</th>
+                                <th>Escalation Path</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="thresholds" class="tab-content">
+            <div class="content-card">
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Configure the numerical ranges that define each water quality level (Good, Average, Poor, Bad). These values are used to label data for the Machine Learning model and for the static rule-based fallback system.</p>
+                        <p><em>I-configure ang mga numerical range na tumutukoy sa bawat antas ng kalidad ng tubig. Ang mga halagang ito ay ginagamit sa pag-label ng data para sa ML model at sa fallback system.</em></p>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <h2>Water Quality Thresholds</h2>
+                    <button id="restoreDefaultThresholdsBtn" class="action-button secondary">Restore Defaults</button>
+                </div>
+                <div class="table-wrapper">
+                    <table id="thresholdsTable">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Quality Level</th>
+                                <th>Min Value</th>
+                                <th>Max Value</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="history" class="tab-content">
+            <div class="content-card">
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Isang kumpletong talaan ng lahat ng alert na nag-trigger, kung sino ang naabisuhan, at kung kailan ito naresolba.</p>
+                        <p><em>A complete record of all triggered alerts, who was notified, and when they were resolved.</em></p>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <h2>Alert History Log</h2>
+                </div>
+                <div class="filters-container">
+                    <input type="text" id="historyDateFilter" class="filter-input" placeholder="Filter by date range...">
+                    <input type="text" id="historyRuleFilter" class="filter-input" placeholder="Filter by rule name...">
+                    <select id="historyStatusFilter" class="filter-input">
+                        <option value="" hidden>All Statuses</option>
+                        <option value="Triggered">Triggered</option>
+                        <option value="Acknowledged">Acknowledged</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Snoozed">Snoozed</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table id="alertHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Triggering Rule</th>
+                                <th>Details</th>
+                                <th>Status</th>
+                                <th>Acknowledged By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="pagination-controls">
+                    <button id="historyPrevPageBtn" disabled>Previous</button>
+                    <span id="historyPageInfo">Page 1 of 1</span>
+                    <button id="historyNextPageBtn" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ruleModal" class="modal-overlay">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <h2 id="ruleModalTitle">Add New Alert Rule</h2>
+                <button class="modal-close-btn" data-modal-id="ruleModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="ruleForm">
+                    <input type="hidden" id="ruleId">
+
+                    <div class="form-grid-container">
+
+                        <div class="form-column">
+                            <div class="form-group">
+                                <label for="ruleName">Rule Name</label>
+                                <input type="text" id="ruleName" placeholder="e.g., High Turbidity Warning" required>
+                            </div>
+                            
+                            <label>Conditions</label>
+                            <div id="ruleConditionsContainer" class="conditions-container">
+                                </div>
+                            <button type="button" id="addConditionBtn" class="action-button small secondary">+ Add Condition</button>
+                        </div>
+
+                        <div class="form-column">
+                            <div class="form-group">
+                                <label for="ruleNotifyGroup">Notify this Group</label>
+                                <select id="ruleNotifyGroup" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="ruleEscalationPolicy">Use Escalation Policy</label>
+                                <select id="ruleEscalationPolicy">
+                                    <option value="">None</option>
+                                </select>
+                            </div>
+
+                            <hr class="form-divider">
+
+                            <div class="form-group-inline">
+                                 <input type="checkbox" id="ruleActivateBuzzer">
+                                <label for="ruleActivateBuzzer">Activate Buzzer 🔔</label>
+                            </div>
+        
+                            <div class="form-group-inline">
+                                <label for="ruleBuzzerMode">Buzzer Mode</label>
+                                <select id="ruleBuzzerMode" class="form-control-small">
+                                    <option value="once">Buzz Once</option>
+                                    <option value="repeating">Repeating Buzz</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group-inline">
+                                <label for="ruleBuzzerDuration">Duration (sec)</label>
+                                <input type="number" id="ruleBuzzerDuration" class="form-control-small" value="5" min="0">
+                            </div>
+
+                            <hr class="form-divider">
+
+                            <div class="form-group-inline">
+                                 <input type="checkbox" id="ruleEnabled">
+                                <label for="ruleEnabled">Enable this rule</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="action-button">Save Rule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="groupModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="groupModalTitle">Add New Group</h2>
+                <button class="modal-close-btn" data-modal-id="groupModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="groupForm">
+                    <input type="hidden" id="groupId">
+                    <div class="form-group">
+                        <label for="groupName">Group Name</label>
+                        <input type="text" id="groupName" placeholder="e.g., On-Call Technicians" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Select Members</label>
+                        <div id="groupMembersChecklist" class="checklist-container"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="action-button">Save Group</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="policyModal" class="modal-overlay">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <h2 id="policyModalTitle">Add New Escalation Policy</h2>
+                <button class="modal-close-btn" data-modal-id="policyModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="policyForm">
+                    <input type="hidden" id="policyId">
+                    <div class="form-group">
+                        <label for="policyName">Policy Name</label>
+                        <input type="text" id="policyName" placeholder="e.g., Technician to Management" required>
+                    </div>
+                    <label>Escalation Path</label>
+                    <div id="policyStepsContainer" class="conditions-container">
+                        </div>
+                    <button type="button" id="addPolicyStepBtn" class="action-button small secondary">+ Add Step</button>
+                    <div class="form-actions">
+                        <button type="submit" class="action-button">Save Policy</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="thresholdModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="thresholdModalTitle">Edit Threshold</h2>
+                <button class="modal-close-btn" data-modal-id="thresholdModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="thresholdForm">
+                    <input type="hidden" id="thresholdId">
+                    <p>Editing threshold for: <strong id="thresholdLabel"></strong></p>
+                    <div class="form-group">
+                        <label for="thresholdMinValue">Min Value (leave blank for no lower limit)</label>
+                        <input type="number" step="0.01" id="thresholdMinValue" placeholder="e.g., 6.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="thresholdMaxValue">Max Value (leave blank for no upper limit)</label>
+                        <input type="number" step="0.01" id="thresholdMaxValue" placeholder="e.g., 8.5">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="action-button">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="snoozeModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="snoozeModalTitle">Snooze Alert Rule</h2>
+                <button class="modal-close-btn" data-modal-id="snoozeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Temporarily silence notifications for this rule. This is useful during maintenance.</p>
+                <form id="snoozeForm">
+                    <input type="hidden" id="snoozeRuleId">
+                    <div class="form-group">
+                        <label for="snoozeDuration">Snooze for:</label>
+                        <select id="snoozeDuration" required>
+                            <option value="15">15 Minutes</option>
+                            <option value="30">30 Minutes</option>
+                            <option value="60">1 Hour</option>
+                            <option value="240">4 Hours</option>
+                            <option value="1440">1 Day</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="action-button">Snooze Rule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+     <div id="toastModal" class="toast-modal">
+        <div class="toast-content">
+            <div id="toastIcon" class="toast-icon"></div>
+            <p id="toastMessage" class="toast-message"></p>
+        </div>
+    </div>
+    
+    <div id="liveAlertBanner" class="live-alert-banner">
+        <div class="live-alert-icon">🔔</div>
+        <div class="live-alert-content">
+            <p id="liveAlertTitle" class="live-alert-title">New Alert</p>
+            <p id="liveAlertDetails" class="live-alert-details">Details of the alert...</p>
+        </div>
+        <div id="liveAlertActions" class="live-alert-actions">
+            <button id="snoozeLiveAlertBtn">Snooze</button>
+            <button id="ackLiveAlertBtn">Acknowledge</button>
+        </div>
+        <button id="closeLiveAlertBtn" class="close-live-alert-btn">&times;</button>
+    </div>
+
+    <div id="networkStatusBanner" class="network-status-banner">
+        <span id="networkStatusIcon">⚠️</span>
+        <span id="networkStatusText">No network connection. Displayed data may not be live.</span>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='global_alerter.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="{{ url_for('static', filename='alerts.js') }}"></script>
+</body>
+</html>

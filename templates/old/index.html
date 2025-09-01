@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Quality Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>Real-Time Water Quality Dashboard</h1>
+    <div id="timestamp"></div>
+
+    <div class="controls">
+        <button id="toggleChartsButton">Show Charts</button>
+    </div>
+
+    <div class="gauge-container-wrapper">
+        <!-- Temperature Gauge -->
+        <div class="gauge-card">
+            <div id="gauge-temp" class="gauge"></div>
+            <!-- <div id="temp-value-display" class="gauge-value-display">--</div> -->
+            <div class="gauge-label">Temperature (°C)</div>
+        </div>
+
+        <!-- pH Gauge -->
+        <div class="gauge-card">
+            <div id="gauge-ph" class="gauge"></div>
+            <!-- <div id="ph-value-display" class="gauge-value-display">--</div> -->
+            <div class="gauge-label">pH</div>
+        </div>
+
+        <!-- TDS Gauge -->
+        <div class="gauge-card">
+            <div id="gauge-tds" class="gauge"></div>
+            <!-- <div id="tds-value-display" class="gauge-value-display">--</div> -->
+            <div class="gauge-label">TDS (ppm)</div>
+        </div>
+
+        <!-- Turbidity Gauge -->
+        <div class="gauge-card">
+            <div id="gauge-turb" class="gauge"></div>
+            <!-- <div id="turb-value-display" class="gauge-value-display">--</div> -->
+            <div class="gauge-label">Turbidity (NTU)</div>
+        </div>
+
+        <!-- Water Quality Text Card (remains as text) -->
+        <div class="card">
+            <div class="value" id="water_quality">--</div>
+            <div class="label">Water Quality</div>
+        </div>
+    </div>
+
+    <div class="quality-explanation">
+        <h2 id="qualityExplanationTitleTL">Mga Detalye ng Kalidad ng Tubig</h2>
+        <h3 id="qualityExplanationTitle"><i>Water Quality Details</i></h3>
+        <p id="qualityReasonTL">Loading Tagalog details...</p>
+        <p id="qualityReason" style="font-style: italic; color: #555;">Loading details...</p>
+        <p id="consumableStatusTL"></p>
+        <p id="consumableStatus" style="font-style: italic; color: #555;"></p>
+        <p id="otherUsesTL"></p>
+        <p id="otherUses" style="font-style: italic; color: #555;"></p>
+        <p id="qualitySuggestionTL"></p>
+        <p id="qualitySuggestion" style="font-style: italic; color: #555;"></p>
+        <button id="getLlmAnalysisBtn" class="llm-button">Generate AI Water Analysis<br><i>Suriin ang tubig gamit ang AI</i></button>
+    </div>
+
+    <div id="chartsContainer" class="charts-container">
+        <canvas id="tempChart"></canvas>
+        <canvas id="phChart"></canvas>
+        <canvas id="tdsChart"></canvas>
+        <canvas id="turbChart"></canvas>
+    </div>
+
+    <div id="llmAnalysisModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Malalimang Pagsusuri sa Kalidad ng Tubig Gamit ang AI
+                <br><i style="font-size: small;">Detailed Water Quality Analysis with AI</i>
+            </h2>
+            
+            <div class="llm-parameters">
+                <h3>Parameters at Analysis Time:</h3>
+                <p>Temperature: <span id="modalTemp">N/A</span> °C</p>
+                <p>pH: <span id="modalPH">N/A</span></p>
+                <p>TDS: <span id="modalTDS">N/A</span> ppm</p>
+                <p>Turbidity: <span id="modalTurb">N/A</span> NTU</p>
+            </div>
+            <div class="llm-output-section">
+                <h3>Reasoning:</h3>
+                <div id="llmReasoning">Loading...</div>
+            </div>
+            <div class="llm-output-section">
+                <h3>Pangangatwiran:</h3>
+                <div id="llmTagalogTranslation">Loading...</div>
+            </div>
+            <div class="llm-output-section">
+                <h3>Suggestions:</h3>
+                <div id="llmSuggestions">Loading...</div>
+            </div>
+            <div class="llm-output-section">
+                <h3>Mungkahi:</h3>
+                <div id="llmSuggestionsTL">Loading...</div>
+            </div>
+            <div class="llm-output-section">
+                <h3>Possible Other Uses:</h3>
+                <div id="llmOtherUses">Loading...</div>
+            </div>
+            <div class="llm-output-section">
+                <h3>Iba Pang Gamit:</h3>
+                <div id="llmOtherUsesTL">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

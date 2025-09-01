@@ -1,0 +1,16 @@
+[Unit]
+Description=BantayTubig Water Quality Monitoring Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=user
+Group=user
+WorkingDirectory=/home/user/BantayTubig
+ExecStart=/home/user/BantayTubig/myenv/bin/python3 /home/user/BantayTubig/main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

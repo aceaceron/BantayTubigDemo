@@ -1,0 +1,9 @@
+Starting sensor logger...
+Traceback (most recent call last):
+  File "/home/user/SWMSwDA/sensor_logger.py", line 59, in <module>
+    temp = read_temp()
+           ^^^^^^^^^^^
+  File "/home/user/SWMSwDA/sensor_logger.py", line 31, in read_temp
+    temp_pos = lines[1].find('t=')
+               ~~~~~^^^
+IndexError: list index out of range

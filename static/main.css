@@ -1,0 +1,557 @@
+/* --- UNIVERSAL & BODY STYLES --- */
+/* These rules apply to every element on all pages for consistency. */
+
+/* Universal box-sizing for consistent layout calculations and font.
+   Applied to: Every element (*). */
+*, *::before, *::after {
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Base body styling for all pages.
+   Applied to: <body> tag. */
+body {
+    font-family: 'Verdana', sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
+    position: relative; /* Needed for z-index to work correctly with the background video. */
+    z-index: 1;
+}
+
+/* Reserves space at the top of the body so content doesn't start hidden underneath the fixed header. */
+body::before {
+    content: "";
+    display: block;
+    height: 100px; /* Should match the approximate height of the header area. */
+}
+
+/* Main content container for all pages, adds padding below the header.
+   Applied to: <div class="main-content"> */
+.main-content {
+    padding-top: 40px;
+}
+
+
+/* --- BACKGROUND VIDEO --- */
+/* Styles the video that plays in the background of all pages.
+   Applied to: <video id="backgroundVideo"> */
+
+#backgroundVideo {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the video covers the entire screen without distortion. */
+    z-index: -1; /* Places it behind all other content. */
+}
+
+
+/* --- HEADER & SIDEBAR --- */
+/* These styles control the main navigation elements present on all pages. */
+
+/* Container for the hamburger menu icon.
+   Applied to: <div class="header-top-left"> */
+.header-top-left {
+    position: absolute;
+    top: 20px;
+    left: 50px; 
+    z-index: 1002; /* High z-index to be clickable over other elements. */
+}
+
+/* The hamburger menu icon itself (☰).
+   Applied to: <div class="menu-icon"> */
+.menu-icon {
+    font-size: 50px; 
+    width: 100px;
+    cursor: pointer;
+    color: white;
+    user-select: none; /* Prevents text selection on click. */
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+/* The sidebar navigation panel that slides in from the left.
+   Applied to: <div id="sidebarMenu" class="sidebar"> */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -510px; /* Hidden off-screen to the left by default. */
+    width: 500px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.90);
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    padding-top: 10px;
+    transition: left 0.3s ease-in-out; /* Smooth slide-in/out animation. */
+    overflow-y: auto;
+}
+
+/* This class is added by JavaScript to show the sidebar. */
+.sidebar.open {
+    left: 0;
+}
+
+/* Unordered list containing the navigation links.
+   Applied to: <ul class="sidebar-menu"> */
+.sidebar ul {
+    list-style: none; 
+    padding: 0;
+    margin-top: 100px;
+    text-align: center; 
+}
+
+/* Individual list items in the sidebar. */
+.sidebar ul li {
+    padding: 10px 0; 
+}
+
+/* Individual navigation links (e.g., DASHBOARD, ANALYTICS).
+   Applied to: <a> tags within the sidebar menu. */
+.sidebar ul li a {
+    text-decoration: none;
+    color: #333;
+    font-size: 1.3em;
+    display: block;
+    width: 100%;
+    text-align: center;
+    transition: color 0.3s ease;
+}
+
+/* Subtext or icons that might be inside a navigation link. */
+.sidebar ul li a i {
+    font-size: 0.8em; 
+    font-weight: normal; 
+    display: block; 
+    margin-top: 1px; 
+}
+
+/* Hover effect for sidebar links. */
+.sidebar ul li a:hover {
+    color: #007bff;
+}
+
+/* Style for the link of the currently active page. */
+.sidebar ul li a.active {
+    color: #007bff;
+    font-weight: bold;
+}
+
+/* Footer section at the bottom of the sidebar.
+   Applied to: <div class="sidebar-footer"> */
+.sidebar-footer {
+    position: absolute;
+    bottom: 30px;
+    left: 30px;
+    right: 30px;
+    color: #444;
+    text-align: left;
+}
+
+/* "BantayTubig" title in the sidebar footer. */
+.footer-title {
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+/* Subtext in the sidebar footer. */
+.footer-subtext {
+    font-size: 1em;
+    font-weight: normal;
+    display: block;
+}
+
+/* Container for the main page title and timestamp on the top right.
+   Applied to: <div class="header-top-right"> */
+.header-top-right {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    text-align: right;
+    color: white;
+    z-index: 2;
+    width: 70vw;
+}
+
+/* Main page title (e.g., "Dashboard", "User Management").
+   Applied to: <h1> tag. */
+h1 {
+    font-size: 2.2em;
+    font-weight: 700;
+    margin: 0 0 5px 0;
+}
+
+/* Timestamp display below the main page title.
+   Applied to: <div id="timestamp"> */
+#timestamp {
+    font-size: 1em;
+    opacity: 0.85;
+    margin: 0;
+    padding: 0;
+}
+
+
+/* --- GENERAL CARD STYLING --- */
+/* A generic style for all card-like containers.
+   Applied to: elements with the .card class. */
+.card {
+    background-color: white;
+    color: black;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 80px;
+    border-radius: 40px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+/* Subtle lift effect on hover for all cards. */
+.card:hover {
+    transform: translateY(-5px);
+}
+
+
+/* --- TOOLTIP STYLES --- */
+/* Styles for the '?' icon and its hover message box on cards. */
+
+/* Container for the tooltip icon and its message.
+   Applied to: <div class="tooltip-container"> */
+.tooltip-container {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10000000;
+}
+
+/* The '?' icon itself.
+   Applied to: <span class="tooltip-icon"> */
+.tooltip-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background-color: #6c757d;
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* The message box that appears when hovering over the icon.
+   Applied to: <div class="tooltip-message"> */
+.tooltip-message {
+    display: none; /* Hidden by default. */
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 350px;
+    background-color: #343a40;
+    color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: left;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* Shows the message on hover. */
+.tooltip-container:hover .tooltip-message {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Paragraphs inside the tooltip message. */
+.tooltip-container .tooltip-message p {
+    color: inherit;
+    font-size: 1em;
+    margin: 0 0 8px 0;
+}
+
+.tooltip-container .tooltip-message p:last-child {
+    margin-bottom: 0;
+}
+
+/* Italicized English translation text inside the tooltip. */
+.tooltip-container .tooltip-message em {
+    color: #ced4da;
+    font-style: italic;
+}
+
+/* --- TOAST NOTIFICATION MODAL --- */
+.toast-modal {
+    position: fixed;
+    top: -100px; /* Start hidden above the screen */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3000; /* Highest z-index to appear on top of everything */
+    background: linear-gradient(45deg, #2c3e50, #34495e);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: top 0.5s ease-in-out; /* Animation for sliding */
+    opacity: 0;
+}
+
+/* This class is added by JS to show the modal */
+.toast-modal.show {
+    top: 20px;
+    opacity: 1;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.toast-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.toast-message {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* --- LIVE ALERT BANNER --- */
+.live-alert-banner {
+    position: fixed;
+    top: -150px; /* Start hidden above the screen */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    z-index: 2900;
+    background: linear-gradient(45deg, #d35400, #e67e22); /* Orange/Red for urgency */
+    color: white;
+    padding: 15px;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: top 0.5s ease-in-out;
+}
+
+.live-alert-banner.show {
+    top: 0;
+}
+
+.live-alert-icon {
+    font-size: 2em;
+    animation: alert-pulse 1.5s infinite;
+}
+
+@keyframes alert-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.live-alert-content {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.live-alert-title {
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    font-size: 1.1em;
+}
+
+.live-alert-details {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9em;
+}
+
+.live-alert-actions button {
+    padding: 6px 12px;
+    border: 1px solid white;
+    background-color: transparent;
+    color: white;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-left: 8px;
+    transition: all 0.2s ease;
+}
+
+.live-alert-actions button:hover {
+    background-color: white;
+    color: #e67e22;
+}
+
+.close-live-alert-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+/* --- NETWORK STATUS BANNER --- */
+.network-status-banner {
+    position: fixed;
+    bottom: -100px; /* Start hidden below the screen */
+    left: 0;
+    width: 100%;
+    z-index: 2800; /* Below the alert banner but above other content */
+    background: linear-gradient(45deg, #ff1414ff, #ffd900ff);
+    color: white;
+    padding: 10px;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: bottom 0.5s ease-in-out;
+}
+
+.network-status-banner.show {
+    bottom: 0;
+}
+
+/* --- RESPONSIVE STYLES --- */
+/* Adjustments for tablet and mobile screens. */
+
+/* For screens smaller than 992px (tablets). */
+@media (max-width: 992px) {
+    .main-content {
+        padding-top: 10px;
+    }
+    body {
+        padding: 10px;
+    }
+    .header-top-left {
+        left: 20px;
+        z-index: 2000;
+    }
+    .header-top-right h1 {
+        font-size: 1.6em;
+    }
+    .header-top-right #timestamp {
+        font-size: 0.85em;
+    }
+    /* Makes the sidebar full-width on mobile. */
+    .sidebar {
+        width: 100%;
+        left: -100%;
+        background: rgba(255, 255, 255, 0.50);
+        backdrop-filter: blur(8px);
+        transition: left 0.3s ease-in-out;
+        z-index: 1500;
+    }
+    .sidebar.open {
+        left: 0;
+    }
+    .sidebar ul li {
+        padding: 12px 0;
+    }
+    .sidebar-footer {
+        left: 0;
+        right: 0;
+        padding: 10px;
+    }
+    .menu-icon {
+        cursor: pointer;
+        font-size: 28px;
+        user-select: none;
+        left: 6px;
+    }
+    .tooltip-message {
+        width: 75vw;
+        font-size: 0.7em;
+    }
+}
+
+/* For screens smaller than 576px (mobile phones). */
+@media (max-width: 576px) {
+    .header-top-left {
+        left: 1px;
+    }
+    .header-top-right h1 {
+        font-size: 1.2em;
+    }
+    .header-top-right #timestamp {
+        font-size: 0.8em;
+    }
+    .menu-icon {
+        font-size: 30px;
+    }
+    .footer-title {
+        font-weight: bold;
+        font-size: 1.5em;
+    }
+    .footer-subtext {
+        font-size: 0.8em;
+        font-weight: normal;
+        display: block;
+    }
+        .live-alert-banner {
+        flex-wrap: wrap; /* Allows items to wrap onto the next line */
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .live-alert-icon {
+        font-size: 1.5em; /* Make the icon a bit smaller */
+    }
+
+    .live-alert-title {
+        font-size: 1em; /* Adjust title font size */
+    }
+
+    .live-alert-details {
+        font-size: 0.85em; /* Adjust details font size */
+    }
+    
+    /* This makes the buttons take up the full width below the text */
+    .live-alert-actions {
+        order: 3; /* Ensures it comes after the icon and content */
+        width: 100%;
+        display: flex;
+        justify-content: flex-end; /* Pushes buttons to the right */
+        gap: 10px;
+        padding-top: 5px; /* Adds space when it wraps */
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        margin-top: 5px;
+    }
+
+    .live-alert-actions button {
+        padding: 5px 10px; /* Make buttons a bit smaller */
+        font-size: 0.9em;
+    }
+
+    /* Move the close button to the top-right corner */
+    .close-live-alert-btn {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+    }
+}

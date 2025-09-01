@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- // META AND DOCUMENT SETUP // -->
+    <!-- This section contains metadata, links to stylesheets, and the page title. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BantayTubig</title>
+
+    <!-- // STYLESHEETS // -->
+    <!-- Links to the CSS files that style this page. -->
+    <!-- 'main.css' is for styles that apply to all pages (e.g., header, sidebar). -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <!-- 'dashboard.css' is for styles specific to this dashboard page. -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    
+    <!-- // FONTS // -->
+    <!-- Imports the 'Poppins' font from Google Fonts. -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- // BACKGROUND VIDEO // -->
+    <!-- A video that autoplays on a loop in the background of the entire page. -->
+    <video autoplay muted loop id="backgroundVideo">
+        <!-- Note: The 'src' path might need to be adjusted depending on your file structure. 
+             Using Flask's url_for like in the CSS links is often more reliable:
+             src="{{ url_for('static', filename='BantayTubig.mp4') }}" -->
+        <source src="static/BantayTubig.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <!-- // UNIVERSAL HEADER & SIDEBAR NAVIGATION // -->
+    <!-- This structure is consistent across all pages for navigation. -->
+    
+    <!-- Top-Left Header: Contains the menu icon to toggle the sidebar. -->
+    <div class="header-top-left">
+        <div class="menu-icon" onclick="toggleMenu()">
+            &#9776; <!-- This is the HTML entity for the hamburger menu icon (☰). -->
+        </div>
+    </div>
+
+    <!-- Sidebar Menu: A slide-out navigation panel. -->
+    <div id="sidebarMenu" class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/" class="active">DASHBOARD</a></li>
+            <li><a href="/analytics">ANALYTICS & REPORTS</a></li>
+            <li><a href="/devices">DEVICE & SENSOR</a></li>
+            <li><a href="/alerts">ALERTS & NOTIFICATION</a></li>
+            <li><a href="/machine-learning">MACHINE LEARNING</a></li>
+            <li><a href="/users">USER MANAGEMENT</a></li>
+            <li><a href="/settings">SYSTEM SETTINGS</a></li>
+            <li><a href="#">ABOUT/HELP</a></li>
+        </ul>
+        <div class="sidebar-footer"><span class="footer-title">BantayTubig</span><br><span class="footer-subtext">Smart
+                Water Quality Monitoring System</span></div>
+    </div>
+
+    <!-- Top-Right Header: Displays the main page title and a dynamic timestamp. -->
+    <div class="header-top-right">
+        <h1>BantayTubig</h1>
+        <div id="timestamp"></div> <!-- The current date/time is inserted here by JavaScript. -->
+    </div>
+
+    <!-- // MAIN PAGE CONTENT // -->
+    <!-- This is the primary container for all content specific to the dashboard. -->
+    <div class="main-content">
+
+        <!-- // TOP LAYOUT SECTION // -->
+        <!-- This flex container holds the main analysis card and the historical charts. -->
+        <div class="top-layout">
+
+            <!-- Water Quality Explanation Card -->
+            <div class="quality-explanation">
+                <!-- Titles for the analysis card. Content is updated by JavaScript. -->
+                <h2 id="qualityExplanationTitleTL">Mga Detalye ng Kalidad ng Tubig</h2>
+                <h3 id="qualityExplanationTitle"><i>Water Quality Details</i></h3>
+
+                <div id="analysisIcons" class="analysis-icons-container" style="display: none;">
+                    <div id="drinkableIconContainer" class="icon-section">
+                        
+                        <div id="icon-potable" class="status-icon" style="display: none;">
+                            <svg width="120" height="120" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                                <defs><linearGradient id="gradWater" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#85D3FF;stop-opacity:1" /><stop offset="100%" style="stop-color:#3498db;stop-opacity:1" /></linearGradient></defs>
+                                <path d="M15,10 L49,10 L45,54 A4,4 0 0 1 41,58 L23,58 A4,4 0 0 1 19,54 L15,10 Z" fill="#FFFFFF" fill-opacity="0.5" stroke="#BDBDBD" stroke-width="2"/>
+                                <path d="M16,12 L48,12 L44.2,52 A2,2 0 0 1 42.2,54 L21.8,54 A2,2 0 0 1 19.8,52 L16,12 Z" fill="url(#gradWater)"/>
+                                <path d="M17,14 L47,14" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+                                <g transform="translate(36, 8)">
+                                    <circle cx="12" cy="12" r="12" fill="#28a745"/>
+                                    <path d="M8 12 L11 15 L16 10" stroke="#FFFFFF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                </g>
+                            </svg>
+                            <p>Potable</p>
+                        </div>
+
+                        <div id="icon-caution" class="status-icon" style="display: none;">
+                            <svg width="120" height="120" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                                <defs><linearGradient id="gradWater" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#85D3FF;stop-opacity:1" /><stop offset="100%" style="stop-color:#3498db;stop-opacity:1" /></linearGradient></defs>
+                                <path d="M15,10 L49,10 L45,54 A4,4 0 0 1 41,58 L23,58 A4,4 0 0 1 19,54 L15,10 Z" fill="#FFFFFF" fill-opacity="0.5" stroke="#BDBDBD" stroke-width="2"/>
+                                <path d="M16,12 L48,12 L44.2,52 A2,2 0 0 1 42.2,54 L21.8,54 A2,2 0 0 1 19.8,52 L16,12 Z" fill="url(#gradWater)"/>
+                                <path d="M17,14 L47,14" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+                                <g transform="translate(32, 6)">
+                                    <path d="M16 2 L2 28 L30 28 Z" fill="#ffc107" stroke="#E6A200" stroke-width="2" stroke-linejoin="round"/>
+                                    <path d="M16 12 L16 18" stroke="#343a40" stroke-width="2.5" stroke-linecap="round"/>
+                                    <circle cx="16" cy="23" r="1.5" fill="#343a40"/>
+                                </g>
+                            </svg>
+                            <p>Potable w/ Caution</p>
+                        </div>
+
+                        <div id="icon-not-recommended" class="status-icon" style="display: none;">
+                            <svg width="120" height="120" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                                <defs><linearGradient id="gradMurky" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#ab8e6b;stop-opacity:1" /><stop offset="100%" style="stop-color:#8d6e4b;stop-opacity:1" /></linearGradient></defs>
+                                <path d="M15,10 L49,10 L45,54 A4,4 0 0 1 41,58 L23,58 A4,4 0 0 1 19,54 L15,10 Z" fill="#FFFFFF" fill-opacity="0.5" stroke="#BDBDBD" stroke-width="2"/>
+                                <path d="M16,12 L48,12 L44.2,52 A2,2 0 0 1 42.2,54 L21.8,54 A2,2 0 0 1 19.8,52 L16,12 Z" fill="url(#gradMurky)"/>
+                                <circle cx="32" cy="34" r="24" fill="none" stroke="#dc3545" stroke-width="4"/>
+                                <line x1="16" y1="50" x2="48" y2="18" stroke="#dc3545" stroke-width="4" stroke-linecap="round"/>
+                            </svg>
+                            <p>Not Recommended</p>
+                        </div>
+
+                        <div id="icon-unsafe" class="status-icon" style="display: none;">
+                            <svg width="120" height="120" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                                <g opacity="0.3"><path d="M15,10 L49,10 L45,54 A4,4 0 0 1 41,58 L23,58 A4,4 0 0 1 19,54 L15,10 Z" fill="#000000" stroke="#000000" stroke-width="2"/></g>
+                                <g>
+                                    <circle cx="32" cy="32" r="28" fill="#343a40"/>
+                                    <path d="M32 12 C 40 12, 40 20, 48 20 C 48 28, 40 28, 40 36 C 48 36, 48 44, 40 44 C 32 44, 32 52, 24 52 C 16 52, 16 44, 24 44 C 16 44, 16 36, 24 36 C 16 36, 16 28, 24 28 C 16 28, 24 28, 24 20 C 16 20, 24 12, 32 12 Z" fill="#FFFFFF"/>
+                                    <circle cx="32" cy="32" r="6" fill="#343a40"/>
+                                    <circle cx="32" cy="32" r="3" fill="#FFFFFF"/>
+                                </g>
+                            </svg>
+                            <p>Unsafe for Contact</p>
+                        </div>
+                    </div>
+
+                    <div id="otherUsesIconsContainer" class="icon-section">
+                        <h3>Other Potential Uses</h3>
+                        <div class="usage-icons-grid">
+                            <div id="icon-cooking" class="usage-icon" style="display: none;">
+                                <svg width="80" height="80" viewBox="0 0 64 64"><defs><linearGradient id="gPot" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#E0E0E0"/><stop offset="100%" stop-color="#BDBDBD"/></linearGradient></defs><rect x="6" y="32" width="52" height="26" rx="8" fill="url(#gPot)" stroke="#757575" stroke-width="2"/><path d="M10 20 A10 12 0 0 1 54 20" fill="none" stroke="#9E9E9E" stroke-width="2"/><path d="M28 20 L36 20" stroke="#757575" stroke-width="4" stroke-linecap="round"/><path d="M20 28 Q24 22 28 28" stroke="#FFFFFF" fill="none" stroke-width="2" stroke-linecap="round" opacity="0.8"/><path d="M36 28 Q40 22 44 28" stroke="#FFFFFF" fill="none" stroke-width="2" stroke-linecap="round" opacity="0.8"/></svg>
+                                <p>Cooking</p>
+                            </div>
+                            <div id="icon-bathing" class="usage-icon" style="display: none;">
+                                <svg width="80" height="80" viewBox="0 0 64 64"><defs><linearGradient id="gShower" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#E0E0E0"/><stop offset="100%" stop-color="#BDBDBD"/></linearGradient></defs><path d="M40 8 A20 20 0 0 0 20 28 L 44 28 A12 12 0 0 1 40 8 Z" fill="url(#gShower)" stroke="#757575" stroke-width="2"/><circle cx="26" cy="36" r="3" fill="#3498db"/><circle cx="38" cy="36" r="3" fill="#3498db"/><circle cx="32" cy="45" r="3" fill="#3498db"/><circle cx="22" cy="48" r="3" fill="#3498db"/><circle cx="42" cy="48" r="3" fill="#3498db"/></svg>
+                                <p>Bathing</p>
+                            </div>
+                            <div id="icon-cleaning" class="usage-icon" style="display: none;">
+                                <svg width="80" height="80" viewBox="0 0 64 64"><rect x="18" y="24" width="28" height="34" rx="6" fill="#85D3FF" stroke="#3498db" stroke-width="2"/><path d="M24 12 L40 12 L40 24 L24 24 Z" fill="#BDBDBD" stroke="#757575" stroke-width="2"/><rect x="28" y="8" width="8" height="4" fill="#757575"/><line x1="32" y1="24" x2="32" y2="30" stroke="#3498db" stroke-width="2"/><path d="M12 28 L18 30" stroke="#3498db" stroke-width="2"/><path d="M10 36 L18 36" stroke="#3498db" stroke-width="2"/><path d="M12 44 L18 42" stroke="#3498db" stroke-width="2"/></svg>
+                                <p>Cleaning</p>
+                            </div>
+                            <div id="icon-irrigation" class="usage-icon" style="display: none;">
+                                <svg width="80" height="80" viewBox="0 0 64 64"><path d="M32 58 C 42 58 42 50 42 50 C 42 40 22 40 22 50 C 22 50 22 58 32 58 Z" fill="#8d6e4b" stroke="#5d4037" stroke-width="2"/><path d="M32 50 C 28 40, 36 40, 32 28" stroke="#28a745" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M22 36 A10 10 0 0 1 32 28" stroke="#28a745" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M42 36 A10 10 0 0 0 32 28" stroke="#28a745" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M32 10 A12 12 0 0 1 20 22" fill="#3498db" opacity="0.8"/></svg>
+                                <p>Irrigation</p>
+                            </div>
+                            <div id="icon-flushing" class="usage-icon" style="display: none;">
+                                <svg width="80" height="80" viewBox="0 0 64 64"><rect x="10" y="22" width="44" height="36" rx="8" fill="#F5F5F5" stroke="#BDBDBD" stroke-width="2"/><rect x="16" y="10" width="32" height="12" rx="4" fill="#E0E0E0" stroke="#BDBDBD" stroke-width="2"/><circle cx="32" cy="40" r="12" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="2"/><circle cx="32" cy="40" r="8" fill="#85D3FF" stroke="#3498db" stroke-width="1.5"/><path d="M32 40 A 6 6 0 0 1 26 34" stroke="#FFFFFF" fill="none" stroke-width="2" opacity="0.7"/></svg>
+                                <p>Flushing</p>
+                            </div>
+                            <div id="icon-industrial" class="usage-icon" style="display: none;">
+                                <svg width="80" height="80" viewBox="0 0 64 64"><defs><linearGradient id="gGear" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#BDBDBD"/><stop offset="100%" stop-color="#757575"/></linearGradient></defs><path d="M32 22 L36 16 L44 16 L48 22 L48 30 L44 36 L36 36 L32 30 Z" fill="#F5F5F5" stroke="#757575" stroke-width="2"/><path d="M20 25 a12 12 0 1 0 24 0 a12 12 0 1 0 -24 0" fill="url(#gGear)" stroke="#424242" stroke-width="1.5"/><circle cx="32" cy="25" r="4" fill="#F5F5F5" stroke="#424242" stroke-width="1.5"/><path d="M12 40 L52 40 L56 56 L8 56 Z" fill="url(#gGear)" stroke="#424242" stroke-width="1.5"/></svg>
+                                <p>Industrial</p>
+                            </div>
+                            <div id="icon-fire-suppression" class="usage-icon" style="display: none;">
+                                <svg width="80" height="80" viewBox="0 0 64 64"><rect x="18" y="16" width="28" height="42" rx="6" fill="#dc3545" stroke="#c0392b" stroke-width="2"/><rect x="14" y="8" width="36" height="8" rx="4" fill="#757575" stroke="#424242" stroke-width="1.5"/><rect x="24" y="24" width="16" height="10" fill="#F5F5F5" opacity="0.8"/><path d="M46 12 L56 12 L52 18 L46 12 Z" fill="#757575" stroke="#424242" stroke-width="1.5"/></svg>
+                                <p>Fire Suppression</p>
+                            </div>
+                            <div id="icon-no-contact" class="usage-icon" style="display: none;">
+                                <svg width="80" height="80" viewBox="0 0 64 64"><path d="M20 56 C 12 56 12 40 22 36 C 26 34 30 36 30 42 L 30 58" fill="none" stroke="#757575" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 46 C 30 38 34 34 38 34 C 44 34 44 58 44 58" fill="none" stroke="#757575" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 28 C 12 18 20 12 32 12 C 44 12 52 18 52 28" fill="none" stroke="#757575" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="32" r="28" fill="none" stroke="#dc3545" stroke-width="4"/><line x1="12" y1="52" x2="52" y2="12" stroke="#dc3545" stroke-width="4" stroke-linecap="round"/></svg>
+                                <p>Avoid Contact</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paragraphs to display detailed analysis, recommendations, etc. -->
+                <p id="qualityReasonTL">Loading Tagalog details...</p>
+                <p id="qualityReason" style="font-style: italic; color: #555;">Loading details...</p>
+                <p id="consumableStatusTL"></p>
+                <p id="consumableStatus" style="font-style: italic; color: #555;"></p>
+                <p id="otherUsesTL"></p>
+                <p id="otherUses" style="font-style: italic; color: #555;"></p>
+                <p id="qualitySuggestionTL"></p>
+                <p id="qualitySuggestion" style="font-style: italic; color: #555;"></p>
+                
+
+                <!-- AI Analysis Buttons -->
+                <div class="llm-button-wrapper">
+                    <!-- Button to trigger the AI analysis. -->
+                    <button id="getLlmAnalysisBtn" class="llm-button"> 
+                        Suriin ang tubig gamit ang AI
+                        <br>
+                        <i style="font-size: 0.8em;">Generate AI Water Analysis</i>
+                    </button>
+                    <!-- Button to return to the basic, non-AI view. Hidden by default. -->
+                    <button id="returnStaticBtn" class="llm-button" style="display: none;">
+                        Return to Basic Analysis
+                    </button>
+                </div>
+            </div>
+
+            <!-- Historical Data Charts Container -->
+            <div id="chartsContainer" class="charts-container">
+                <!-- Canvas elements where Chart.js will draw the line graphs. -->
+                <canvas id="tempChart"></canvas>
+                <canvas id="phChart"></canvas>
+                <canvas id="tdsChart"></canvas>
+                <canvas id="turbChart"></canvas>
+            </div>
+        </div>
+
+        <!-- // GAUGE METRICS SECTION // -->
+        <!-- This wrapper holds all the live data gauges and the overall quality card. -->
+        <div class="gauge-container-wrapper">
+            
+            <div class="gauge-card">
+                <div id="gauge-temp" class="gauge"></div> <div class="gauge-label">Temperature (°C)</div>
+                <div class="gauge-tooltip">
+                    <p>Ito ay sumusukat sa init o lamig ng tubig. Importante ito para sa mga aquatic life at chemical reactions.</p>
+                    <p><em>This measures the heat or coldness of the water. It's important for aquatic life and chemical reactions.</em></p>
+                </div>
+            </div>
+
+            <div class="gauge-card">
+                <div id="gauge-ph" class="gauge"></div>
+                <div class="gauge-label">pH</div>
+                <div class="gauge-tooltip">
+                    <p>Sinusukat nito kung gaano ka-acidic o ka-alkaline ang tubig. Ang ideal pH ay malapit sa 7 (neutral).</p>
+                    <p><em>This measures how acidic or alkaline the water is. The ideal pH is near 7 (neutral).</em></p>
+                </div>
+            </div>
+
+            <div class="gauge-card">
+                <div id="gauge-tds" class="gauge"></div>
+                <div class="gauge-label">TDS (ppm)</div>
+                <div class="gauge-tooltip">
+                    <p>Ito ang kabuuang dami ng mga mineral, asin, o metal na natunaw sa tubig. Mataas na TDS ay maaaring magpahiwatig ng polusyon.</p>
+                    <p><em>This is the total amount of minerals, salts, or metals dissolved in water. High TDS can indicate pollution.</em></p>
+                </div>
+            </div>
+
+            <div class="gauge-card">
+                <div id="gauge-turb" class="gauge"></div>
+                <div class="gauge-label">Turbidity (NTU)</div>
+                <div class="gauge-tooltip">
+                    <p>Sinusukat nito kung gaano kalabo ang tubig dahil sa mga suspended particles. Ang malinaw na tubig ay may mababang turbidity.</p>
+                    <p><em>This measures how cloudy the water is due to suspended particles. Clear water has low turbidity.</em></p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="quality-display">
+                    <div class="value" id="water_quality">--</div> 
+                    <div class="label">Water Quality</div>
+                </div>
+
+                <div id="mlConfidenceContainer" style="display: none; width: 100%; margin-top: 10px;">
+                    <div class="confidence-label">
+                        <span>Confidence</span>
+                        <span id="confidencePercentage">0%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div id="confidenceProgressBar" class="progress-bar-fill"></div>
+                    </div>
+                    <div id="predictionBreakdown" class="prediction-breakdown">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- // MODAL for TOAST NOTIFICATIONS (SUCCESS/INFO) // -->
+    <div id="toastModal" class="toast-modal">
+        <div class="toast-content">
+            <div id="toastIcon" class="toast-icon">
+                <!-- SVG Icon will be inserted here by JavaScript -->
+            </div>
+            <p id="toastMessage" class="toast-message"></p>
+        </div>
+    </div>
+    
+    <div id="liveAlertBanner" class="live-alert-banner">
+        <div class="live-alert-icon">🔔</div>
+        <div class="live-alert-content">
+            <p id="liveAlertTitle" class="live-alert-title">New Alert</p>
+            <p id="liveAlertDetails" class="live-alert-details">Details of the alert...</p>
+        </div>
+        <div id="liveAlertActions" class="live-alert-actions">
+            <button id="snoozeLiveAlertBtn">Snooze</button>
+            <button id="ackLiveAlertBtn">Acknowledge</button>
+        </div>
+        <button id="closeLiveAlertBtn" class="close-live-alert-btn">&times;</button>
+    </div>
+
+    <div id="networkStatusBanner" class="network-status-banner">
+        <span id="networkStatusIcon">⚠️</span>
+        <span id="networkStatusText">No network connection. Displayed data may not be live.</span>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='global_alerter.js') }}"></script>
+
+    <!-- // JAVASCRIPT LIBRARIES & SCRIPTS // -->
+    <!-- Scripts are placed at the end of the body for faster page loading. -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <!-- The main JavaScript file for the dashboard's functionality. -->
+    <script src="../static/script.js"></script>
+    
+</body>
+</html>

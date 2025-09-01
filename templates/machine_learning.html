@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine Learning - BantayTubig</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='machine_learning.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+<body>
+
+    <video autoplay muted loop id="backgroundVideo">
+        <source src="{{ url_for('static', filename='BantayTubig.mp4') }}" type="video/mp4">
+    </video>
+
+    <div class="header-top-left">
+        <div class="menu-icon">&#9776;</div> </div>
+
+    <div id="sidebarMenu" class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/">DASHBOARD</a></li>
+            <li><a href="/analytics">ANALYTICS & REPORTS</a></li>
+            <li><a href="/devices">DEVICE & SENSOR</a></li>
+            <li><a href="/alerts">ALERTS & NOTIFICATION</a></li>
+            <li><a href="/machine-learning" class="active">MACHINE LEARNING</a></li>
+            <li><a href="/users">USER MANAGEMENT</a></li>
+            <li><a href="/settings">SYSTEM SETTINGS</a></li>
+            <li><a href="#">ABOUT/HELP</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <span class="footer-title">BantayTubig</span><br>
+            <span class="footer-subtext">Smart Water Quality Monitoring System</span>
+        </div>
+    </div>
+
+    <div class="header-top-right">
+        <h1>Machine Learning Hub</h1>
+        <div id="timestamp">Panghuhula at Pagsusuri ng mga Hindi Pangkaraniwang Kaganapan</div>
+    </div>
+
+    <div class="main-content ml-page">
+        
+        <div class="tabs-container">
+            <button class="tab-link active" data-tab="live">Live Analysis</button>
+            <button class="tab-link" data-tab="historical">Historical Summary</button>
+            <button class="tab-link" data-tab="forecast">Forecasting</button>
+            <button class="tab-link" data-tab="annotate">Event Annotation</button>
+        </div>
+
+        <div id="live" class="tab-content active">
+            <div class="content-card">
+                 <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Ipinapakita nito ang real-time na pagsusuri ng AI sa kasalukuyang kalidad ng tubig, kasama ang mga posibleng dahilan at mungkahi.</p>
+                        <p><em>This shows the AI's real-time analysis of the current water quality, including potential reasoning and suggestions.</em></p>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <h2>AI Analysis of Current Water Quality</h2>
+                </div>
+                <div id="current-analysis-container" class="analysis-container">
+                    <div>
+                        <h4>Reasoning</h4>
+                        <p id="ai-reasoning">Loading AI analysis...</p>
+                    </div>
+                    <div>
+                        <h4>Suggestions</h4>
+                        <p id="ai-suggestions">...</p>
+                    </div>
+                    <div>
+                        <h4>Other Potential Uses</h4>
+                        <p id="ai-other-uses">...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="historical" class="tab-content">
+            <div class="content-card">
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Pumili ng saklaw ng petsa upang makabuo ng isang buod na pinapagana ng AI tungkol sa mga trend at anomalya sa kalidad ng tubig.</p>
+                        <p><em>Select a date range to generate an AI-powered summary of water quality trends and anomalies.</em></p>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <h2>AI-Powered Historical Summary</h2>
+                </div>
+                <div class="historical-form">
+                    <input type="text" id="dateRangePicker" placeholder="Select a date range">
+                    <button id="generateAnalysisBtn" class="action-button">Generate Summary</button>
+                </div>
+                <div id="historical-reasoning-container" class="reasoning-container">
+                    <p>Select a date range and click "Generate Summary" to get an AI-powered explanation.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="forecast" class="tab-content">
+            <div class="content-card">
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Hinuhulaan ng AI ang mga trend ng kalidad ng tubig para sa susunod na 24 na oras batay sa historikal na datos.</p>
+                        <p><em>The AI forecasts water quality trends for the next 24 hours based on historical data patterns.</em></p>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <h2>Predictive Forecasting (Next 24 Hours)</h2>
+                </div>
+                <p class="card-subtitle">
+                    This feature uses historical data to predict future trends. <strong>If no forecast is shown, the system has not yet collected enough data (typically a few days' worth) to learn reliable patterns.</strong>
+                </p>
+                <div class="forecast-grid">
+                    <div class="chart-container"><canvas id="tempForecastChart"></canvas></div>
+                    <div class="chart-container"><canvas id="phForecastChart"></canvas></div>
+                    <div class="chart-container"><canvas id="tdsForecastChart"></canvas></div>
+                    <div class="chart-container"><canvas id="turbidityForecastChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="annotate" class="tab-content">
+            <div class="content-card">
+                 <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Tulungan ang AI na matuto sa pamamagitan ng pag-validate sa mga na-detect na event. Ang iyong feedback ay nagpapatalino sa system.</p>
+                        <p><em>Help the AI learn by validating detected events. Your feedback makes the system smarter.</em></p>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <h2>AI-Assisted Event Annotation (Feedback Loop)</h2>
+                </div>
+                <p class="card-subtitle">Help the AI learn by validating detected events. Your feedback makes the system smarter.</p>
+                <div id="annotation-container" class="annotation-container">
+                    <p id="no-anomalies-message">No new events require validation at this time. Check back later.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastModal" class="toast-modal">
+        <div class="toast-content">
+            <div id="toastIcon" class="toast-icon"></div>
+            <p id="toastMessage" class="toast-message"></p>
+        </div>
+    </div>
+    
+    <div id="liveAlertBanner" class="live-alert-banner">
+        <div class="live-alert-icon">🔔</div>
+        <div class="live-alert-content">
+            <p id="liveAlertTitle" class="live-alert-title">New Alert</p>
+            <p id="liveAlertDetails" class="live-alert-details">Details of the alert...</p>
+        </div>
+        <div id="liveAlertActions" class="live-alert-actions">
+            <button id="snoozeLiveAlertBtn">Snooze</button>
+            <button id="ackLiveAlertBtn">Acknowledge</button>
+        </div>
+        <button id="closeLiveAlertBtn" class="close-live-alert-btn">&times;</button>
+    </div>
+
+    <div id="networkStatusBanner" class="network-status-banner">
+        <span id="networkStatusIcon">⚠️</span>
+        <span id="networkStatusText">No network connection. Displayed data may not be live.</span>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='global_alerter.js') }}"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="{{ url_for('static', filename='machine_learning.js') }}"></script>
+</body>
+</html>

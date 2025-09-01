@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- // META AND DOCUMENT SETUP // -->
+    <!-- This section contains metadata, links to stylesheets, and the page title. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics & Reports - BantayTubig</title>
+
+    <!-- // STYLESHEETS & FONTS // -->
+    <!-- 'main.css' for universal styles, 'analytics.css' for page-specific styles. -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='analytics.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Stylesheet for the Flatpickr date range picker library. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+<body>
+
+    <!-- // BACKGROUND VIDEO // -->
+    <video autoplay muted loop id="backgroundVideo">
+        <source src="{{ url_for('static', filename='BantayTubig.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <!-- // UNIVERSAL HEADER & SIDEBAR NAVIGATION // -->
+    <!-- This structure is consistent across all pages. -->
+    <div class="header-top-left">
+        <div class="menu-icon" onclick="toggleMenu()">
+            &#9776; <!-- Hamburger menu icon -->
+        </div>
+    </div>
+
+    <div id="sidebarMenu" class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/">DASHBOARD</a></li>
+            <li><a href="/analytics" class="active">ANALYTICS & REPORTS</a></li>
+            <li><a href="/devices">DEVICE & SENSOR</a></li>
+            <li><a href="/alerts">ALERTS & NOTIFICATION</a></li>
+            <li><a href="/machine-learning">MACHINE LEARNING</a></li>
+            <li><a href="/users">USER MANAGEMENT</a></li>
+            <li><a href="/settings" >SYSTEM SETTINGS</a></li>
+            <li><a href="#">ABOUT/HELP</a></li>
+        </ul>
+        <div class="sidebar-footer"><span class="footer-title">BantayTubig</span><br><span class="footer-subtext">Smart
+                Water Quality Monitoring System</span></div>
+    </div>
+
+    <div class="header-top-right">
+        <h1>Analytics & Reports</h1>
+        <div id="timestamp">Suriin ang mga data</div>
+    </div>
+
+    <!-- // MAIN PAGE CONTENT // -->
+    <!-- This is the primary container for all analytics components. -->
+    <div class="main-content analytics-page">
+        
+        <!-- // DATA FILTERS & CONTROLS CARD // -->
+        <div class="analytics-controls card">
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-message">
+                    <p>Dito mo maaaring i-filter ang data. Pumili ng petsa, oras, agwat, at mga parameter.</p>
+                    <p><em>Here you can filter the data. Select a date, time, interval, and parameters.</em></p>
+                </div>
+            </div>
+            <h3>Adjust Filters</h3>
+            <!-- Each 'control-group' holds a single filter type. -->
+            <div class="control-group">
+                <label for="dateRangePicker">Primary Date Range:</label>
+                <input type="text" id="dateRangePicker" placeholder="Select date range...">
+            </div>
+            <div class="control-group">
+                <label for="compareDateRangePicker">Comparison Date Range (Optional):</label>
+                <input type="text" id="compareDateRangePicker" placeholder="Select comparison range...">
+            </div>
+            <div class="control-group">
+                <label>Hourly Range (Optional):</label>
+                <div class="time-picker-group">
+                    <input type="text" id="timePickerStart" class="time-picker-input" placeholder="Start Time">
+                    <span>to</span>
+                    <input type="text" id="timePickerEnd" class="time-picker-input" placeholder="End Time">
+                </div>
+            </div>
+            <div class="control-group">
+                <label for="intervalSelector">Data Interval (minutes):</label>
+                <select id="intervalSelector">
+                    <option value="1">None</option>
+                    <option value="2">2</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="30">30</option>
+                    <option value="60">60</option>
+                    <option value="120">120</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Parameters:</label>
+                <div class="parameter-checkboxes">
+                    <label><input type="checkbox" name="parameter" value="temperature" checked> Temp</label>
+                    <label><input type="checkbox" name="parameter" value="ph" checked> pH</label>
+                    <label><input type="checkbox" name="parameter" value="tds" checked> TDS</label>
+                    <label><input type="checkbox" name="parameter" value="turbidity" checked> Turbidity</label>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>Water Quality:</label>
+                <div class="parameter-checkboxes">
+                    <label><input type="checkbox" name="quality" value="Good" checked> Good</label>
+                    <label><input type="checkbox" name="quality" value="Average" checked> Average</label>
+                    <label><input type="checkbox" name="quality" value="Poor" checked> Poor</label>
+                    <label><input type="checkbox" name="quality" value="Bad" checked> Bad</label>
+                    <label><input type="checkbox" name="quality" value="Unknown" checked> Unknown</label>
+                </div>
+            </div>
+            <!-- Button to trigger AI-based analysis of the filtered data. -->
+            <div class="llm-reasoning-section">
+                <button id="generateReasoningBtn" class="llm-reasoning-btn">Bumuo ng Pagsusuri Gamit ang AI
+                    <br>
+                    <i style="font-size: 0.6em;">Generate AI Summary Water Quality Reasoning</i>
+                </button>
+            </div>
+        </div>
+
+        <!-- // HISTORICAL DATA CHART CARD // -->
+        <div class="chart-container-large card">
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-message">
+                    <p>Ipinapakita ng chart na ito ang pagbabago ng water quality data sa paglipas ng panahon batay sa iyong mga filter.</p>
+                    <p><em>This chart shows the changes in water quality data over time based on your filters.</em></p>
+                </div>
+            </div>
+            <h3>Historical Chart</h3>
+            <!-- The canvas element where Chart.js will draw the main line graph. -->
+            <canvas id="historicalChart"></canvas>
+        </div>
+
+        <!-- // HISTORICAL DATA TABLE CARD // -->
+        <div class="table-container card">
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-message">
+                    <p>Isang detalyadong talaan ng lahat ng nakolektang data. Maaari mong i-sort ang bawat column.</p>
+                    <p><em>A detailed log of all collected data. You can sort each column.</em></p>
+                </div>
+            </div>
+            <h3>Historical Data</h3>
+            <!-- Wrapper to allow the table to scroll vertically if it has many rows. -->
+            <div class="table-wrapper">
+                <table id="historicalDataTable">
+                    <thead>
+                        <tr class="sortable-header">
+                            <!-- Table headers are sortable by clicking them. -->
+                            <th data-column="timestamp">Timestamp <span class="sort-icon"></span></th>
+                            <th data-column="temperature">Temperature (°C) <span class="sort-icon"></span></th>
+                            <th data-column="ph">pH <span class="sort-icon"></span></th>
+                            <th data-column="tds">TDS (ppm) <span class="sort-icon"></span></th>
+                            <th data-column="turbidity">Turbidity (NTU) <span class="sort-icon"></span></th>
+                            <th data-column="water_quality">Quality <span class="sort-icon"></span></th>
+                        </tr>
+                    </thead>
+                    <!-- The table body is populated with data by JavaScript. -->
+                    <tbody></tbody>
+                </table>
+            </div>
+            <!-- Controls for navigating through pages of table data. -->
+            <div class="pagination-controls">
+                <button id="prevPageBtn" disabled>Previous</button>
+                <span id="pageInfo">Page 1 of 1</span>
+                <button id="nextPageBtn" disabled>Next</button>
+            </div>
+        </div>
+
+        <!-- // REPORT GENERATOR CARD // -->
+        <div class="report-generator card">
+            <div class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-message">
+                    <p>Gumawa at mag-download ng mga ulat sa PDF o CSV format.</p>
+                    <p><em>Create and download reports in PDF or CSV format.</em></p>
+                </div>
+            </div>
+            <h3>Report Generator</h3>
+            <div class="report-controls">
+                <div class="control-group">
+                    <label>On-Demand Report</label>
+                    <div class="export-buttons">
+                        <button id="exportPdfBtn">Export as PDF</button>
+                        <button id="exportCsvBtn">Export as CSV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- // ADVANCED ANALYTICS SECTION (COLLAPSIBLE) // -->
+        <div class="advanced-analytics-section">
+            <!-- This button toggles the visibility of the advanced features container. -->
+            <button id="toggleAdvancedBtn" class="advanced-toggle-btn">
+                Advanced Analytics
+                <span class="arrow-icon">▼</span>
+            </button>
+            <!-- This container holds all advanced cards and is hidden by default. -->
+            <div id="advanced-features-container" class="analytics-advanced-row" style="display: none;">
+                
+                <!-- Statistical Summary Card -->
+                <div class="statistical-summary card">
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>Nagbibigay ng buod ng statistics para sa bawat parameter sa napiling panahon.</p>
+                            <p><em>Provides a statistical summary for each parameter in the selected period.</em></p>
+                        </div>
+                    </div><br>
+                    <h3>Statistical Summary</h3>
+                    <!-- Statistical data (min, max, avg) is inserted here by JavaScript. -->
+                    <div id="stats-container"></div>
+                </div>
+
+                <!-- Key Driver Analysis Card -->
+                <div class="key-drivers card">
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>Ipinapakita kung aling mga parameter ang may pinakamalaking impluwensya sa resulta ng kalidad ng tubig.</p>
+                            <p><em>Shows which parameters had the most influence on the water quality outcome.</em></p>
+                        </div>
+                    </div>
+                    <h3>Key Driver Analysis</h3>
+                    <div class="chart-container-small">
+                        <!-- Canvas for the key driver bar chart. -->
+                        <canvas id="keyDriverChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- "What-If" Scenario Simulator Card -->
+                <div class="what-if-simulator card">
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>Subukang baguhin ang mga value ng parameter upang makita ang posibleng maging resulta.</p>
+                            <p><em>Try changing parameter values to see the potential impact on water quality.</em></p>
+                        </div>
+                    </div>
+                    <h3>"What-If" Scenario Simulator</h3>
+                    <!-- Sliders to adjust parameter values. -->
+                    <div class="simulator-controls">
+                        <div class="slider-group">
+                            <label for="temp-slider">Temperature: <span id="temp-value">25.0</span> °C</label>
+                            <input type="range" id="temp-slider" min="0" max="40" value="25" step="0.1">
+                        </div>
+                        <div class="slider-group">
+                            <label for="ph-slider">pH: <span id="ph-value">7.0</span></label>
+                            <input type="range" id="ph-slider" min="0" max="14" value="7" step="0.1">
+                        </div>
+                        <div class="slider-group">
+                            <label for="tds-slider">TDS: <span id="tds-value">300</span> ppm</label>
+                            <input type="range" id="tds-slider" min="0" max="1200" value="300" step="1">
+                        </div>
+                        <div class="slider-group">
+                            <label for="turb-slider">Turbidity: <span id="turb-value">5.0</span> NTU</label>
+                            <input type="range"id="turb-slider" min="0" max="500" value="5" step="0.1">
+                        </div>
+                    </div>
+                    <!-- Displays the predicted quality based on slider values. -->
+                    <div class="simulator-result">
+                        <h4>Predicted Quality:</h4>
+                        <div id="scenario-prediction" class="quality-badge quality-unknown">N/A</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- // MODAL for AI Generated Reasoning // -->
+        <!-- This pop-up is hidden by default and shows the AI analysis text. -->
+        <div id="llmReasoningModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>AI Generated Reasoning</h2>
+                    <button id="closeLlmModalBtn" class="modal-close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <!-- A loading spinner is shown while waiting for the AI response. -->
+                    <div id="llmLoadingSpinner" class="loading-spinner" style="display: none;"></div>
+                    <!-- The AI-generated text is inserted into this container. -->
+                    <div id="llmResultContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- // MODAL for TOAST NOTIFICATIONS (SUCCESS/INFO) // -->
+    <div id="toastModal" class="toast-modal">
+        <div class="toast-content">
+            <div id="toastIcon" class="toast-icon">
+                <!-- SVG Icon will be inserted here by JavaScript -->
+            </div>
+            <p id="toastMessage" class="toast-message"></p>
+        </div>
+    </div>
+    
+    <div id="liveAlertBanner" class="live-alert-banner">
+        <div class="live-alert-icon">🔔</div>
+        <div class="live-alert-content">
+            <p id="liveAlertTitle" class="live-alert-title">New Alert</p>
+            <p id="liveAlertDetails" class="live-alert-details">Details of the alert...</p>
+        </div>
+        <div id="liveAlertActions" class="live-alert-actions">
+            <button id="snoozeLiveAlertBtn">Snooze</button>
+            <button id="ackLiveAlertBtn">Acknowledge</button>
+        </div>
+        <button id="closeLiveAlertBtn" class="close-live-alert-btn">&times;</button>
+    </div>
+
+    <div id="networkStatusBanner" class="network-status-banner">
+        <span id="networkStatusIcon">⚠️</span>
+        <span id="networkStatusText">No network connection. Displayed data may not be live.</span>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='global_alerter.js') }}"></script>
+
+    <!-- // JAVASCRIPT LIBRARIES & SCRIPTS // -->
+    <!-- Scripts are placed at the end of the body for faster page loading. -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <!-- The main JavaScript file for the analytics page's functionality. -->
+    <script src="{{ url_for('static', filename='analytics.js') }}"></script>
+
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- // META AND DOCUMENT SETUP // -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings - BantayTubig</title>
+
+    <!-- // STYLESHEETS & FONTS // -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='system_settings.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- // BACKGROUND VIDEO & UNIVERSAL UI ELEMENTS // -->
+    <video autoplay muted loop id="backgroundVideo">
+        <source src="{{ url_for('static', filename='BantayTubig.mp4') }}" type="video/mp4">
+    </video>
+    <div class="header-top-left">
+        <div class="menu-icon">&#9776;</div>
+    </div>
+    <div id="sidebarMenu" class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/">DASHBOARD</a></li>
+            <li><a href="/analytics">ANALYTICS & REPORTS</a></li>
+            <li><a href="/devices">DEVICE & SENSOR</a></li>
+            <li><a href="/alerts">ALERTS & NOTIFICATION</a></li>
+            <li><a href="/machine-learning">MACHINE LEARNING</a></li>
+            <li><a href="/users">USER MANAGEMENT</a></li>
+            <li><a href="/settings" class="active">SYSTEM SETTINGS</a></li>
+            <li><a href="#">ABOUT/HELP</a></li>
+        </ul>
+        <div class="sidebar-footer"><span class="footer-title">BantayTubig</span><br><span class="footer-subtext">Smart
+                Water Quality Monitoring System</span></div>
+    </div>
+    <div class="header-top-right">
+        <h1>System Settings</h1>
+        <div id="timestamp">I-configure ang mga pangkalahatang setting ng system</div>
+    </div>
+
+    <!-- // MAIN PAGE CONTENT // -->
+    <div class="main-content settings-page">
+
+        <!-- Accordion Item 1: General Settings -->
+        <div class="settings-accordion-item">
+            <button class="settings-toggle-btn">General Settings <span class="arrow-icon">▼</span></button>
+            <div class="settings-content-panel">
+                <div class="content-card">
+                    <div class="tooltip-container"><span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>Dito isinasaayos ang mga pangunahing setting ng system, tulad ng pangalan nito.</p>
+                            <p><em>Here you can configure the system's basic settings, such as its name.</em></p>
+                        </div>
+                    </div>
+                    <div class="settings-form">
+                        <div class="form-group"><label for="systemName">System Name</label><input type="text"
+                                id="systemName" placeholder="Loading..."><small>Set a custom name for the monitoring
+                                platform.</small></div>
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordion Item 2: Network & Connectivity -->
+        <div class="settings-accordion-item">
+            <button class="settings-toggle-btn">Network & Connectivity <span class="arrow-icon">▼</span></button>
+            <div class="settings-content-panel">
+                <div class="content-card">
+                    <div class="tooltip-container"><span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>Pamahalaan ang koneksyon ng device sa internet. Maaari mong tingnan ang kasalukuyang
+                                status at kumonekta sa mga Wi-Fi network.</p>
+                            <p><em>Manage the device's internet connection. You can view the current status and connect
+                                    to Wi-Fi networks.</em></p>
+                        </div>
+                    </div>
+                    <div class="network-status-card">
+                        <h3>Current Status</h3>
+                        <div id="networkStatusContent">
+                            <p><strong>Status:</strong> <span
+                                    class="status-badge status-disconnected">Checking...</span></p>
+                            <p><strong>SSID:</strong> <span id="currentSsid">N/A</span></p>
+                            <p><strong>IP Address:</strong> <span id="currentIp">N/A</span></p>
+                        </div>
+                    </div>
+                    <div class="available-networks-card">
+                        <div class="card-header">
+                            <h3>Available Wi-Fi Networks</h3><button id="scanWifiBtn" class="action-button small"><span
+                                    class="button-icon-placeholder"></span> Scan</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="wifiListTable">
+                                <thead>
+                                    <tr>
+                                        <th>SSID</th>
+                                        <th>Signal</th>
+                                        <th>Security</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wifiListBody">
+                                    <tr>
+                                        <td colspan="4">Click 'Scan' to find networks.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-accordion-item">
+            <button class="settings-toggle-btn">Security <span class="arrow-icon">▼</span></button>
+            <div class="settings-content-panel">
+                <div class="content-card">
+                    <div class="tooltip-container"><span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>I-configure ang mga setting na may kaugnayan sa seguridad, tulad ng session timeout.</p>
+                            <p><em>Configure security-related settings, such as session timeout.</em></p>
+                        </div>
+                    </div>
+                    <div class="settings-form">
+                        <div class="form-group"><label for="sessionTimeout">Session Timeout</label>
+                            <select id="sessionTimeout">
+                                <option value="15">15 Minutes</option>
+                                <option value="30">30 Minutes</option>
+                                <option value="60">1 Hour</option>
+                                <option value="120">2 Hours</option>
+                            </select>
+                            <small>Automatically log out users after a period of inactivity.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-accordion-item">
+            <button class="settings-toggle-btn">UI & Display <span class="arrow-icon">▼</span></button>
+            <div class="settings-content-panel">
+                <div class="content-card">
+                    <div class="tooltip-container"><span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>I-customize ang mga elementong ipinapakita sa dashboard.</p>
+                            <p><em>Customize the elements shown on the dashboard.</em></p>
+                        </div>
+                    </div>
+                    <div class="settings-form">
+                        <div class="form-group-toggle">
+                            <label for="showMlConfidenceToggle">Show ML Confidence Details</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="showMlConfidenceToggle">
+                                <span class="slider"></span>
+                            </label>
+                            <small>Show/hide the prediction confidence bar on the main dashboard card.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-accordion-item">
+            <button class="settings-toggle-btn">Data Management <span class="arrow-icon">▼</span></button>
+            <div class="settings-content-panel">
+                <div class="content-card">
+                    <div class="tooltip-container"><span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>Tukuyin ang mga patakaran kung gaano katagal itatago ang data sa system.</p>
+                            <p><em>Define policies for how long monitoring data is stored on the system.</em></p>
+                        </div>
+                    </div>
+                    <div class="settings-form">
+                        <div class="form-group"><label for="dataRetention">Data Retention Policy</label>
+                            <select id="dataRetention">
+                                <option value="1">1 Day - FOR DEMO ONLY!</option>
+                                <option value="30">30 Days</option>
+                                <option value="90">90 Days</option>
+                                <option value="180">6 Months</option>
+                                <option value="365">1 Year</option>
+                                <option value="730">2 Years</option>
+                            </select>
+                            <small>Set how long historical data is kept before being deleted.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- // FLOATING SAVE BUTTON & POWER OFF // -->
+    <div class="floating-actions">
+        <button id="powerOffBtn" class="action-button danger" title="Stop Application & Shut Down">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="power-icon"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+        </button>
+        <button id="saveSettingsBtn" class="action-button">Save Changes</button>
+    </div>
+
+    <!-- // MODAL for WIFI PASSWORD // -->
+    <div id="wifiPasswordModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="wifiModalTitle">Connect to Network</h2><button id="closeWifiModalBtn"
+                    class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="wifiConnectForm"><input type="hidden" id="wifiSsidInput">
+                    <div class="form-group"><label for="wifiPasswordInput">Password for <strong
+                                id="ssidNameLabel"></strong></label><input type="password" id="wifiPasswordInput"
+                            placeholder="Enter network password" autocomplete="current-password"></div>
+                    <div class="form-actions"><button type="submit" class="action-button">Connect</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- // MODAL for DATA CLEANUP CONFIRMATION // -->
+    <div id="dataCleanupModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content wide-modal">
+            <div class="modal-header">
+                <div class="modal-title-icon-wrapper">
+                    <div class="modal-icon-svg warning-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                            <path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480H40c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24V296c0 13.3 10.7 24 24 24s24-10.7 24-24V184c0-13.3-10.7-24-24-24zm32 224c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="#f39c12"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2>Confirm Data Deletion</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="confirmation-text">
+                    <p class="taglish-warning">
+                        Magde-delete ka ng data na mas luma sa iyong bagong retention policy. <b>Hindi na ito maibabalik.</b>
+                        <span class="english-translation">You are about to delete data older than your new retention policy. <b>This action is irreversible.</b></span>
+                    </p>
+                    <div class="tooltip-container inline">
+                        <span class="tooltip-icon small">?</span>
+                        <div class="tooltip-message">
+                            <p>Ipinapakita nito ang isang preview ng data na permanenteng tatanggalin base sa iyong bagong polisiya.</p>
+                            <p><em>This shows a preview of the data that will be permanently deleted based on your new policy.</em></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-controls">
+                    <div class="preview-control-group">
+                        <label for="tablePreviewSelect">Preview Data From:</label>
+                        <select id="tablePreviewSelect">
+                            <option value="measurements">Sensor Measurements</option>
+                            <option value="audit_log">Audit Logs</option>
+                            <option value="device_logs">Device Maintenance Logs</option>
+                        </select>
+                    </div>
+                    <input type="text" id="previewSearchInput" class="filter-input" placeholder="Search by ID, Date (YYYY-MM-DD), or Time (e.g., 7:28pm)...">
+                </div>
+                <div class="table-wrapper">
+                    <table id="cleanupPreviewTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th class="sortable" data-column="timestamp">Timestamp <span class="sort-icon"></span></th>
+                                <th class="sortable" data-column="Details">Details <span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+                <div class="pagination-controls" id="previewPagination">
+                    <button id="previewPrevPageBtn" disabled>Previous</button>
+                    <span id="previewPageInfo">Page 1 of 1</span>
+                    <button id="previewNextPageBtn" disabled>Next</button>
+                </div>
+                <div class="form-actions">
+                    <button id="cancelDeleteBtn" class="action-button secondary">Cancel</button>
+                    <button id="confirmDeleteBtn" class="action-button danger">Yes, Delete Old Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <!-- // MODAL for TOAST NOTIFICATIONS (SUCCESS/INFO) // -->
+    <div id="toastModal" class="toast-modal">
+        <div class="toast-content">
+            <div id="toastIcon" class="toast-icon">
+                <!-- SVG Icon will be inserted here by JavaScript -->
+            </div>
+            <p id="toastMessage" class="toast-message"></p>
+        </div>
+    </div>
+    
+    <div id="liveAlertBanner" class="live-alert-banner">
+        <div class="live-alert-icon">🔔</div>
+        <div class="live-alert-content">
+            <p id="liveAlertTitle" class="live-alert-title">New Alert</p>
+            <p id="liveAlertDetails" class="live-alert-details">Details of the alert...</p>
+        </div>
+        <div id="liveAlertActions" class="live-alert-actions">
+            <button id="snoozeLiveAlertBtn">Snooze</button>
+            <button id="ackLiveAlertBtn">Acknowledge</button>
+        </div>
+        <button id="closeLiveAlertBtn" class="close-live-alert-btn">&times;</button>
+    </div>
+
+    <div id="networkStatusBanner" class="network-status-banner">
+        <span id="networkStatusIcon">⚠️</span>
+        <span id="networkStatusText">No network connection. Displayed data may not be live.</span>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='global_alerter.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='system_settings.js') }}"></script>
+</body>
+
+</html>

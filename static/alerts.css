@@ -1,0 +1,447 @@
+/* --- ALERTS & NOTIFICATIONS PAGE STYLES --- */
+/* These styles are specific to the alerts.html page. */
+
+/* Main container for the content on the alerts page.
+   Applied to: <div class="main-content alerts-page"> */
+.alerts-page {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* --- Tab Navigation (Re-uses general styles from user_management.css) --- */
+.tabs-container {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.tab-link {
+    padding: 10px 20px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1em;
+    font-weight: 600;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.tab-link.active {
+    color: white;
+    border-bottom-color: #00aaff;
+}
+
+/* --- Tab Content --- */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- General Content Card (Re-uses general styles) --- */
+.content-card {
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    position: relative; /* For tooltip positioning */
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+    color: #333;
+}
+
+/* --- General Table & Button Styles (Re-uses general styles) --- */
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px; /* Ensures table is wide enough on desktops */
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.action-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    margin-right: 15px;
+}
+
+.action-button:hover {
+    background-color: #0056b3;
+}
+
+.action-button.small {
+    padding: 5px 10px;
+    font-size: 0.85em;
+}
+
+.action-button.secondary {
+    background-color: #6c757d;
+}
+.action-button.secondary:hover {
+    background-color: #5a6268;
+}
+
+.action-button.deactivate {
+    background-color: #dc3545;
+}
+.action-button.deactivate:hover {
+    background-color: #c82333;
+}
+
+/* --- Specific Styles for Alert Rule Builder --- */
+.conditions-container {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #fdfdfd;
+}
+
+.condition-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.condition-row select,
+.condition-row input {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.condition-row input[type="number"] {
+    width: 80px;
+}
+
+.remove-condition-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+/* --- Specific Styles for Alert History --- */
+.filters-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    flex-grow: 1;
+}
+
+/* Styles for status badges in the history table */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    color: black;
+    font-weight: 600;
+    font-size: 0.9em;
+    text-transform: capitalize;
+}
+
+.status-active {color: #0056b3;}
+.status-inactive {color:#5a6268}
+.status-triggered { background-color: #ffc107; color: #333; }
+.status-acknowledged { background-color: #17a2b8; }
+.status-resolved { background-color: #28a745; }
+.status-snoozed { background-color: #6c757d; }
+
+.default-badge, .snooze-badge {
+    font-size: 0.75em;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+    vertical-align: middle;
+}
+.default-badge {
+    background-color: #e9ecef;
+    color: #495057;
+}
+.snooze-badge {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* --- Modal & Form Styles --- */
+.modal-overlay {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: none;
+    justify-content: center; align-items: center;
+    z-index: 2000;
+    overflow-x: scroll;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 500px;
+    text-align: left;
+    animation: fadeInScale 0.4s ease-out;
+}
+
+.modal-content.wide {
+    max-width: 800px; /* For the more complex rule builder modal */
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 15px; margin-bottom: 20px;
+}
+
+.modal-close-btn {
+    background: none; border: none; font-size: 2em;
+    cursor: pointer; color: #6c757d;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.form-group label, .form-group-inline label {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+.form-group-inline label {
+    margin-bottom: 0;
+}
+
+.form-group input, .form-group select, .form-control-small {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+/* --- Styles for Two-Column Modal Form --- */
+
+.form-grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Creates two equal-width columns */
+    gap: 30px; /* Space between the columns */
+    align-items: start;
+}
+
+.form-column {
+    display: flex;
+    flex-direction: column;
+}
+
+/* A simple horizontal line to separate sections in the form */
+hr.form-divider {
+    border: none;
+    border-top: 1px solid #e9ecef;
+    margin: 15px 0;
+}
+
+/* Styling for smaller inputs in the form group */
+.form-control-small {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    max-width: 150px;
+}
+
+/* Checklist for selecting users in the group modal */
+
+/* The scrollable container box */
+.checklist-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    width: 100%;
+}
+
+/* The label for each user row */
+.checklist-item {
+    display: flex;        
+    align-items: center;  
+    padding: 4px 0;       
+    cursor: pointer;
+    margin-bottom: 0;    
+    margin-left: 0;
+}
+
+/* Target the checkbox directly to control its spacing and size */
+.checklist-item input[type="checkbox"] {
+    margin-right: 10px;
+    flex-shrink: 0;    
+
+    /* Add these lines to set a consistent size */
+    width: 16px;
+    height: 16px;
+}
+
+/* --- Pagination Controls --- */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.pagination-controls button {
+    padding: 8px 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+.pagination-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* --- Responsive Adjustments for Tablets & Mobile (Screens below 768px) --- */
+@media (max-width: 768px) {
+
+    /* Make the two-column form in the modal stack into a single column */
+    .form-grid-container {
+        grid-template-columns: 1fr; /* Change from two columns to one */
+        gap: 0; /* Remove the gap between columns */
+        overflow-y: scroll;
+        max-height: 60vh;
+        width: 80vw;
+    }
+
+    /* Add some space between the stacked form columns for clarity */
+    .form-column:first-child {
+        margin-bottom: 20px;
+    }
+
+    /* Adjust modal padding and fonts for smaller screens */
+    .modal-content {
+        padding: 15px;
+    }
+    .card-header div {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+    }
+
+    .card-header div button {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+
+    .modal-header h2 {
+        font-size: 1.2em;
+    }
+
+    /* Ensure table wrapper provides horizontal scroll on small screens */
+    .table-wrapper {
+        overflow-x: auto;
+        padding-bottom: 10px; /* Add some padding for the scrollbar */
+    }
+
+    .form-group input, .form-group select, .form-control-small {
+        width: 80%;
+    }
+
+    /* Stack buttons in card headers to prevent overflow */
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .card-header div {
+        margin-left: auto; /* Aligns the button group to the right */
+    }
+    
+    .tabs-container {
+        max-width: 90vw;
+        overflow-x: scroll;
+    }
+
+    .tab-link {
+        font-size: 12px;
+    }
+}
