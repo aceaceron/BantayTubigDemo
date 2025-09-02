@@ -2,12 +2,12 @@
 """
 Handles all API endpoints related to device management, sensor data, and calibration.
 """
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, jsonify, request, abort, session
 from datetime import datetime
 import numpy as np
 
 # Import shared config and database functions
-from config import DEVICE_ID, CURRENT_USER_ID
+from config import DEVICE_ID
 from database import *
 import sensor_reader
 
@@ -67,7 +67,7 @@ def api_update_device_crud():
     if existing:
         db_data.update({k: existing.get(k) for k in ['sensors', 'status']})
     add_or_update_device(db_data)
-    add_audit_log(user_id=CURRENT_USER_ID, component='Device Management', action='Device Details Updated', target=f"ID: {db_data['id']}", status='Success', ip_address=request.remote_addr)
+    add_audit_log(user_id=session.get('user_id'), component='Device Management', action='Device Details Updated', target=f"ID: {db_data['id']}", status='Success', ip_address=request.remote_addr)
     return jsonify({"status": "success"})
 
 @device_bp.route('/devices/delete', methods=['POST'])
@@ -89,7 +89,7 @@ def api_add_log_crud():
         abort(400, "Missing data.")
     try:
         add_device_log(device_id=device_id, user_id=user_id_from_form, notes=notes)
-        add_audit_log(user_id=CURRENT_USER_ID, component='Device Management', action='Maintenance Log Added', target=f"Device ID: {device_id}", status='Success', ip_address=request.remote_addr, details={'note': notes, 'logged_for_user_id': user_id_from_form})
+        add_audit_log(user_id=session.get('user_id'), component='Device Management', action='Maintenance Log Added', target=f"Device ID: {device_id}", status='Success', ip_address=request.remote_addr, details={'note': notes, 'logged_for_user_id': user_id_from_form})
         user = get_user_by_id(user_id_from_form)
         tech_name = user['full_name'] if user else 'Unknown User'
         response_log = {"date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "tech": tech_name, "notes": notes}
@@ -143,10 +143,10 @@ def api_calculate_calibration():
         slope, offset = np.polyfit(voltages, buffer_values, 1)
         new_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         update_sensor_calibration(device_id, sensor_type, new_date, slope, offset, is_default=0)
-        add_audit_log(user_id=CURRENT_USER_ID, component='Sensor Calibration', action='Sensor Calibrated', target=f"Device: {device_id}, Sensor: {sensor_type}", status='Success', ip_address=request.remote_addr, details={'slope': slope, 'offset': offset})
+        add_audit_log(user_id=session.get('user_id'), component='Sensor Calibration', action='Sensor Calibrated', target=f"Device: {device_id}, Sensor: {sensor_type}", status='Success', ip_address=request.remote_addr, details={'slope': slope, 'offset': offset})
         return jsonify({"status": "success", "message": f"New calibration saved for {sensor_type}"})
     except Exception as e:
-        add_audit_log(user_id=CURRENT_USER_ID, component='Sensor Calibration', action='Sensor Calibrated', target=f"Device: {device_id}, Sensor: {sensor_type}", status='Failure', ip_address=request.remote_addr, details={'error': str(e)})
+        add_audit_log(user_id=session.get('user_id'), component='Sensor Calibration', action='Sensor Calibrated', target=f"Device: {device_id}, Sensor: {sensor_type}", status='Failure', ip_address=request.remote_addr, details={'error': str(e)})
         abort(500, "An error occurred during calibration.")
 
 @device_bp.route('/devices/restore_default_calibration', methods=['POST'])
@@ -158,7 +158,7 @@ def api_restore_default():
     if not device_id or not sensor_type:
         abort(400, "deviceId and sensorType are required.")
     restore_default_calibration(device_id, sensor_type)
-    add_audit_log(user_id=CURRENT_USER_ID, component='Sensor Calibration', action='Calibration Restored', target=f"Device: {device_id}, Sensor: {sensor_type}", status='Success', ip_address=request.remote_addr)
+    add_audit_log(user_id=session.get('user_id'), component='Sensor Calibration', action='Calibration Restored', target=f"Device: {device_id}, Sensor: {sensor_type}", status='Success', ip_address=request.remote_addr)
     return jsonify({"status": "success", "message": f"Default calibration restored for {sensor_type}."})
 
 @device_bp.route('/audit_log', methods=['GET'])

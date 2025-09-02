@@ -1,0 +1,45 @@
+<div id="sidebarMenu" class="sidebar">
+    <ul class="sidebar-menu">
+        
+        {% if session.user_id %}
+            <li><a href="/" {% if active_page == 'dashboard' %}class="active"{% endif %}>DASHBOARD</a></li>
+        {% endif %}
+
+        {% if session.user_role in ['Administrator', 'Data Scientist'] %}
+            <li><a href="/analytics" {% if active_page == 'analytics' %}class="active"{% endif %}>ANALYTICS & REPORTS</a></li>
+        {% endif %}
+
+        {% if session.user_role in ['Administrator', 'Technician'] %}
+            <li><a href="/devices" {% if active_page == 'devices' %}class="active"{% endif %}>DEVICE & SENSOR</a></li>
+        {% endif %}
+
+        {% if session.user_role in ['Administrator', 'Technician'] %}
+            <li><a href="/alerts" {% if active_page == 'alerts' %}class="active"{% endif %}>ALERTS & NOTIFICATION</a></li>
+        {% endif %}
+        
+        {% if session.user_role in ['Administrator', 'Data Scientist'] %}
+            <li><a href="/machine-learning" {% if active_page == 'machine_learning' %}class="active"{% endif %}>MACHINE LEARNING</a></li>
+        {% endif %}
+
+        {% if session.user_role == 'Administrator' %}
+            <li><a href="/users" {% if active_page == 'users' %}class="active"{% endif %}>USER MANAGEMENT</a></li>
+        {% endif %}
+
+        {% if session.user_id %}
+            <li><a href="/settings" {% if active_page == 'settings' %}class="active"{% endif %}>SYSTEM SETTINGS</a></li>
+        {% endif %}
+
+        {% if session.user_id %}
+            <li><a href="#">ABOUT/HELP</a></li>
+        {% endif %}
+        
+        {% if session.user_id %}
+            <li><a href="{{ url_for('view_bp.logout') }}">LOGOUT</a></li>
+        {% endif %}
+    </ul>
+    
+    <div class="sidebar-footer">
+        <span class="footer-title">BantayTubig</span><br>
+        <span class="footer-subtext">Smart Water Quality Monitoring System</span>
+    </div>
+</div>

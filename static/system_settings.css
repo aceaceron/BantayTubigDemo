@@ -8,55 +8,187 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin-bottom: 60px;
+}
+
+/* A simple horizontal line to separate sections in a form */
+hr.form-divider {
+    border: none;
+    border-top: 1px solid #e9ecef;
+    margin: 25px 0;
 }
 
 /* --- ACCORDION STYLES --- */
-.settings-accordion-item { width: 100%; }
-.settings-toggle-btn {
-    width: 100%; padding: 15px 25px; display: flex;
-    justify-content: space-between; align-items: center; cursor: pointer;
-    position: relative; background-color: rgba(255, 255, 255, 0.15); 
-    backdrop-filter: blur(8px); border: 2px solid rgba(255, 255, 255, 0.4);
-    border-radius: 15px; color: rgba(255, 255, 255, 0.9); font-size: 1.2em;
-    font-weight: 600; font-family: 'Poppins', sans-serif; transition: all 0.3s ease;
+.settings-accordion-item {
+    width: 100%;
 }
-.settings-toggle-btn:hover { background-color: rgba(255, 255, 255, 0.25); color: white; }
-.settings-toggle-btn.active { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-.arrow-icon { font-size: 1em; transition: transform 0.3s ease-in-out; }
-.settings-toggle-btn.active .arrow-icon { transform: rotate(180deg); }
-.settings-content-panel {
-    max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out;
-    background-color: rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px);
-    border: 2px solid rgba(255, 255, 255, 0.4); border-top: none;
-    border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;
-}
-.content-card { position: relative; background-color: transparent; box-shadow: none; padding: 25px; }
 
-/* --- TOOLTIP STYLES --- */
-/* .tooltip-container { position: absolute; top: 15px; right: 15px; }
-.tooltip-icon { width: 24px; height: 24px; background-color: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; }
-.tooltip-message { visibility: hidden; width: 280px; background-color: #333; color: #fff; text-align: left; border-radius: 6px; padding: 10px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -140px; opacity: 0; transition: opacity 0.3s; }
-.tooltip-message::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #333 transparent transparent transparent; }
-.tooltip-container:hover .tooltip-message { visibility: visible; opacity: 1; }
-.tooltip-message p { margin: 5px 0; }
-.tooltip-message em { font-style: italic; color: #ccc; font-size: 0.9em; } */
+.settings-toggle-btn {
+    width: 100%;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.2em;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.settings-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+.settings-toggle-btn.active {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.arrow-icon {
+    font-size: 1em;
+    transition: transform 0.3s ease-in-out;
+}
+
+.settings-toggle-btn.active .arrow-icon {
+    transform: rotate(180deg);
+}
+
+.settings-content-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top: none;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+.content-card {
+    position: relative;
+    background-color: transparent;
+    box-shadow: none;
+    padding: 25px;
+}
 
 /* --- FORM & CONTENT STYLES --- */
-.settings-form { display: flex; flex-direction: column; gap: 25px; }
-.form-group { display: flex; flex-direction: column; gap: 8px; }
-.form-group label { font-weight: 600; color: #333; font-size: 1.1em; }
-.form-group input[type="text"], .form-group input[type="number"], .form-group select { width: 100%; max-width: 400px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 1em; }
-.form-group small { color: #666; font-size: 0.9em; }
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Adjusted gap for the new h3 element */
+}
+.settings-form h3 {
+    font-weight: 600;
+    color: #333;
+    font-size: 1.1em;
+    margin: 0; /* Remove default heading margin */
+}
+#changePasswordForm .form-group {
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    margin: 10px;
+    border-radius: 10px;
+}
+#changePasswordForm .action-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    margin-right: 15px;
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="password"],
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1em;
+}
+
+.form-group small {
+    color: #666;
+    font-size: 0.9em;
+}
 
 /* --- NETWORK-SPECIFIC STYLES --- */
-.network-status-card { background-color: transparent; padding: 10px; margin-bottom: 15px; }
-.available-networks-card { background-color: rgba(248, 249, 250, 0.8); border: 1px solid rgba(233, 236, 239, 0.8); border-radius: 15px; padding: 20px; margin-bottom: 25px; }
-.network-status-card:last-child, .available-networks-card:last-child { margin-bottom: 0; }
-.card-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
-#networkStatusContent p { margin: 8px 0; font-size: 1.1em; color: #333; text-align: left;}
-.status-badge { padding: 4px 10px; border-radius: 12px; color: white; font-weight: 600; }
-.status-badge.status-connected { background-color: #28a745; }
-.status-badge.status-disconnected { background-color: #dc3545; }
+.network-status-card {
+    background-color: transparent;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.available-networks-card {
+    background-color: rgba(248, 249, 250, 0.8);
+    border: 1px solid rgba(233, 236, 239, 0.8);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.network-status-card:last-child,
+.available-networks-card:last-child {
+    margin-bottom: 0;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+#networkStatusContent p {
+    margin: 8px 0;
+    font-size: 1.1em;
+    color: #333;
+    text-align: left;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+}
+
+.status-badge.status-connected {
+    background-color: #28a745;
+}
+
+.status-badge.status-disconnected {
+    background-color: #dc3545;
+}
+
 /* Style for the "Connected" label in the Wi-Fi list */
 .connected-label {
     display: inline-block;
@@ -71,7 +203,8 @@
 }
 
 /* Scan and Connect Button Styles */
-#scanWifiBtn, .connect-btn {
+#scanWifiBtn,
+.connect-btn {
     color: white;
     background: linear-gradient(45deg, #007bff, #0056b3);
     box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
@@ -79,7 +212,9 @@
     border-radius: 20px;
     padding: 10px;
 }
-#scanWifiBtn:hover, .connect-btn:hover {
+
+#scanWifiBtn:hover,
+.connect-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0, 123, 255, 0.6);
 }
@@ -90,183 +225,221 @@
 }
 
 /* SVG Icon Styles */
-.button-icon-placeholder { display: inline-block; width: 16px; height: 16px; margin-right: 8px; vertical-align: middle; }
-.svg-loader { animation: spin 1.5s linear infinite; }
-@keyframes spin { 100% { transform: rotate(360deg); } }
-.signal-svg { width: 24px; height: 24px; vertical-align: middle; }
-.signal-excellent path { fill: #28a745; }
-.signal-good path { fill: #86dc35; }
-.signal-ok path { fill: #ffc107; }
-.signal-weak path { fill: #dc3545; }
+.button-icon-placeholder {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.svg-loader {
+    animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.signal-svg {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+.signal-excellent path {
+    fill: #28a745;
+}
+
+.signal-good path {
+    fill: #86dc35;
+}
+
+.signal-ok path {
+    fill: #ffc107;
+}
+
+.signal-weak path {
+    fill: #dc3545;
+}
 
 /* Table styles */
-.table-wrapper { overflow-x: auto; }
-#wifiListTable { width: 100%; border-collapse: collapse; margin-top: 15px; }
-#wifiListTable th, #wifiListTable td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; vertical-align: middle; }
-#wifiListTable th { background-color: #f2f2f2; font-weight: 600; }
+.table-wrapper {
+    overflow-x: auto;
+}
+
+#wifiListTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#wifiListTable th,
+#wifiListTable td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+#wifiListTable th {
+    background-color: #f2f2f2;
+    font-weight: 600;
+}
 
 /* --- FLOATING SAVE BUTTON & MODAL --- */
-.floating-actions { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
-#saveSettingsBtn { padding: 15px 30px; font-size: 1.2em; border-radius: 30px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; }
+.floating-actions {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+#saveSettingsBtn {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
 
 /* --- POWER OFF BUTTON STYLES --- */
 .floating-actions {
-    display: flex;
-    gap: 15px; /* Adds space between the buttons */
-    align-items: center;
+    display: flex; /* Arranges buttons horizontally. */
+    gap: 15px;     /* Adds space between the buttons. */
+    align-items: center; /* Vertically aligns the buttons. */
 }
 
+/* This styles the circular red shutdown button. */
 #powerOffBtn {
-    padding: 12px; /* Make it a circle */
-    width: 54px;   /* Explicit width */
-    height: 54px;  /* Explicit height */
-    border-radius: 50%; /* Circular shape */
+    padding: 12px;
+    width: 54px;   /* Explicit width to create a circle. */
+    height: 54px;  /* Explicit height to create a circle. */
+    border-radius: 50%; /* Makes the button circular. */
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #dc3545; /* Red color for danger */
+    background-color: #dc3545; /* Red for danger. */
     border-color: #dc3545;
 }
 
 #powerOffBtn:hover {
     background-color: #c82333;
     border-color: #bd2130;
-    transform: translateY(-2px); /* Add a little lift on hover */
+    transform: translateY(-2px); /* Adds a subtle lift on hover. */
 }
 
 .power-icon {
-    width: 28px; /* Adjust icon size */
+    width: 28px;
+    /* Adjust icon size */
     height: 28px;
 }
+
+
+/* <<< --- NEW LOGOUT BUTTON STYLES START --- >>> */
+
+/* This styles the new circular blue logout button. */
+#logoutBtn {
+    padding: 12px;
+    width: 54px;   /* Same dimensions as the shutdown button. */
+    height: 54px;  /* Same dimensions for consistency. */
+    border-radius: 50%; /* Makes it a circle. */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* The 'primary' class will handle the blue color. */
+}
+
+/* This styles the SVG icon inside the logout button. */
+.logout-icon {
+    width: 28px;
+    height: 28px;
+}
+
+
+/* A general style for primary action buttons (used by the logout button). */
+.action-button.primary {
+    background-color: #007bff; /* Blue color. */
+    border-color: #007bff;
+    color: white; /* Ensures the SVG icon is white. */
+}
+
+.action-button.primary:hover, .action-button:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-2px);
+}
+
 /* Save Button Animation */
-#saveSettingsBtn.saving { animation: pulse 1s infinite; }
+#saveSettingsBtn.saving {
+    animation: pulse 1s infinite;
+}
+
 @keyframes pulse {
-    0% { transform: scale(1); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
-    50% { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4); }
-    100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
 }
 
 /* Modal styles */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 2000; }
-.modal-content { background-color: #fff; padding: 25px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2); width: 90%; max-width: 500px; }
-.modal-header { display: flex; justify-content: space-between; border-bottom: 1px solid #e9ecef; padding-bottom: 15px; margin-bottom: 20px; }
-.modal-close-btn { background: none; border: none; font-size: 2em; cursor: pointer; color: #6c757d; }
-.form-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
-/* --- Styles for Cleanup Confirmation Modal --- */
-.modal-content.wide-modal {
-    max-width: 800px;
-    position: relative;
-}
-
-.modal-title-icon-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.modal-icon-svg.warning-icon svg {
-    width: 36px;
-    height: 36px;
-}
-
-.confirmation-text {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.taglish-warning {
-    font-size: 1.1em; /* Larger font for the main warning */
-    margin: 0;
-}
-
-.taglish-warning .english-translation {
-    display: block; /* Puts the English text on a new line */
-    font-size: 0.8em; /* Smaller font relative to its parent */
-    font-style: italic;
-    color: #6c757d;
-}
-
-
-.tooltip-icon.small {
-    width: 18px;
-    height: 18px;
-    font-size: 0.8em;
-}
-
-.preview-controls {
-    display: flex;
-    flex-direction: column; /* Stack controls vertically */
-    gap: 15px;
-    margin: 20px 0 10px 0;
-}
-
-.preview-control-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap; /* Allows wrapping on small screens */
-}
-
-.preview-controls .filter-input {
-    width: 100%; /* Make search bar full width */
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-}
-
-.action-button,
-#tablePreviewSelect {
-    width: auto;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    margin-left: 10px;
-}
-
-#cleanupPreviewTable {
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9em;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
 }
 
-#cleanupPreviewTable th, #cleanupPreviewTable td {
-    padding: 8px 10px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
+.modal-content {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 500px;
 }
 
-#cleanupPreviewTable th {
-    background-color: #f8f9fa;
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
 }
 
-/* --- Styles for Sortable Preview Table Header --- */
-#cleanupPreviewTable th.sortable {
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 2em;
     cursor: pointer;
-    position: relative;
-}
-
-#cleanupPreviewTable th.sortable:hover {
-    background-color: #e9ecef; /* Light grey hover effect */
-}
-
-#cleanupPreviewTable tr:hover {
-    background-color: #e9ecef; /* Light grey hover effect */
-}
-
-/* Style for the sort icon (up/down arrows) */
-.sort-icon {
-    font-size: 0.8em;
-    margin-left: 5px;
     color: #6c757d;
-    display: inline-block;
-    width: 1em; /* Prevents layout shift when icon appears */
 }
 
-#previewPagination {
-    margin-top: 10px;
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
 }
+
 
 /* --- Button Design --- */
 .action-button.secondary {
@@ -291,14 +464,13 @@
     border-color: #c82333;
 }
 
-/* static/system_settings.css */
-
 /* --- TOGGLE SWITCH STYLES --- */
 
 /* This is the main container for the label, switch, and help text. */
 .form-group-toggle {
     display: flex;
-    flex-wrap: wrap; /* Allows help text to wrap to the next line */
+    flex-wrap: wrap;
+    /* Allows help text to wrap to the next line */
     align-items: center;
     justify-content: space-between;
     gap: 15px;
@@ -313,10 +485,12 @@
 
 /* The <small> help text below the toggle */
 .form-group-toggle small {
-    flex-basis: 100%; /* Ensures it takes the full width on a new line */
+    flex-basis: 100%;
+    /* Ensures it takes the full width on a new line */
     color: #666;
     font-size: 0.9em;
-    margin-top: -5px; /* Adjust spacing */
+    margin-top: -5px;
+    /* Adjust spacing */
 }
 
 /* This is the wrapper for the switch. */
@@ -364,12 +538,13 @@
 
 /* --- The "ON" State --- */
 /* Changes the track color when the switch is on. */
-input:checked + .slider {
-    background-color: #28a745; /* Green for 'on' */
+input:checked+.slider {
+    background-color: #28a745;
+    /* Green for 'on' */
 }
 
 /* Slides the knob to the right when the switch is on. */
-input:checked + .slider:before {
+input:checked+.slider:before {
     -webkit-transform: translateX(26px);
     -ms-transform: translateX(26px);
     transform: translateX(26px);
@@ -379,43 +554,68 @@ input:checked + .slider:before {
 .wifi-connecting-icon {
     animation: pulse-wifi 1.5s ease-in-out infinite;
 }
+
 @keyframes pulse-wifi {
-    0% { opacity: 1; }
-    50% { opacity: 0.4; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
-@media (max-width: 992px) { 
+@media (max-width: 992px) {
+    .content-card {
+        max-height: 200vh;
+        height: 100%;
+    }
     .available-networks-card .card-header {
         flex-direction: column;
         align-items: flex-start;
     }
+
     .modal-content.wide-modal {
-        width: 90vw; /* Use viewport width to ensure it fits */
-        max-width: none; /* Override the desktop max-width */
-        height: 80vh;
+        width: 90vw;
+        /* Use viewport width to ensure it fits */
+        max-width: none;
+        /* Override the desktop max-width */
+        height: 100%;
         overflow-y: scroll;
     }
 
     .confirmation-text {
-        flex-direction: column; /* Stack the icon and text vertically */
-        align-items: flex-start; /* Align to the left */
+        flex-direction: column;
+        /* Stack the icon and text vertically */
+        align-items: flex-start;
+        /* Align to the left */
         gap: 15px;
     }
 
     .taglish-warning {
-        font-size: 1em; /* Slightly reduce font size for smaller screens */
+        font-size: 1em;
+        /* Slightly reduce font size for smaller screens */
     }
 
     #cleanupPreviewTable {
-        font-size: 0.85em; /* Make table text smaller to fit more content */
+        font-size: 0.85em;
+        /* Make table text smaller to fit more content */
         overflow-y: scroll;
         overflow-x: scroll;
     }
 
     #cleanupPreviewTable th,
     #cleanupPreviewTable td {
-        padding: 6px 8px; /* Reduce padding inside table cells */
+        padding: 6px 8px;
+        /* Reduce padding inside table cells */
     }
 
+    .form-grid {
+        grid-template-columns: 1fr; /* Change from two columns to one. */
+        gap: 25px; /* Re-apply vertical gap when stacked. */
+    }
 }

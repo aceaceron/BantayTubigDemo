@@ -118,7 +118,7 @@
 
 /* General styling for input fields and select dropdowns in the filter card.
    Applied to: #dateRangePicker, #intervalSelector, #compareDateRangePicker, #reportType */
-#dateRangePicker, #intervalSelector, #compareDateRangePicker, #reportType {
+#dateRangePicker, #intervalSelector, #compareDateRangePicker, #reportType, #dataRetention {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -689,6 +689,131 @@
     height: 50px;
     animation: spin 1s linear infinite;
     margin: 20px auto;
+}
+
+/* --- Styles for Cleanup Confirmation Modal --- */
+.modal-content.wide-modal {
+    max-width: 800px;
+    position: relative;
+}
+
+.modal-title-icon-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.modal-icon-svg.warning-icon svg {
+    width: 36px;
+    height: 36px;
+}
+
+.confirmation-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.taglish-warning {
+    font-size: 1.1em;
+    /* Larger font for the main warning */
+    margin: 0;
+}
+
+.taglish-warning .english-translation {
+    display: block;
+    /* Puts the English text on a new line */
+    font-size: 0.8em;
+    /* Smaller font relative to its parent */
+    font-style: italic;
+    color: #6c757d;
+}
+
+.tooltip-icon.small {
+    width: 18px;
+    height: 18px;
+    font-size: 0.8em;
+}
+
+.preview-controls {
+    display: flex;
+    flex-direction: column;
+    /* Stack controls vertically */
+    gap: 15px;
+    margin: 20px 0 10px 0;
+}
+
+.preview-control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    /* Allows wrapping on small screens */
+}
+
+.preview-controls .filter-input {
+    width: 100%;
+    /* Make search bar full width */
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.action-button,
+#tablePreviewSelect {
+    width: auto;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-left: 10px;
+}
+
+#cleanupPreviewTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+#cleanupPreviewTable th,
+#cleanupPreviewTable td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+#cleanupPreviewTable th {
+    background-color: #f8f9fa;
+}
+
+/* --- Styles for Sortable Preview Table Header --- */
+#cleanupPreviewTable th.sortable {
+    cursor: pointer;
+    position: relative;
+}
+
+#cleanupPreviewTable th.sortable:hover {
+    background-color: #e9ecef;
+    /* Light grey hover effect */
+}
+
+#cleanupPreviewTable tr:hover {
+    background-color: #e9ecef;
+    /* Light grey hover effect */
+}
+
+/* Style for the sort icon (up/down arrows) */
+.sort-icon {
+    font-size: 0.8em;
+    margin-left: 5px;
+    color: #6c757d;
+    display: inline-block;
+    width: 1em;
+    /* Prevents layout shift when icon appears */
+}
+
+#previewPagination {
+    margin-top: 10px;
 }
 
 /* --- AI REASONING MODAL STYLES --- */

@@ -109,6 +109,7 @@ def predict_water_quality(temp, ph, tds, turbidity):
         print(f"Error during ML prediction: {e}")
         return { "quality": "Unknown", "confidence": 0, "probabilities": {name: 0 for name in CLASS_NAMES} }
 
+
 def train_decision_tree():
     """
     Trains a Random Forest Classifier only if there are at least 250 samples
@@ -174,7 +175,9 @@ def train_decision_tree():
 
         y_pred = clf.predict(X_test)
         print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
-        joblib.dump(MODEL_FILE, clf)
+        
+        joblib.dump(clf, MODEL_FILE)
+        
         print(f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Model trained and saved successfully.")
         model = clf
 

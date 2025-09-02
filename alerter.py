@@ -398,3 +398,10 @@ def check_rules_and_trigger_alerts(sensor_readings):
             if duration > 0 and mode == 'repeating':
                 if not (current_buzzer_thread and current_buzzer_thread.is_alive()):
                     start_repeating_buzz(duration, pause=1.0)
+
+
+def send_generic_sms(number, message):
+    """A simple wrapper to send a custom SMS message."""
+    print(f"Sending generic SMS to {number}: '{message}'")
+    # This reuses your existing, robust send_sms_alert function
+    send_sms_alert(number, message)

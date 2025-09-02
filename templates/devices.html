@@ -40,20 +40,7 @@
     </div>
 
     <!-- Sidebar Menu: A slide-out navigation panel. -->
-    <div id="sidebarMenu" class="sidebar">
-        <ul class="sidebar-menu">
-            <li><a href="/">DASHBOARD</a></li>
-            <li><a href="/analytics">ANALYTICS & REPORTS</a></li>
-            <li><a href="/devices" class="active">DEVICE & SENSOR</a></li>
-            <li><a href="/alerts">ALERTS & NOTIFICATION</a></li>
-            <li><a href="/machine-learning">MACHINE LEARNING</a></li>
-            <li><a href="/users">USER MANAGEMENT</a></li>
-            <li><a href="/settings">SYSTEM SETTINGS</a></li>
-            <li><a href="#">ABOUT/HELP</a></li>
-        </ul>
-        <div class="sidebar-footer"><span class="footer-title">BantayTubig</span><br><span class="footer-subtext">Smart
-                Water Quality Monitoring System</span></div>
-    </div>
+    {% include '_sidebar.html' %}
 
     <!-- Top-Right Header: Displays the main page title and a subtitle. -->
     <div class="header-top-right">

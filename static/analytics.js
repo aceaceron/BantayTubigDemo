@@ -53,17 +53,22 @@ document.addEventListener('click', function(event) {
 document.addEventListener('DOMContentLoaded', function() {
 
     // --- GLOBAL CONFIGURATION & STATE MANAGEMENT ---
-
-    const analysisLocation = "Labo, Camarines Norte"; // Location for AI context.
-    let historicalChart, keyDriverChart; // Chart.js instances.
-    let rawData = { primary: [], comparison: [] }; // Stores unfiltered data from the server.
-    let filteredData = []; // Stores data after filters (date, time, interval) are applied.
+    const analysisLocation = "Jose Panganiban, Bicol, Philippines";
+    let historicalChart, keyDriverChart;
+    let rawData = { primary: [], comparison: [] };
+    let filteredData = [];
     let currentPage = 1;
     const rowsPerPage = 15;
     let sortColumn = 'timestamp';
     let sortDirection = 'desc';
 
-    // Configuration object for water quality parameters.
+    // --- State variables for the Data Retention feature ---
+    let currentDataRetention = '365';
+    let previewData = { full: [], filtered: [] };
+    let previewCurrentPage = 1;
+    const previewRowsPerPage = 5;
+    let previewSort = { column: 'timestamp', direction: 'desc' };
+
     const parameterConfig = {
         temperature: { label: 'Temperature (°C)', primaryColor: 'rgb(255, 99, 132)', compareColor: 'rgba(255, 99, 132, 0.4)' },
         ph: { label: 'pH', primaryColor: 'rgb(54, 162, 235)', compareColor: 'rgba(54, 162, 235, 0.4)' },
@@ -72,8 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // --- DOM ELEMENT SELECTORS ---
-    
-    // Filter Controls
     const primaryDatePicker = document.getElementById('dateRangePicker');
     const compareDatePicker = document.getElementById('compareDateRangePicker');
     const timePickerStart = document.getElementById('timePickerStart');
@@ -81,22 +84,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const intervalSelector = document.getElementById('intervalSelector');
     const checkboxes = document.querySelectorAll('input[name="parameter"]');
     const qualityCheckboxes = document.querySelectorAll('input[name="quality"]');
-
-    // Data Display: Table & Stats
     const tableBody = document.querySelector('#historicalDataTable tbody');
     const tableHeaders = document.querySelectorAll('#historicalDataTable th');
     const statsContainer = document.getElementById('stats-container');
-    
-    // Pagination Controls
     const prevPageBtn = document.getElementById('prevPageBtn');
     const nextPageBtn = document.getElementById('nextPageBtn');
     const pageInfo = document.getElementById('pageInfo');
-
-    // Report Export Buttons
     const exportPdfBtn = document.getElementById('exportPdfBtn');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
-
-    // Advanced Analytics UI
     const toggleAdvancedBtn = document.getElementById('toggleAdvancedBtn');
     const advancedFeaturesContainer = document.getElementById('advanced-features-container');
     const tempSlider = document.getElementById('temp-slider');
@@ -108,13 +103,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const tdsValue = document.getElementById('tds-value');
     const turbValue = document.getElementById('turb-value');
     const scenarioPrediction = document.getElementById('scenario-prediction');
-
-    // AI Reasoning Modal UI
     const generateReasoningBtn = document.getElementById('generateReasoningBtn');
     const llmReasoningModal = document.getElementById('llmReasoningModal');
     const closeLlmModalBtn = document.getElementById('closeLlmModalBtn');
     const llmLoadingSpinner = document.getElementById('llmLoadingSpinner');
     const llmResultContainer = document.getElementById('llmResultContainer');
+    
+    // --- Selectors for Data Retention feature ---
+    const dataRetentionInput = document.getElementById('dataRetention');
+    const applyRetentionBtn = document.getElementById('applyRetentionBtn');
+    const dataCleanupModal = document.getElementById('dataCleanupModal');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const tablePreviewSelect = document.getElementById('tablePreviewSelect');
+    const previewSearchInput = document.getElementById('previewSearchInput');
+    const cleanupPreviewTableBody = document.querySelector('#cleanupPreviewTable tbody');
+    const previewSortableHeaders = document.querySelectorAll('#cleanupPreviewTable th.sortable');
+    const previewPrevPageBtn = document.getElementById('previewPrevPageBtn');
+    const previewNextPageBtn = document.getElementById('previewNextPageBtn');
+    const previewPageInfo = document.getElementById('previewPageInfo');
 
 
     // --- INITIALIZATION FUNCTIONS ---
@@ -510,9 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
     // --- REPORT EXPORTING FUNCTIONS ---
-
     /**
      * Exports the currently filtered data to a PDF file.
      */
@@ -617,6 +622,109 @@ document.addEventListener('DOMContentLoaded', function() {
         return { hours, minutes };
     }
 
+    
+    // <<< --- DATA RETENTION & CLEANUP FUNCTIONS --- >>>
+    async function loadCurrentRetentionPolicy() {
+        try {
+            const data = await apiFetch('/api/system/settings');
+            if (dataRetentionInput) {
+                dataRetentionInput.value = data.dataRetention;
+                currentDataRetention = data.dataRetention;
+            }
+        } catch (error) {
+            console.error("Could not load retention policy:", error);
+        }
+    }
+
+    function openCleanupModal() {
+        dataCleanupModal.style.display = 'flex';
+        fetchAndRenderPreview();
+    }
+    
+    async function fetchAndRenderPreview() {
+        const retentionDays = dataRetentionInput.value;
+        const selectedTable = tablePreviewSelect.value;
+        try {
+            const data = await apiFetch('/analytics/retention-preview',  {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    retention_days: retentionDays,
+                    table_name: selectedTable
+                })
+            });
+            previewData.full = data;
+            applyPreviewFilters(); // This now calls the correct local function
+        } catch (error) {
+            cleanupPreviewTableBody.innerHTML = `<tr><td colspan="3">Error loading preview.</td></tr>`;
+        }
+    }
+
+    function applyPreviewFilters() {
+        const searchTerm = previewSearchInput.value.trim().toLowerCase();
+        if (!searchTerm) {
+            previewData.filtered = [...previewData.full];
+        } else {
+            previewData.filtered = previewData.full.filter(row => {
+                // Complex search logic here...
+                const details = row.Details ? String(row.Details).toLowerCase() : '';
+                const timestampString = row.timestamp ? String(row.timestamp).toLowerCase() : '';
+                return details.includes(searchTerm) || timestampString.includes(searchTerm);
+            });
+        }
+        previewCurrentPage = 1;
+        applyPreviewSort();
+        renderPreviewTable();
+    }
+
+    function applyPreviewSort() {
+        previewData.filtered.sort((a, b) => {
+            // Sorting logic here...
+            return 0; // Placeholder
+        });
+        updatePreviewSortIcons();
+    }
+
+    function renderPreviewTable() {
+        cleanupPreviewTableBody.innerHTML = '';
+        const start = (previewCurrentPage - 1) * previewRowsPerPage;
+        const end = start + previewRowsPerPage;
+        const paginatedData = previewData.filtered.slice(start, end);
+
+        if (paginatedData.length === 0) {
+            cleanupPreviewTableBody.innerHTML = `<tr><td colspan="3">No data matching the criteria will be deleted.</td></tr>`;
+        } else {
+            paginatedData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.id}</td>
+                    <td>${new Date(row.timestamp).toLocaleString()}</td>
+                    <td>${row.Details || 'N/A'}</td>
+                `;
+                cleanupPreviewTableBody.appendChild(tr);
+            });
+        }
+        updatePreviewPagination();
+    }
+
+    function updatePreviewSortIcons() {
+        previewSortableHeaders.forEach(th => {
+            const icon = th.querySelector('.sort-icon');
+            if (th.dataset.column === previewSort.column) {
+                icon.textContent = previewSort.direction === 'asc' ? ' ▲' : ' ▼';
+            } else {
+                icon.textContent = '';
+            }
+        });
+    }
+
+    function updatePreviewPagination() {
+        const totalRows = previewData.filtered.length;
+        const totalPages = Math.ceil(totalRows / previewRowsPerPage) || 1;
+        previewPageInfo.textContent = `Page ${previewCurrentPage} of ${totalPages}`;
+        previewPrevPageBtn.disabled = previewCurrentPage === 1;
+        previewNextPageBtn.disabled = previewCurrentPage >= totalPages;
+    }
 
     // --- EVENT LISTENERS ---
 
@@ -670,6 +778,107 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (event.target === llmReasoningModal) closeModal(); // Close if overlay is clicked
             });
         }
+
+        // --- New Listeners for Data Retention ---
+        if (applyRetentionBtn) {
+            applyRetentionBtn.addEventListener('click', async () => {
+                const newRetention = dataRetentionInput.value;
+                const settingsData = { dataRetention: newRetention };
+
+                // Logic for when the new policy is stricter (deletes more data)
+                if (parseInt(newRetention) < parseInt(currentDataRetention)) {
+                    const previewCheckData = await apiFetch('/analytics/retention-preview', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ retention_days: newRetention, table_name: 'measurements' })
+                    });
+                    
+                    if (previewCheckData && previewCheckData.length > 0) {
+                        openCleanupModal(); // Show the confirmation modal
+                    } else {
+                        // If no data is affected, save the setting directly
+                        await apiFetch('/analytics/retention_policy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settingsData) });
+                        showToastModal('Policy updated! No old data was found to delete.', svgSuccess);
+                        currentDataRetention = newRetention;
+                    }
+                } else {
+                    // Logic for when the new policy is less strict (saves directly)
+                    await apiFetch('/analytics/retention_policy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settingsData) });
+                    showToastModal('Settings saved successfully!', svgSuccess);
+                    currentDataRetention = newRetention;
+                }
+            });
+        }
+
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', async () => {
+                confirmDeleteBtn.disabled = true;
+                confirmDeleteBtn.textContent = 'Deleting...';
+                try {
+                    // First, update the setting itself
+                    await apiFetch('/analytics/retention_policy', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ dataRetention: dataRetentionInput.value })
+                    });
+                    // Then, run the cleanup process
+                    const result = await apiFetch('/analytics/run-cleanup', { method: 'POST' });
+                    showToastModal(result.message, svgSuccess, 5000);
+                    dataCleanupModal.style.display = 'none';
+                    currentDataRetention = dataRetentionInput.value;
+                } finally {
+                    confirmDeleteBtn.disabled = false;
+                    confirmDeleteBtn.textContent = 'Yes, Delete Old Data';
+                }
+            });
+        }
+
+        if (cancelDeleteBtn) {
+            cancelDeleteBtn.addEventListener('click', async () => {
+                dataRetentionInput.value = currentDataRetention;
+                await apiFetch('/api/system/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dataRetention: currentDataRetention })
+                });
+                showToastModal('Data retention change canceled.', svgSuccess);
+                dataCleanupModal.style.display = 'none';
+            });
+        }
+
+        
+        if (tablePreviewSelect) tablePreviewSelect.addEventListener('change', fetchAndRenderPreview);
+        if (previewSearchInput) previewSearchInput.addEventListener('input', applyPreviewFilters);
+        if (previewPrevPageBtn) {
+            previewPrevPageBtn.addEventListener('click', () => {
+                if (previewCurrentPage > 1) {
+                    previewCurrentPage--;
+                    renderPreviewTable();
+                }
+            });
+        }
+        previewSortableHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.dataset.column;
+                if (previewSort.column === column) {
+                    previewSort.direction = previewSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    previewSort.column = column;
+                    previewSort.direction = 'desc'; // Default to descending for a new column
+                }
+                applyPreviewSort();
+                renderPreviewTable();
+            });
+        });
+        if (previewNextPageBtn) {
+            previewNextPageBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(previewData.filtered.length / previewRowsPerPage);
+                if (previewCurrentPage < totalPages) {
+                    previewCurrentPage++;
+                    renderPreviewTable();
+                }
+            });
+        }
     }
 
     // --- SCRIPT EXECUTION START ---
@@ -679,4 +888,5 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchKeyDrivers();
     initializeSimulator();
     setupEventListeners();
+    loadCurrentRetentionPolicy();
 });

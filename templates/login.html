@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BantayTubig</title>
+
+    <!-- // STYLESHEETS & FONTS // -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <!-- A new, specific CSS file for the login page styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- // BACKGROUND VIDEO // -->
+    <video autoplay muted loop id="backgroundVideo">
+        <source src="{{ url_for('static', filename='BantayTubig.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    
+    <!-- // MAIN LOGIN CONTAINER // -->
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h2>BantayTubig</h2>
+                <p>Smart Water Quality Monitoring System</p>
+            </div>
+            
+            <!-- Display login error messages here -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div id="js-flash-container"></div> 
+
+            <form method="POST" action="{{ url_for('view_bp.login') }}" class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="login-button">Login</button>
+            </form>
+
+            <form class="login-form" id="verifyCodeForm" style="display: none;">
+                <p class="form-instructions">A code has been sent to your mobile. Please enter it below.</p>
+                <div class="form-group">
+                    <label for="verificationCode">Verification Code</label>
+                    <input type="text" id="verificationCode" required>
+                </div>
+                <button type="submit" class="login-button">Verify Code</button>
+            </form>
+
+            <form class="login-form" id="setNewPasswordForm" style="display: none;">
+                <p class="form-instructions">Verification successful. Please create a new password.</p>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" required autocomplete="new-password">
+                    <small>Password must be at least 6 characters long.</small>
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewPassword">Confirm New Password</label>
+                    <input type="password" id="confirmNewPassword" required autocomplete="new-password">
+                </div>
+                <button type="submit" class="login-button">Set New Password</button>
+            </form>
+
+            <div class="login-footer">
+                <a href="#" id="forgotPasswordBtn" style="display: none;">Forgot Password?</a>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="resetSuccessModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content text-center">
+            </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='login.js') }}"></script>
+</body>
+</html>

@@ -3,6 +3,8 @@
 /**
  * ------------------------------------------------------------------------
  * UNIVERSAL SIDEBAR & HEADER SCRIPT
+ * This function sets up the event listeners for the mobile-friendly
+ * sidebar navigation menu.
  * ------------------------------------------------------------------------
  */
 function setupGlobalNavigation() {
@@ -28,9 +30,12 @@ function setupGlobalNavigation() {
         }
     });
 }
+
 /**
  * ------------------------------------------------------------------------
  * API FETCH HELPER
+ * A reusable function to make requests to the backend API and handle
+ * responses and errors consistently.
  * ------------------------------------------------------------------------
  */
 async function apiFetch(url, options = {}) {
@@ -49,6 +54,7 @@ async function apiFetch(url, options = {}) {
 /**
  * ------------------------------------------------------------------------
  * SYSTEM SETTINGS PAGE SCRIPT
+ * This function contains all the logic specific to the system_settings.html page.
  * ------------------------------------------------------------------------
  */
 function setupSettingsPage() {
@@ -62,7 +68,7 @@ function setupSettingsPage() {
             if (contentPanel.style.maxHeight) {
                 contentPanel.style.maxHeight = null;
             } else {
-                contentPanel.style.maxHeight = "100vh";
+                contentPanel.style.maxHeight = "100%";
             }
         });
     });
@@ -74,10 +80,24 @@ function setupSettingsPage() {
     const previewRowsPerPage = 5;
     let previewSort = { column: 'timestamp', direction: 'desc' };
 
-    // --- ELEMENT SELECTORS ---
-    const systemNameInput = document.getElementById('systemName');
+    // <<< --- ELEMENT SELECTORS --- >>>
+
+    // General & Floating Actions
     const saveBtn = document.getElementById('saveSettingsBtn');
-    const powerOffBtn = document.getElementById('powerOffBtn'); 
+    const powerOffBtn = document.getElementById('powerOffBtn');
+    const systemNameInput = document.getElementById('systemName');
+
+    // Security & Account
+    const sessionTimeoutInput = document.getElementById('sessionTimeout');
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    const currentPasswordInput = document.getElementById('currentPassword');
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+
+    // UI & Display
+    const showMlConfidenceToggle = document.getElementById('showMlConfidenceToggle');
+
+    // Network & Connectivity
     const scanWifiBtn = document.getElementById('scanWifiBtn');
     const wifiListBody = document.getElementById('wifiListBody');
     const networkStatusContent = document.getElementById('networkStatusContent');
@@ -87,7 +107,8 @@ function setupSettingsPage() {
     const ssidNameLabel = document.getElementById('ssidNameLabel');
     const wifiSsidInput = document.getElementById('wifiSsidInput');
     const wifiPasswordInput = document.getElementById('wifiPasswordInput');
-    const sessionTimeoutInput = document.getElementById('sessionTimeout');
+
+    // Data Management & Cleanup Modal
     const dataRetentionInput = document.getElementById('dataRetention');
     const dataCleanupModal = document.getElementById('dataCleanupModal');
     const closeCleanupModalBtn = document.getElementById('closeCleanupModalBtn');
@@ -100,19 +121,29 @@ function setupSettingsPage() {
     const previewPageInfo = document.getElementById('previewPageInfo');
     const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+    // Universal Toast Notifications
     const toastModal = document.getElementById('toastModal');
     const toastIcon = document.getElementById('toastIcon');
     const toastMessage = document.getElementById('toastMessage');
-    const showMlConfidenceToggle = document.getElementById('showMlConfidenceToggle'); 
 
     // --- SVG Icon Definitions ---
+    // These constants store SVG markup as strings. This is an efficient method
+    // that avoids loading separate image files and allows for easy styling and
+    // dynamic rendering in the user interface.
+    // Icon for ongoing operations, like an API call.
     const svgLoader = `<svg class="svg-loader" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`;
+    // Icon for buttons that trigger a refresh or scan, like the "Scan WiFi" button.
     const svgSync = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`;
+    // Icon for success notifications, shown in a green toast modal.
     const svgSuccess = `<svg viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+    // Icon for when the device is attempting to connect to a network.
     const svgConnecting = `<svg class="wifi-connecting-icon" viewBox="0 0 24 24" fill="none" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a8 8 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a4 4 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`;
+    // Icon for error notifications, shown in a red toast modal.
     const svgError = `<svg viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
-    const svgPower = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>`; 
-
+    // Icon for the system shutdown button.
+    const svgPower = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>`;
+        
     // --- DATA FETCHING & SAVING LOGIC ---
     async function loadDeviceSettings() {
         try {
@@ -322,140 +353,140 @@ function setupSettingsPage() {
 
 
     // --- DATA CLEANUP MODAL FUNCTIONS ---
-    async function openCleanupModal(retentionDays) {
-        dataCleanupModal.style.display = 'flex';
-        await fetchAndRenderPreview();
-    }
+    // async function openCleanupModal(retentionDays) {
+    //     dataCleanupModal.style.display = 'flex';
+    //     await fetchAndRenderPreview();
+    // }
     
-    async function fetchAndRenderPreview() {
-        const retentionDays = dataRetentionInput.value;
-        const selectedTable = tablePreviewSelect.value;
+    // async function fetchAndRenderPreview() {
+    //     const retentionDays = dataRetentionInput.value;
+    //     const selectedTable = tablePreviewSelect.value;
         
-        try {
-            const data = await apiFetch('/api/system/retention-preview', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    retention_days: retentionDays,
-                    table_name: selectedTable
-                })
-            });
-            previewData.full = data;
-            applyPreviewFilters();
-        } catch (error) {
-            cleanupPreviewTableBody.innerHTML = `<tr><td colspan="3">Error loading preview.</td></tr>`;
-        }
-    }
+    //     try {
+    //         const data = await apiFetch('/api/system/retention-preview', {
+    //             method: 'POST',
+    //             headers: { 'Content-Type': 'application/json' },
+    //             body: JSON.stringify({
+    //                 retention_days: retentionDays,
+    //                 table_name: selectedTable
+    //             })
+    //         });
+    //         previewData.full = data;
+    //         applyPreviewFilters();
+    //     } catch (error) {
+    //         cleanupPreviewTableBody.innerHTML = `<tr><td colspan="3">Error loading preview.</td></tr>`;
+    //     }
+    // }
 
 
-    function applyPreviewFilters() {
-        const searchTerm = previewSearchInput.value.trim().toLowerCase();
+    // function applyPreviewFilters() {
+    //     const searchTerm = previewSearchInput.value.trim().toLowerCase();
 
-        if (!searchTerm) {
-            previewData.filtered = [...previewData.full];
-            renderPreviewTable();
-            return;
-        }
+    //     if (!searchTerm) {
+    //         previewData.filtered = [...previewData.full];
+    //         renderPreviewTable();
+    //         return;
+    //     }
 
-        previewData.filtered = previewData.full.filter(row => {
-            const rowTimestamp = new Date(row.timestamp);
+    //     previewData.filtered = previewData.full.filter(row => {
+    //         const rowTimestamp = new Date(row.timestamp);
 
-            // 1. Search by ID (if input is purely a number)
-            if (/^\d+$/.test(searchTerm)) {
-                return String(row.id).includes(searchTerm);
-            }
+    //         // 1. Search by ID (if input is purely a number)
+    //         if (/^\d+$/.test(searchTerm)) {
+    //             return String(row.id).includes(searchTerm);
+    //         }
 
-            // 2. Search by Date (if input can be parsed as a valid date, e.g., "2025-08-19")
-            const searchDate = new Date(searchTerm);
-            if (!isNaN(searchDate.getTime())) {
-                return rowTimestamp.getFullYear() === searchDate.getFullYear() &&
-                       rowTimestamp.getMonth() === searchDate.getMonth() &&
-                       rowTimestamp.getDate() === searchDate.getDate();
-            }
+    //         // 2. Search by Date (if input can be parsed as a valid date, e.g., "2025-08-19")
+    //         const searchDate = new Date(searchTerm);
+    //         if (!isNaN(searchDate.getTime())) {
+    //             return rowTimestamp.getFullYear() === searchDate.getFullYear() &&
+    //                    rowTimestamp.getMonth() === searchDate.getMonth() &&
+    //                    rowTimestamp.getDate() === searchDate.getDate();
+    //         }
             
-            // 3. Search by Time (if input is like "7:28pm", searches for all records on the current day)
-            // This allows users to quickly see today's logs without typing the full date.
-            if (/^\d{1,2}:\d{2}\s*(am|pm)?$/i.test(searchTerm)) {
-                const today = new Date();
-                return rowTimestamp.getFullYear() === today.getFullYear() &&
-                       rowTimestamp.getMonth() === today.getMonth() &&
-                       rowTimestamp.getDate() === today.getDate();
-            }
+    //         // 3. Search by Time (if input is like "7:28pm", searches for all records on the current day)
+    //         // This allows users to quickly see today's logs without typing the full date.
+    //         if (/^\d{1,2}:\d{2}\s*(am|pm)?$/i.test(searchTerm)) {
+    //             const today = new Date();
+    //             return rowTimestamp.getFullYear() === today.getFullYear() &&
+    //                    rowTimestamp.getMonth() === today.getMonth() &&
+    //                    rowTimestamp.getDate() === today.getDate();
+    //         }
 
-            // 4. Fallback to generic text search in details and full timestamp string
-            const details = row.Details ? String(row.Details).toLowerCase() : '';
-            const timestampString = row.timestamp ? String(row.timestamp).toLowerCase() : '';
-            return details.includes(searchTerm) || timestampString.includes(searchTerm);
-        });
+    //         // 4. Fallback to generic text search in details and full timestamp string
+    //         const details = row.Details ? String(row.Details).toLowerCase() : '';
+    //         const timestampString = row.timestamp ? String(row.timestamp).toLowerCase() : '';
+    //         return details.includes(searchTerm) || timestampString.includes(searchTerm);
+    //     });
 
-        previewCurrentPage = 1;
-        applyPreviewSort(); 
-        renderPreviewTable();
-    }
+    //     previewCurrentPage = 1;
+    //     applyPreviewSort(); 
+    //     renderPreviewTable();
+    // }
 
-    function applyPreviewSort() {
-        previewData.filtered.sort((a, b) => {
-            const col = previewSort.column;
-            const dir = previewSort.direction === 'asc' ? 1 : -1;
+    // function applyPreviewSort() {
+    //     previewData.filtered.sort((a, b) => {
+    //         const col = previewSort.column;
+    //         const dir = previewSort.direction === 'asc' ? 1 : -1;
             
-            let valA = a[col];
-            let valB = b[col];
+    //         let valA = a[col];
+    //         let valB = b[col];
 
-            if (col === 'timestamp') {
-                valA = valA ? new Date(valA).getTime() : 0;
-                valB = valB ? new Date(valB).getTime() : 0;
-            } else {
-                valA = valA ? String(valA).toLowerCase() : '';
-                valB = valB ? String(valB).toLowerCase() : '';
-            }
+    //         if (col === 'timestamp') {
+    //             valA = valA ? new Date(valA).getTime() : 0;
+    //             valB = valB ? new Date(valB).getTime() : 0;
+    //         } else {
+    //             valA = valA ? String(valA).toLowerCase() : '';
+    //             valB = valB ? String(valB).toLowerCase() : '';
+    //         }
 
-            if (valA < valB) return -1 * dir;
-            if (valA > valB) return 1 * dir;
-            return 0;
-        });
-        updatePreviewSortIcons();
-    }
+    //         if (valA < valB) return -1 * dir;
+    //         if (valA > valB) return 1 * dir;
+    //         return 0;
+    //     });
+    //     updatePreviewSortIcons();
+    // }
 
-    function renderPreviewTable() {
-        cleanupPreviewTableBody.innerHTML = '';
-        const start = (previewCurrentPage - 1) * previewRowsPerPage;
-        const end = start + previewRowsPerPage;
-        const paginatedData = previewData.filtered.slice(start, end);
+    // function renderPreviewTable() {
+    //     cleanupPreviewTableBody.innerHTML = '';
+    //     const start = (previewCurrentPage - 1) * previewRowsPerPage;
+    //     const end = start + previewRowsPerPage;
+    //     const paginatedData = previewData.filtered.slice(start, end);
 
-        if (paginatedData.length === 0) {
-            cleanupPreviewTableBody.innerHTML = `<tr><td colspan="3">No data matching the criteria will be deleted.</td></tr>`;
-        } else {
-            paginatedData.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row.id}</td>
-                    <td>${new Date(row.timestamp).toLocaleString()}</td>
-                    <td>${row.Details || 'N/A'}</td>
-                `;
-                cleanupPreviewTableBody.appendChild(tr);
-            });
-        }
-        updatePreviewPagination();
-    }
+    //     if (paginatedData.length === 0) {
+    //         cleanupPreviewTableBody.innerHTML = `<tr><td colspan="3">No data matching the criteria will be deleted.</td></tr>`;
+    //     } else {
+    //         paginatedData.forEach(row => {
+    //             const tr = document.createElement('tr');
+    //             tr.innerHTML = `
+    //                 <td>${row.id}</td>
+    //                 <td>${new Date(row.timestamp).toLocaleString()}</td>
+    //                 <td>${row.Details || 'N/A'}</td>
+    //             `;
+    //             cleanupPreviewTableBody.appendChild(tr);
+    //         });
+    //     }
+    //     updatePreviewPagination();
+    // }
 
-    function updatePreviewSortIcons() {
-        previewSortableHeaders.forEach(th => {
-            const icon = th.querySelector('.sort-icon');
-            if (th.dataset.column === previewSort.column) {
-                icon.textContent = previewSort.direction === 'asc' ? ' ▲' : ' ▼';
-            } else {
-                icon.textContent = '';
-            }
-        });
-    }
+    // function updatePreviewSortIcons() {
+    //     previewSortableHeaders.forEach(th => {
+    //         const icon = th.querySelector('.sort-icon');
+    //         if (th.dataset.column === previewSort.column) {
+    //             icon.textContent = previewSort.direction === 'asc' ? ' ▲' : ' ▼';
+    //         } else {
+    //             icon.textContent = '';
+    //         }
+    //     });
+    // }
 
-    function updatePreviewPagination() {
-        const totalRows = previewData.filtered.length;
-        const totalPages = Math.ceil(totalRows / previewRowsPerPage) || 1;
-        previewPageInfo.textContent = `Page ${previewCurrentPage} of ${totalPages}`;
-        previewPrevPageBtn.disabled = previewCurrentPage === 1;
-        previewNextPageBtn.disabled = previewCurrentPage >= totalPages;
-    }
+    // function updatePreviewPagination() {
+    //     const totalRows = previewData.filtered.length;
+    //     const totalPages = Math.ceil(totalRows / previewRowsPerPage) || 1;
+    //     previewPageInfo.textContent = `Page ${previewCurrentPage} of ${totalPages}`;
+    //     previewPrevPageBtn.disabled = previewCurrentPage === 1;
+    //     previewNextPageBtn.disabled = previewCurrentPage >= totalPages;
+    // }
 
 
     // --- TOAST MODAL FUNCTION ---
@@ -474,100 +505,60 @@ function setupSettingsPage() {
 
     // --- SETUP EVENT LISTENERS (add these inside the function) ---
 
-    if (tablePreviewSelect) tablePreviewSelect.addEventListener('change', fetchAndRenderPreview);
-    if (previewSearchInput) previewSearchInput.addEventListener('input', applyPreviewFilters);
-    if (previewPrevPageBtn) {
-        previewPrevPageBtn.addEventListener('click', () => {
-            if (previewCurrentPage > 1) {
-                previewCurrentPage--;
-                renderPreviewTable();
-            }
-        });
-    }
-    previewSortableHeaders.forEach(header => {
-        header.addEventListener('click', () => {
-            const column = header.dataset.column;
-            if (previewSort.column === column) {
-                previewSort.direction = previewSort.direction === 'asc' ? 'desc' : 'asc';
-            } else {
-                previewSort.column = column;
-                previewSort.direction = 'desc'; // Default to descending for a new column
-            }
-            applyPreviewSort();
-            renderPreviewTable();
-        });
-    });
-    if (previewNextPageBtn) {
-        previewNextPageBtn.addEventListener('click', () => {
-            const totalPages = Math.ceil(previewData.filtered.length / previewRowsPerPage);
-            if (previewCurrentPage < totalPages) {
-                previewCurrentPage++;
-                renderPreviewTable();
-            }
-        });
-    }
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', async () => {
-            confirmDeleteBtn.disabled = true;
-            confirmDeleteBtn.textContent = 'Deleting...';
-            try {
-                const result = await apiFetch('/api/system/run-cleanup', { method: 'POST' });
-                showToastModal(result.message, svgSuccess, 5000);
-                dataCleanupModal.style.display = 'none';
-                // Finalize the state update now that deletion is confirmed
-                currentSettings.dataRetention = dataRetentionInput.value;
-            } catch (error) {
-                // Handled by apiFetch
-            } finally {
-                confirmDeleteBtn.disabled = false;
-                confirmDeleteBtn.textContent = 'Yes, Delete Old Data';
-            }
-        });
-    }
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent the default browser form submission
 
-    if (cancelDeleteBtn) {
-        cancelDeleteBtn.addEventListener('click', async () => {
-            // Get the original value that was stored before the save attempt
-            const originalRetentionValue = currentSettings.dataRetention;
+            const currentPassword = currentPasswordInput.value;
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
 
-            // 1. Visually revert the dropdown
-            dataRetentionInput.value = originalRetentionValue;
-            
-            // 2. Save the original value back to the database
+            // --- Client-side validation ---
+            if (newPassword.length < 6) {
+                showToastModal('New password must be at least 6 characters long.', svgError);
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showToastModal('New passwords do not match.', svgError);
+                return;
+            }
+
             try {
-                await apiFetch('/api/system/settings', {
+                const result = await apiFetch('/api/users/change_password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ dataRetention: originalRetentionValue })
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
                 });
-                showToastModal('Data retention change canceled.', svgSuccess);
+                showToastModal(result.message, svgSuccess);
+                changePasswordForm.reset(); // Clear the form fields on success
             } catch (error) {
-                showToastModal('Failed to revert the setting. Please try saving again.', svgError);
+                // The apiFetch helper already shows a toast for errors
+                console.error('Password change failed:', error);
             }
-
-            // 3. Close the modal
-            dataCleanupModal.style.display = 'none';
         });
     }
 
+    // --- POWER OFF LOGIC ---
+    // Handles the device shutdown process.
     if (powerOffBtn) {
         powerOffBtn.addEventListener('click', () => {
+            // Asks the user for confirmation before proceeding.
             if (!confirm("Are you sure you want to shut down the system? It will become unresponsive in a few seconds.")) {
                 return;
             }
 
-            // Disable buttons to prevent multiple clicks
             powerOffBtn.disabled = true;
             if (saveBtn) saveBtn.disabled = true;
 
-            // Show a toast that the process has started
             showToastModal('System will power off shortly.', svgPower, 10000);
 
-            // Call the SINGLE endpoint that handles the entire sequence
+            // Sends the shutdown command to the server.
             fetch('/api/system/power-off', { method: 'POST' })
                 .catch(error => {
-                    // A network error is EXPECTED because the server is stopping.
-                    // This indicates the process is working correctly.
+                    // A network error is expected because the server is stopping.
                     console.log("Shutdown initiated. Server connection lost as expected.");
                 });
         });

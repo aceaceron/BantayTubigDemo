@@ -115,3 +115,55 @@ document.addEventListener('DOMContentLoaded', () => {
     checkNetworkStatus();
 });
 
+
+// --- GLOBAL HELPERS (Accessible by all other scripts) ---
+
+const toastModal = document.getElementById('toastModal');
+const toastIcon = document.getElementById('toastIcon');
+const toastMessage = document.getElementById('toastMessage');
+const svgSuccess = `<svg viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+const svgError = `<svg viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+
+/**
+ * Displays a global toast notification.
+ */
+function showToastModal(message, icon, duration = 4000) {
+    if (!toastModal) return;
+    toastMessage.textContent = message;
+    toastIcon.innerHTML = icon;
+    toastModal.classList.add('show');
+    setTimeout(() => toastModal.classList.remove('show'), duration);
+}
+
+
+/**
+ * A robust, global helper function to fetch data from the API and handle
+ * authentication redirects by checking the Content-Type.
+ */
+async function apiFetch(url, options = {}) {
+    try {
+        const response = await fetch(url, options);
+        const contentType = response.headers.get("content-type");
+
+        if (!contentType || !contentType.includes("application/json")) {
+            console.error("Auth error: Server sent non-JSON response. Redirecting to login.");
+            window.location.assign('/login');
+            return new Promise(() => {});
+        }
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        return data;
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            console.error("Received non-JSON response from API. Redirecting to login.");
+            window.location.assign('/login');
+            return new Promise(() => {});
+        }
+        console.error('API Fetch Error:', error);
+        showToastModal(`Error: ${error.message}`, svgError);
+        throw error;
+    }
+}
+
+

@@ -8,6 +8,7 @@ import os
 import secrets
 import string
 import json
+import datetime
 from .config import DB_PATH, DB_LOCK
 
 # --- Password Hashing Functions ---
@@ -38,6 +39,42 @@ def generate_secure_password(length=6):
     return ''.join(secrets.choice(alphabet) for i in range(length))
 
 # --- User Management Functions ---
+
+def get_user_for_login(email):
+    """
+    Retrieves essential user details for the login process.
+    """
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        # <<< FIX: Added u.phone_number to the SELECT query >>>
+        cursor.execute("""
+            SELECT u.id, u.full_name, u.hashed_password, u.salt, u.phone_number, r.name as role_name
+            FROM users u
+            LEFT JOIN roles r ON u.role_id = r.id
+            WHERE u.email = ? AND u.status = 'Active'
+        """, (email,))
+        row = cursor.fetchone()
+        conn.close()
+    return dict(row) if row else None
+
+def update_last_login(user_id):
+    """
+    Updates the 'last_login' timestamp for a specific user to the current time.
+    """
+    # Get the current time in the correct format for the database.
+    current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        cursor = conn.cursor()
+        # Execute the SQL UPDATE command.
+        cursor.execute(
+            "UPDATE users SET last_login = ? WHERE id = ?",
+            (current_timestamp, user_id)
+        )
+        conn.commit()
+        conn.close()
 
 def create_user(full_name, email, password, role_name):
     """
@@ -123,6 +160,72 @@ def reset_password_for_user(user_id):
         conn.close()
     return new_password
 
+def change_user_password(user_id, current_password, new_password):
+    """
+    Changes a user's password after verifying their current password.
+    Returns (True, "Success message") or (False, "Error message").
+    """
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # 1. Fetch the user's current hash and salt
+        cursor.execute("SELECT hashed_password, salt FROM users WHERE id = ?", (user_id,))
+        user_data = cursor.fetchone()
+        if not user_data:
+            conn.close()
+            return False, "User not found."
+
+        # 2. Verify the provided current password
+        if not verify_password(user_data['hashed_password'], current_password, user_data['salt']):
+            conn.close()
+            return False, "Incorrect current password."
+
+        # 3. Hash the new password with a new salt
+        new_hashed_password, new_salt = hash_password(new_password)
+
+        # 4. Update the database with the new credentials
+        cursor.execute(
+            "UPDATE users SET hashed_password = ?, salt = ? WHERE id = ?",
+            (new_hashed_password, new_salt, user_id)
+        )
+        conn.commit()
+        conn.close()
+    
+    return True, "Password updated successfully."
+
+def is_user_admin(email):
+    """Checks if a user with a given email has the 'Administrator' role."""
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT r.name as role_name
+            FROM users u
+            JOIN roles r ON u.role_id = r.id
+            WHERE u.email = ?
+        """, (email,))
+        user = cursor.fetchone()
+        conn.close()
+    if user and user['role_name'] == 'Administrator':
+        return True
+    return False
+
+def set_new_password_for_user(user_id, new_password):
+    """Generates a new hash and salt for a new password and updates the database."""
+    new_hashed_password, new_salt = hash_password(new_password)
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET hashed_password = ?, salt = ? WHERE id = ?",
+            (new_hashed_password, new_salt, user_id)
+        )
+        conn.commit()
+        conn.close()
+        
 def get_all_users_with_roles():
     """
     Retrieves all users along with their assigned role name.

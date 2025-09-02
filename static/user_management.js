@@ -26,38 +26,6 @@ function setupGlobalNavigation() {
 }
 
 
-// --- Toast Modal Elements & SVGs ---
-const toastModal = document.getElementById('toastModal');
-const toastIcon = document.getElementById('toastIcon');
-const toastMessage = document.getElementById('toastMessage');
-
-const svgSuccess = `<svg viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-const svgConnecting = `<svg class="wifi-connecting-icon" viewBox="0 0 24 24" fill="none" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a8 8 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a4 4 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`;
-const svgError = `<svg viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
-
-/**
- * Displays a toast notification and hides it after a set duration.
- * This function is now globally available to any script loaded after this one.
- * @param {string} message The message to display.
- * @param {string} icon The SVG string for the icon.
- * @param {number} duration The time in milliseconds before the toast hides.
- */
-function showToastModal(message, icon, duration = 3000) {
-    if (!toastModal) {
-        console.error('Toast modal element not found in the DOM.');
-        return;
-    }
-    
-    toastMessage.textContent = message;
-    toastIcon.innerHTML = icon;
-
-    toastModal.classList.add('show');
-
-    setTimeout(() => {
-        toastModal.classList.remove('show');
-    }, duration);
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     setupGlobalNavigation();
 
@@ -154,25 +122,62 @@ document.addEventListener('DOMContentLoaded', function() {
     const PROTECTED_ROLES = ['Administrator', 'Technician', 'Viewer', 'Data Scientist'];
 
     // --- API FUNCTIONS ---
+    /**
+     * ------------------------------------------------------------------------
+     * API FETCH HELPER
+     * This function fetches data from the API and intelligently handles redirects
+     * by checking the Content-Type of the server's response.
+     * ------------------------------------------------------------------------
+     */
     async function apiFetch(url, options = {}) {
         try {
             const response = await fetch(url, options);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+
+            // Check the 'Content-Type' header of the response.
+            const contentType = response.headers.get("content-type");
+
+            // If the server sent back HTML/text instead of JSON, it's a redirect to the login page.
+            if (!contentType || !contentType.includes("application/json")) {
+                console.error("Authentication error: Server sent back non-JSON response. Redirecting to login.");
+                // Force the browser to navigate to the login page.
+                window.location.assign('/login');
+                // Stop any further script execution by returning a promise that never resolves.
+                return new Promise(() => {});
             }
-            return response.json();
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            }
+            return data;
+
         } catch (error) {
+            // This will catch any other network or unexpected errors.
             console.error('API Fetch Error:', error);
-            showToastModal(`Error: ${error.message}`, svgError, 5000); 
+            // Display a user-friendly error message. A toast notification would be ideal.
+            alert(`An error occurred: ${error.message}`);
             throw error;
         }
     }
 
+
     // --- USER MANAGEMENT FUNCTIONS ---
+    /**
+     * Fetches the list of all users from the API.
+     */
     async function loadUsers() {
-        allUsers = await apiFetch('/api/users');
-        renderFilteredAndSortedUsers();
+        if (!usersTableBody) return; // Exit if the table isn't on the page.
+        
+        try {
+            usersTableBody.innerHTML = '<tr><td colspan="6">Loading users...</td></tr>';
+            // Use the robust apiFetch to get the user list.
+            const users = await apiFetch('/api/users');
+            renderUsersTable(users);
+        } catch (error) {
+            // The apiFetch function already handles the redirect, so this will catch other errors.
+            usersTableBody.innerHTML = '<tr><td colspan="6">Failed to load users. Please try again.</td></tr>';
+            console.error("Error in loadUsers:", error);
+        }
     }
 
     // Central function to handle filtering, sorting, and rendering

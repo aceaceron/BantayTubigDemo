@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied - BantayTubig</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Simple styles for the warning box */
+        .centered-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 70vh;
+        }
+        .access-denied-box {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+        }
+        .access-denied-box h1 {
+            color: #c0392b; /* Red color for warning */
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+        .access-denied-box p {
+            color: #34495e;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .back-to-dash-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .back-to-dash-btn:hover {
+            background-color: #2980b9;
+        }
+        .english-translation {
+            display: block; /* Ensures it appears on a new line */
+            font-size: 0.7em; /* Makes the font smaller than its parent */
+            font-style: italic;
+            font-weight: normal; /* Removes bolding from h1 */
+            color: #6c757d; /* Muted grey color */
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <video autoplay muted loop id="backgroundVideo">
+        <source src="{{ url_for('static', filename='BantayTubig.mp4') }}" type="video/mp4">
+    </video>
+
+    <div class="centered-container">
+        <div class="access-denied-box">
+            <h1>
+                Hindi Pinapahintulutan ang Access
+                <span class="english-translation">Access Denied</span>
+            </h1>
+            <p>
+                Wala kang kinakailangang pahintulot para makita ang page na ito. Mangyaring makipag-ugnayan sa isang administrator kung sa tingin mo ay isa itong pagkakamali.
+                <span class="english-translation">You do not have the necessary permissions to view this page. Please contact an administrator if you believe this is an error.</span>
+            </p>
+            <a href="{{ url_for('view_bp.index') }}" class="back-to-dash-btn">Bumalik sa Dashboard</a>
+        </div>
+    </div>
+
+</body>
+</html>

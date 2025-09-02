@@ -1,9 +1,52 @@
 // static/alerts.js
+/**
+ * ------------------------------------------------------------------------
+ * UNIVERSAL SIDEBAR & HEADER SCRIPT
+ * ------------------------------------------------------------------------
+ * This section contains the logic for the sidebar navigation menu and
+ * the dynamic timestamp, which are present on all pages.
+ */
+
+/**
+ * Toggles the visibility of the sidebar navigation menu.
+ * On smaller screens, it also changes the hamburger icon to an 'X'.
+ */
+
+/**
+ * ------------------------------------------------------------------------
+ * UNIVERSAL SIDEBAR & HEADER SCRIPT
+ * ------------------------------------------------------------------------
+ */
+function setupGlobalNavigation() {
+    const sidebar = document.getElementById('sidebarMenu');
+    const menuIcon = document.querySelector('.menu-icon');
+    
+    menuIcon.addEventListener('click', (event) => {
+        event.stopPropagation();
+        sidebar.classList.toggle('open');
+        if (window.innerWidth <= 992) {
+            menuIcon.classList.toggle('active');
+            menuIcon.innerHTML = menuIcon.classList.contains('active') ? "&#10006;" : "&#9776;";
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!sidebar.contains(event.target) && !menuIcon.contains(event.target)) {
+            sidebar.classList.remove('open');
+            if (window.innerWidth <= 992 && menuIcon.classList.contains('active')) {
+                menuIcon.classList.remove('active');
+                menuIcon.innerHTML = "&#9776;";
+            }
+        }
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
-
-    // --- GLOBAL NAVIGATION AND TOAST SETUP ---
+    
+    // --- INITIALIZE GLOBAL NAVIGATION ---
     setupGlobalNavigation();
+    
+    // --- GLOBAL NAVIGATION AND TOAST SETUP ---
     const { showToast, svgSuccess, svgError } = setupToastNotifications();
 
     // --- STATE MANAGEMENT ---
@@ -794,15 +837,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- INITIALIZATION ---
     loadInitialData();
 });
-
-// --- Refactored Global Functions for reuse ---
-function setupGlobalNavigation() {
-    const sidebar = document.getElementById('sidebarMenu');
-    const menuIcon = document.querySelector('.menu-icon');
-    if (!sidebar || !menuIcon) return;
-    menuIcon.addEventListener('click', e => { e.stopPropagation(); sidebar.classList.toggle('open'); });
-    document.addEventListener('click', e => { if (!sidebar.contains(e.target) && !menuIcon.contains(e.target)) sidebar.classList.remove('open'); });
-}
 
 function setupModalHandlers() {
     const modals = document.querySelectorAll('.modal-overlay');

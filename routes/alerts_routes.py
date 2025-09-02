@@ -2,9 +2,10 @@
 """
 Handles all API endpoints for alert rules, notification groups, and alert history.
 """
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, jsonify, request, abort, session
 from database import * # Imports all functions from the database package
-from config import CURRENT_USER_ID # Used for acknowledging alerts
+from auth.decorators import role_required
+from database.alerts_manager import get_all_thresholds, restore_default_thresholds, update_threshold
 
 # A Blueprint is created to organize all alert-related routes.
 alerts_bp = Blueprint('alerts_bp', __name__)
@@ -30,13 +31,13 @@ def api_add_alert_rule():
     try:
         new_id = add_alert_rule(data)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Alert Rules', action='Rule Created',
+            user_id=session.get('user_id'), component='Alert Rules', action='Rule Created',
             target=f"Name: {data.get('name')}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Rule added successfully.", "id": new_id}), 201
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Alert Rules', action='Rule Created',
+            user_id=session.get('user_id'), component='Alert Rules', action='Rule Created',
             target=f"Name: {data.get('name')}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
@@ -49,13 +50,13 @@ def api_update_alert_rule(rule_id):
     try:
         update_alert_rule(rule_id, data)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Alert Rules', action='Rule Updated',
+            user_id=session.get('user_id'), component='Alert Rules', action='Rule Updated',
             target=f"Rule ID: {rule_id}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Rule updated successfully."})
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Alert Rules', action='Rule Updated',
+            user_id=session.get('user_id'), component='Alert Rules', action='Rule Updated',
             target=f"Rule ID: {rule_id}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
@@ -77,13 +78,13 @@ def api_delete_alert_rule(rule_id):
         # If it's not a default rule, proceed with deletion
         delete_alert_rule(rule_id)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Alert Rules', action='Rule Deleted',
+            user_id=session.get('user_id'), component='Alert Rules', action='Rule Deleted',
             target=f"Rule ID: {rule_id}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Rule deleted successfully."})
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Alert Rules', action='Rule Deleted',
+            user_id=session.get('user_id'), component='Alert Rules', action='Rule Deleted',
             target=f"Rule ID: {rule_id}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
@@ -112,13 +113,13 @@ def api_add_notification_group():
     try:
         new_id = add_notification_group(data)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Notification Groups', action='Group Created',
+            user_id=session.get('user_id'), component='Notification Groups', action='Group Created',
             target=f"Name: {data.get('name')}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Group added successfully.", "id": new_id}), 201
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Notification Groups', action='Group Created',
+            user_id=session.get('user_id'), component='Notification Groups', action='Group Created',
             target=f"Name: {data.get('name')}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
@@ -131,13 +132,13 @@ def api_update_notification_group(group_id):
     try:
         update_notification_group(group_id, data)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Notification Groups', action='Group Updated',
+            user_id=session.get('user_id'), component='Notification Groups', action='Group Updated',
             target=f"Group ID: {group_id}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Group updated successfully."})
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Notification Groups', action='Group Updated',
+            user_id=session.get('user_id'), component='Notification Groups', action='Group Updated',
             target=f"Group ID: {group_id}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
@@ -149,13 +150,13 @@ def api_delete_notification_group(group_id):
     try:
         delete_notification_group(group_id)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Notification Groups', action='Group Deleted',
+            user_id=session.get('user_id'), component='Notification Groups', action='Group Deleted',
             target=f"Group ID: {group_id}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Group deleted successfully."})
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Notification Groups', action='Group Deleted',
+            user_id=session.get('user_id'), component='Notification Groups', action='Group Deleted',
             target=f"Group ID: {group_id}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
@@ -179,13 +180,13 @@ def api_add_escalation_policy():
     try:
         new_id = add_escalation_policy(data)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Escalation Policies', action='Policy Created',
+            user_id=session.get('user_id'), component='Escalation Policies', action='Policy Created',
             target=f"Name: {data.get('name')}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Policy added successfully.", "id": new_id}), 201
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Escalation Policies', action='Policy Created',
+            user_id=session.get('user_id'), component='Escalation Policies', action='Policy Created',
             target=f"Name: {data.get('name')}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
@@ -198,13 +199,13 @@ def api_update_escalation_policy(policy_id):
     try:
         update_escalation_policy(policy_id, data)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Escalation Policies', action='Policy Updated',
+            user_id=session.get('user_id'), component='Escalation Policies', action='Policy Updated',
             target=f"Policy ID: {policy_id}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Policy updated successfully."})
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Escalation Policies', action='Policy Updated',
+            user_id=session.get('user_id'), component='Escalation Policies', action='Policy Updated',
             target=f"Policy ID: {policy_id}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
@@ -216,13 +217,13 @@ def api_delete_escalation_policy(policy_id):
     try:
         delete_escalation_policy(policy_id)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Escalation Policies', action='Policy Deleted',
+            user_id=session.get('user_id'), component='Escalation Policies', action='Policy Deleted',
             target=f"Policy ID: {policy_id}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Policy deleted successfully."})
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Escalation Policies', action='Policy Deleted',
+            user_id=session.get('user_id'), component='Escalation Policies', action='Policy Deleted',
             target=f"Policy ID: {policy_id}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
@@ -257,13 +258,13 @@ def api_restore_thresholds():
     try:
         restore_default_thresholds()
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Thresholds', action='Defaults Restored',
+            user_id=session.get('user_id'), component='Thresholds', action='Defaults Restored',
             status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Default thresholds restored."})
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Thresholds', action='Defaults Restored',
+            user_id=session.get('user_id'), component='Thresholds', action='Defaults Restored',
             status='Failure', ip_address=request.remote_addr, details={'error': str(e)}
         )
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -277,23 +278,28 @@ def api_get_alert_history():
     return jsonify(history)
 
 @alerts_bp.route('/alerts/history/<int:log_id>/acknowledge', methods=['POST'])
+@role_required('Administrator', 'Technician') # Allow Admins and Techs to acknowledge
 def api_acknowledge_alert(log_id):
     """Marks a specific alert in the history as 'Acknowledged'."""
     try:
-        acknowledge_alert(log_id, CURRENT_USER_ID)
+        current_user_id = session.get('user_id')
+        if not current_user_id:
+             return jsonify({"status": "error", "message": "User not logged in."}), 401
+
+        acknowledge_alert(log_id, current_user_id)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Alert Management', action='Alert Acknowledged',
+            user_id=current_user_id, component='Alert Management', action='Alert Acknowledged',
             target=f"History ID: {log_id}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Alert acknowledged."})
     except Exception as e:
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Alert Management', action='Alert Acknowledged',
+            user_id=session.get('user_id'), component='Alert Management', action='Alert Acknowledged',
             target=f"History ID: {log_id}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
         return jsonify({"status": "error", "message": str(e)}), 400
-    
+
 @alerts_bp.route('/alerts/rules/<int:rule_id>', methods=['GET'])
 def api_get_rule_details(rule_id):
     """Fetches details for a single alert rule."""
@@ -312,7 +318,7 @@ def api_snooze_rule(rule_id):
     try:
         snooze_alert_rule(rule_id, duration_minutes)
         add_audit_log(
-            user_id=CURRENT_USER_ID, component='Alert Rules', action='Rule Snoozed',
+            user_id=session.get('user_id'), component='Alert Rules', action='Rule Snoozed',
             target=f"Rule ID: {rule_id}", status='Success', ip_address=request.remote_addr,
             details={'duration_minutes': duration_minutes}
         )

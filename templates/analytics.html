@@ -31,20 +31,7 @@
         </div>
     </div>
 
-    <div id="sidebarMenu" class="sidebar">
-        <ul class="sidebar-menu">
-            <li><a href="/">DASHBOARD</a></li>
-            <li><a href="/analytics" class="active">ANALYTICS & REPORTS</a></li>
-            <li><a href="/devices">DEVICE & SENSOR</a></li>
-            <li><a href="/alerts">ALERTS & NOTIFICATION</a></li>
-            <li><a href="/machine-learning">MACHINE LEARNING</a></li>
-            <li><a href="/users">USER MANAGEMENT</a></li>
-            <li><a href="/settings" >SYSTEM SETTINGS</a></li>
-            <li><a href="#">ABOUT/HELP</a></li>
-        </ul>
-        <div class="sidebar-footer"><span class="footer-title">BantayTubig</span><br><span class="footer-subtext">Smart
-                Water Quality Monitoring System</span></div>
-    </div>
+    {% include '_sidebar.html' %}
 
     <div class="header-top-right">
         <h1>Analytics & Reports</h1>
@@ -268,6 +255,33 @@
                         <div id="scenario-prediction" class="quality-badge quality-unknown">N/A</div>
                     </div>
                 </div>
+
+                <div class="data-management-card card">
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">?</span>
+                        <div class="tooltip-message">
+                            <p>Tukuyin ang mga patakaran kung gaano katagal itatago ang data sa system bago ito awtomatikong i-delete.</p>
+                            <p><em>Define policies for how long historical data is stored before it is automatically deleted.</em></p>
+                        </div>
+                    </div>
+                    <h3>Data Management</h3>
+                    <div class="report-controls">
+                        <div class="control-group">
+                            <label for="dataRetention">Data Retention Policy</label>
+                            <select id="dataRetention">
+                                <option value="7">7 Days</option>
+                                <option value="30">30 Days</option>
+                                <option value="90">90 Days</option>
+                                <option value="180">6 Months</option>
+                                <option value="365">1 Year</option>
+                                <option value="730">2 Years</option>
+                            </select>
+                        </div>
+                        <div class="export-buttons">
+                            <button id="applyRetentionBtn" class="action-button">Apply Policy</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -288,6 +302,74 @@
             </div>
         </div>
     </div>
+
+    <!-- // MODAL for DATA CLEANUP CONFIRMATION // -->
+    <div id="dataCleanupModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content wide-modal">
+            <div class="modal-header">
+                <div class="modal-title-icon-wrapper">
+                    <div class="modal-icon-svg warning-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                            <path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480H40c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24V296c0 13.3 10.7 24 24 24s24-10.7 24-24V184c0-13.3-10.7-24-24-24zm32 224c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="#f39c12"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2>Confirm Data Deletion</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="confirmation-text">
+                    <p class="taglish-warning">
+                        Magde-delete ka ng data na mas luma sa iyong bagong retention policy. <b>Hindi na ito maibabalik.</b>
+                        <span class="english-translation">You are about to delete data older than your new retention policy. <b>This action is irreversible.</b></span>
+                    </p>
+                    <div class="tooltip-container inline">
+                        <span class="tooltip-icon small">?</span>
+                        <div class="tooltip-message">
+                            <p>Ipinapakita nito ang isang preview ng data na permanenteng tatanggalin base sa iyong bagong polisiya.</p>
+                            <p><em>This shows a preview of the data that will be permanently deleted based on your new policy.</em></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-controls">
+                    <div class="preview-control-group">
+                        <label for="tablePreviewSelect">Preview Data From:</label>
+                        <select id="tablePreviewSelect">
+                            <option value="measurements">Sensor Measurements</option>
+                            <option value="audit_log">Audit Logs</option>
+                            <option value="device_logs">Device Maintenance Logs</option>
+                        </select>
+                    </div>
+                    <input type="text" id="previewSearchInput" class="filter-input" placeholder="Search by ID, Date (YYYY-MM-DD), or Time (e.g., 7:28pm)...">
+                </div>
+                <div class="table-wrapper">
+                    <table id="cleanupPreviewTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th class="sortable" data-column="timestamp">Timestamp <span class="sort-icon"></span></th>
+                                <th class="sortable" data-column="Details">Details <span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+                <div class="pagination-controls" id="previewPagination">
+                    <button id="previewPrevPageBtn" disabled>Previous</button>
+                    <span id="previewPageInfo">Page 1 of 1</span>
+                    <button id="previewNextPageBtn" disabled>Next</button>
+                </div>
+                <div class="form-actions">
+                    <button id="cancelDeleteBtn" class="action-button secondary">Cancel</button>
+                    <button id="confirmDeleteBtn" class="action-button danger">Yes, Delete Old Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- // MODAL for TOAST NOTIFICATIONS (SUCCESS/INFO) // -->
     <div id="toastModal" class="toast-modal">

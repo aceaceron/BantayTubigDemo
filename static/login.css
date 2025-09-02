@@ -1,0 +1,145 @@
+/* static/login.css */
+
+/* --- BODY & CONTAINER STYLES --- */
+
+/* Ensures the login container is centered vertically and horizontally on the page. */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 0;
+}
+
+/* Removes the top spacing from main.css that is not needed on the login page. */
+body::before {
+    content: none;
+}
+
+/* The main container for the login form and its box. */
+.login-container {
+    position: relative;
+    z-index: 2; /* Ensures it's above the background video */
+}
+
+/* The white box that holds the login form content. */
+.login-box {
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* --- HEADER & FORM STYLES --- */
+
+/* The header section with the "BantayTubig" title. */
+.login-header {
+    margin-bottom: 30px;
+}
+
+.login-header h2 {
+    margin: 0;
+    font-size: 2em;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.login-header p {
+    margin: 5px 0 0 0;
+    color: #7f8c8d;
+}
+
+/* Styles for individual form groups (label + input). */
+.form-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #34495e;
+}
+
+/* Styling for the email and password input fields. */
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Adds a subtle glow effect when an input field is focused. */
+.form-group input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+/* The main login button. */
+.login-button {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    background-color: #3498db;
+    color: white;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-button:hover {
+    background-color: #2980b9;
+}
+
+/* --- FOOTER & MESSAGES --- */
+
+/* The footer section with the "Forgot Password?" link. */
+.login-footer {
+    margin-top: 20px;
+}
+
+.login-footer a {
+    color: #7f8c8d;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Styling for flashed error messages (e.g., "Invalid credentials"). */
+.flash-message {
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.flash-message.error {
+    background-color: #fbeae5;
+    color: #c0392b;
+    border: 1px solid #e74c3c;
+}
+
+/* --- RESPONSIVE ADJUSTMENTS --- */
+@media (max-width: 480px) {
+    .login-box {
+        padding: 25px;
+    }
+
+    .login-header h2 {
+        font-size: 1.8em;
+    }
+}

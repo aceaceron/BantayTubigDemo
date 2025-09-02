@@ -2,21 +2,22 @@
 """
 Handles all API endpoints for data analytics, reporting, and AI/ML features.
 """
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, jsonify, request, abort, session
 from collections import Counter
 import sqlite3
 
 # Import shared config and functions
 from config import DEVICE_ID
 from database import (
-    DB_PATH, DB_LOCK, get_all_devices, get_latest_data, get_context_for_latest_measurement,
-    get_audit_logs, summarize_context_for_range, get_thresholds_for_dashboard
+    DB_PATH, DB_LOCK, add_audit_log, get_all_devices, get_latest_data, get_context_for_latest_measurement,
+    get_audit_logs, summarize_context_for_range, get_thresholds_for_dashboard,
+    cleanup_old_data, get_deletable_data_preview
 )
 from water_quality import predict_water_quality, get_feature_importances
 from static_analyzer import get_detailed_water_analysis
 from llm_analyzer import generate_llm_analysis
 from llm_reasoning import generate_reasoning_for_range
-
+from auth.decorators import role_required
 
 analytics_bp = Blueprint('analytics_bp', __name__)
 
@@ -249,3 +250,55 @@ def summarize_data_for_range(start_date, end_date):
     except Exception as e:
         print(f"Error summarizing data for range: {e}")
         return summary
+    
+@analytics_bp.route('/retention_policy', methods=['POST'])
+@role_required('Administrator')
+def set_retention_policy():
+    """Updates just the data retention setting."""
+    data = request.get_json()
+    new_retention_days = data.get('dataRetention')
+    if not new_retention_days:
+        return jsonify({'status': 'error', 'message': 'dataRetention not provided.'}), 400
+    
+    try:
+        conn = get_db_connection()
+        conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", 
+                     ('data_retention_days', str(new_retention_days)))
+        conn.commit()
+        conn.close()
+        add_audit_log(user_id=session.get('user_id'), component='Data Management', action='Policy Updated', target=f"{new_retention_days} days", status='Success', ip_address=request.remote_addr)
+        return jsonify({'status': 'success', 'message': f"Data retention policy set to {new_retention_days} days."})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+
+@analytics_bp.route('/retention-preview', methods=['POST'])
+@role_required('Administrator')
+def get_retention_preview():
+    """Provides a preview of data that would be deleted by a new policy."""
+    data = request.get_json()
+    days = data.get('retention_days')
+    table = data.get('table_name')
+    if not days or not table:
+        return jsonify({'error': 'retention_days and table_name are required'}), 400
+    
+    preview_data = get_deletable_data_preview(table, int(days))
+    return jsonify(preview_data)
+
+@analytics_bp.route('/run-cleanup', methods=['POST'])
+@role_required('Administrator')
+def run_cleanup_now():
+    """Triggers the data retention cleanup process immediately."""
+    try:
+        cleanup_old_data()
+        add_audit_log(
+            user_id=session.get('user_id'), component='Data Management', action='Manual Cleanup', 
+            status='Success', ip_address=request.remote_addr
+        )
+        return jsonify({'status': 'success', 'message': 'Data cleanup process completed.'})
+    except Exception as e:
+        add_audit_log(
+            user_id=session.get('user_id'), component='Data Management', action='Manual Cleanup', 
+            status='Failure', ip_address=request.remote_addr, details={'error': str(e)}
+        )
+        return jsonify({'status': 'error', 'message': str(e)}), 500

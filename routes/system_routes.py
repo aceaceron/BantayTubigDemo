@@ -8,7 +8,7 @@ import os
 import signal 
 import subprocess 
 import threading
-from database.maintenance import cleanup_old_data, get_deletable_data_preview
+# from database.maintenance import cleanup_old_data, get_deletable_data_preview
 
 system_bp = Blueprint('system_bp', __name__)
 
@@ -64,9 +64,6 @@ def manage_system_settings():
             if 'sessionTimeout' in data:
                 conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", 
                              ('session_timeout', str(data['sessionTimeout'])))
-            if 'dataRetention' in data:
-                conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", 
-                             ('data_retention_days', str(data['dataRetention'])))
             if 'showMlConfidence' in data:
                 conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", 
                              ('show_ml_confidence', str(data['showMlConfidence']).lower()))
@@ -77,29 +74,6 @@ def manage_system_settings():
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
-
-@system_bp.route('/system/retention-preview', methods=['POST'])
-def get_retention_preview():
-    """Provides a preview of data that would be deleted by a new policy."""
-    data = request.get_json()
-    days = data.get('retention_days')
-    table = data.get('table_name')
-    if not days or not table:
-        return jsonify({'error': 'retention_days and table_name are required'}), 400
-    
-    preview_data = get_deletable_data_preview(table, int(days))
-    return jsonify(preview_data)
-
-
-@system_bp.route('/system/run-cleanup', methods=['POST'])
-def run_cleanup_now():
-    """Triggers the data retention cleanup process immediately."""
-    try:
-        cleanup_old_data()
-        return jsonify({'status': 'success', 'message': 'Data cleanup process completed.'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
-    
 
 @system_bp.route('/system/stop-main', methods=['POST'])
 def stop_main_app():
