@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
         flatpickr(primaryDatePicker, {
             mode: "range",
             dateFormat: "Y-m-d",
-            defaultDate: [new Date().fp_incr(-1), new Date()], // Default to yesterday and today
+            defaultDate: [new Date(), new Date()], // Default to today only
             onChange: (selectedDates) => {
                 if (selectedDates.length === 2) fetchHistoricalData(selectedDates[0], selectedDates[1], 'primary');
             }
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Initial data fetch for the default date range.
-        fetchHistoricalData(new Date().fp_incr(-1), new Date(), 'primary');
+        fetchHistoricalData(new Date(), new Date(), 'primary');
     }
 
     /**
@@ -521,6 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /**
      * Exports the currently filtered data to a PDF file.
      */
+    
     function exportToPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -533,7 +534,8 @@ document.addEventListener('DOMContentLoaded', function() {
             new Date(item.timestamp).toLocaleString(),
             isNaN(item.temperature) ? 'N/A' : item.temperature.toFixed(2),
             isNaN(item.ph) ? 'N/A' : item.ph.toFixed(2),
-            isNaN(item.tds) ? 'N/A' : item.tds.toString(),
+            // **THE FIX:** Applied .toFixed(2) to the TDS value
+            isNaN(item.tds) ? 'N/A' : item.tds.toFixed(2),
             isNaN(item.turbidity) ? 'N/A' : item.turbidity.toFixed(2),
             item.water_quality || 'Unknown'
         ]);
@@ -541,7 +543,6 @@ document.addEventListener('DOMContentLoaded', function() {
         doc.autoTable({ head: [tableColumn], body: tableRows, startY: 28 });
         doc.save(`BantayTubig_Report_${new Date().toISOString().split('T')[0]}.pdf`);
     }
-
     /**
      * Exports the currently filtered data to a CSV file.
      */
@@ -624,6 +625,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
     // <<< --- DATA RETENTION & CLEANUP FUNCTIONS --- >>>
+    const exportPreviewPdfBtn = document.getElementById('exportPreviewPdfBtn');
+    const exportPreviewCsvBtn = document.getElementById('exportPreviewCsvBtn');
+    const exportPreviewDbBtn = document.getElementById('exportPreviewDbBtn');
+
     async function loadCurrentRetentionPolicy() {
         try {
             const data = await apiFetch('/api/system/settings');
@@ -666,54 +671,162 @@ document.addEventListener('DOMContentLoaded', function() {
             previewData.filtered = [...previewData.full];
         } else {
             previewData.filtered = previewData.full.filter(row => {
-                // Complex search logic here...
+                // Get all potential fields to search against
+                const idString = String(row.id).toLowerCase();
                 const details = row.Details ? String(row.Details).toLowerCase() : '';
-                const timestampString = row.timestamp ? String(row.timestamp).toLowerCase() : '';
-                return details.includes(searchTerm) || timestampString.includes(searchTerm);
+                
+                // Create a formatted, localized string for the timestamp to match what the user sees.
+                const formattedTimestamp = row.timestamp ? new Date(row.timestamp).toLocaleString().toLowerCase() : '';
+
+                // Check if the search term is included in the ID, details, or the formatted timestamp.
+                return idString.includes(searchTerm) || 
+                    details.includes(searchTerm) || 
+                    formattedTimestamp.includes(searchTerm);
             });
         }
         previewCurrentPage = 1;
         applyPreviewSort();
         renderPreviewTable();
     }
-
+    
     function applyPreviewSort() {
+        const { column, direction } = previewSort; // Destructure for easier access
+
         previewData.filtered.sort((a, b) => {
-            // Sorting logic here...
-            return 0; // Placeholder
+            // Use '??' to provide a default value (e.g., an empty string) for null or undefined properties
+            // This prevents errors if a row is missing a 'Details' field, for example.
+            let valA = a[column] ?? '';
+            let valB = b[column] ?? '';
+
+            // For timestamp columns, compare them as Date objects for correct chronological sorting.
+            if (column === 'timestamp') {
+                valA = new Date(valA);
+                valB = new Date(valB);
+            }
+
+            // For string columns, convert to lowercase for case-insensitive sorting.
+            if (typeof valA === 'string') {
+                valA = valA.toLowerCase();
+                valB = valB.toLowerCase();
+            }
+
+            // The core comparison logic.
+            if (valA < valB) {
+                return direction === 'asc' ? -1 : 1;
+            }
+            if (valA > valB) {
+                return direction === 'asc' ? 1 : -1;
+            }
+            return 0; // Return 0 if values are equal.
         });
+
         updatePreviewSortIcons();
     }
 
+    // This function will attach the sort event listeners to the dynamically created headers.
+    function attachPreviewSortListeners() {
+        // We need to re-select the headers every time the table is re-rendered.
+        const newPreviewSortableHeaders = document.querySelectorAll('#cleanupPreviewTable th.sortable');
+        
+        newPreviewSortableHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.dataset.column;
+                if (previewSort.column === column) {
+                    previewSort.direction = previewSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    previewSort.column = column;
+                    previewSort.direction = 'desc'; // Default to descending
+                }
+                applyPreviewSort();
+                renderPreviewTable(); // Re-render the table with the new sort order
+            });
+        });
+    }
+
+
     function renderPreviewTable() {
-        cleanupPreviewTableBody.innerHTML = '';
+        const tableHeader = document.querySelector('#cleanupPreviewTable thead');
+        const tableBody = document.querySelector('#cleanupPreviewTable tbody');
+        
+        // Clear previous table content
+        tableHeader.innerHTML = '';
+        tableBody.innerHTML = '';
+
         const start = (previewCurrentPage - 1) * previewRowsPerPage;
         const end = start + previewRowsPerPage;
         const paginatedData = previewData.filtered.slice(start, end);
 
         if (paginatedData.length === 0) {
-            cleanupPreviewTableBody.innerHTML = `<tr><td colspan="3">No data matching the criteria will be deleted.</td></tr>`;
-        } else {
-            paginatedData.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row.id}</td>
-                    <td>${new Date(row.timestamp).toLocaleString()}</td>
-                    <td>${row.Details || 'N/A'}</td>
-                `;
-                cleanupPreviewTableBody.appendChild(tr);
-            });
+            tableBody.innerHTML = `<tr><td colspan="10">No data matching the criteria will be deleted.</td></tr>`;
+            updatePreviewPagination();
+            return;
         }
+
+        // --- Dynamic Header Generation ---
+        let columns = Object.keys(paginatedData[0]);
+        
+        // **Requirement: Ensure 'id' is the first column**
+        const idIndex = columns.indexOf('id');
+        if (idIndex > -1) {
+            columns.splice(idIndex, 1); // Remove 'id' from its current position
+            columns.unshift('id');      // Add 'id' to the beginning
+        }
+
+        const headerRow = document.createElement('tr');
+        columns.forEach(col => {
+            const th = document.createElement('th');
+            // Capitalize column name for display
+            th.textContent = col.charAt(0).toUpperCase() + col.slice(1).replace(/_/g, ' ');
+            
+            // Make all columns sortable
+            th.classList.add('sortable');
+            th.dataset.column = col;
+            th.innerHTML += ' <span class="sort-icon"></span>';
+            
+            headerRow.appendChild(th);
+        });
+        tableHeader.appendChild(headerRow);
+
+        // --- Dynamic Body Generation ---
+        paginatedData.forEach(row => {
+            const tr = document.createElement('tr');
+            columns.forEach(col => {
+                const td = document.createElement('td');
+                let cellValue = row[col] ?? 'N/A'; // Handle null/undefined values
+
+                // Format specific columns if needed
+                if (col === 'timestamp' && cellValue !== 'N/A') {
+                    cellValue = new Date(cellValue).toLocaleString();
+                } else if (typeof cellValue === 'number') {
+                    // For sensor readings like temperature, ph, etc.
+                    cellValue = parseFloat(cellValue.toFixed(4));
+                }
+                
+                td.textContent = cellValue;
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+        });
+
+        // Re-attach listeners and update UI
+        attachPreviewSortListeners();
         updatePreviewPagination();
+        updatePreviewSortIcons(); 
     }
 
     function updatePreviewSortIcons() {
-        previewSortableHeaders.forEach(th => {
+        // This ensures it's not using a stale list of headers that have been deleted.
+        const currentPreviewHeaders = document.querySelectorAll('#cleanupPreviewTable th.sortable');
+        
+        currentPreviewHeaders.forEach(th => {
             const icon = th.querySelector('.sort-icon');
-            if (th.dataset.column === previewSort.column) {
-                icon.textContent = previewSort.direction === 'asc' ? ' ▲' : ' ▼';
-            } else {
-                icon.textContent = '';
+            // Check that the icon span exists before trying to change it
+            if (icon) {
+                if (th.dataset.column === previewSort.column) {
+                    icon.textContent = previewSort.direction === 'asc' ? ' ▲' : ' ▼';
+                } else {
+                    icon.textContent = '';
+                }
             }
         });
     }
@@ -724,6 +837,84 @@ document.addEventListener('DOMContentLoaded', function() {
         previewPageInfo.textContent = `Page ${previewCurrentPage} of ${totalPages}`;
         previewPrevPageBtn.disabled = previewCurrentPage === 1;
         previewNextPageBtn.disabled = previewCurrentPage >= totalPages;
+    }
+
+    // This is the new helper function for downloading files
+    async function handlePreviewExport(format) {
+        const retentionDays = dataRetentionInput.value;
+        const selectedTable = tablePreviewSelect.value;
+
+        try {
+            const response = await fetch('/analytics/export-deletable-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    retention_days: retentionDays,
+                    table_name: selectedTable,
+                    format: format
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || `Failed to export data as ${format}.`);
+            }
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `${selectedTable}_export_${new Date().toISOString().split('T')[0]}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+
+        } catch (error) {
+            console.error(`Export Error (${format}):`, error);
+            // You can replace this alert with your showToastModal function
+            alert(`Error: ${error.message}`);
+        }
+    }
+
+    // This is the PDF export function
+    function exportPreviewToPDF() {
+        if (!previewData.full || previewData.full.length === 0) {
+            alert("No data to export.");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const selectedTable = tablePreviewSelect.value;
+
+        doc.text(`BantayTubig - Data Deletion Preview`, 14, 16);
+        doc.setFontSize(10);
+        doc.text(`Table: ${selectedTable}`, 14, 22);
+        doc.text(`This data is older than the new ${dataRetentionInput.value}-day retention policy.`, 14, 28);
+
+        const tableColumn = Object.keys(previewData.full[0]);
+        
+        // **THE FIX:** This logic now checks each value.
+        // If it's a number, it's formatted to 2 decimal places.
+        const tableRows = previewData.full.map(item => {
+            return tableColumn.map(col => {
+                const value = item[col];
+                if (value === null || typeof value === 'undefined') {
+                    return 'N/A';
+                }
+                // Check if the value is a number before formatting
+                if (typeof value === 'number') {
+                    return value.toFixed(2);
+                }
+                // Otherwise, return the value as is (e.g., for timestamps, text)
+                return value;
+            });
+        });
+
+        doc.autoTable({ head: [tableColumn], body: tableRows, startY: 35 });
+        doc.save(`BantayTubig_Deletion_Preview_${selectedTable}_${new Date().toISOString().split('T')[0]}.pdf`);
     }
 
     // --- EVENT LISTENERS ---
@@ -779,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // --- New Listeners for Data Retention ---
+        // --- Listeners for Data Retention ---
         if (applyRetentionBtn) {
             applyRetentionBtn.addEventListener('click', async () => {
                 const newRetention = dataRetentionInput.value;
@@ -811,25 +1002,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (confirmDeleteBtn) {
-            confirmDeleteBtn.addEventListener('click', async () => {
-                confirmDeleteBtn.disabled = true;
-                confirmDeleteBtn.textContent = 'Deleting...';
-                try {
-                    // First, update the setting itself
-                    await apiFetch('/analytics/retention_policy', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ dataRetention: dataRetentionInput.value })
-                    });
-                    // Then, run the cleanup process
-                    const result = await apiFetch('/analytics/run-cleanup', { method: 'POST' });
-                    showToastModal(result.message, svgSuccess, 5000);
-                    dataCleanupModal.style.display = 'none';
-                    currentDataRetention = dataRetentionInput.value;
-                } finally {
-                    confirmDeleteBtn.disabled = false;
-                    confirmDeleteBtn.textContent = 'Yes, Delete Old Data';
-                }
+            confirmDeleteBtn.addEventListener('click', () => {
+                // 1. Define the destructive action you want to confirm
+                const deleteAction = async () => {
+                    confirmDeleteBtn.disabled = true;
+                    confirmDeleteBtn.textContent = 'Deleting...';
+                    try {
+                        // First, update the setting itself
+                        await apiFetch('/analytics/retention_policy', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ dataRetention: dataRetentionInput.value })
+                        });
+                        // Then, run the cleanup process
+                        const result = await apiFetch('/analytics/run-cleanup', { method: 'POST' });
+                        showToastModal(result.message, svgSuccess, 5000);
+                        dataCleanupModal.style.display = 'none';
+                        currentDataRetention = dataRetentionInput.value;
+                    } finally {
+                        confirmDeleteBtn.disabled = false;
+                        confirmDeleteBtn.textContent = 'Yes, Delete Old Data';
+                    }
+                };
+
+                // 2. Call the confirmation modal and pass the action as a callback
+                showConfirmationModal(
+                    'Confirm Data Deletion',
+                    'Are you sure you want to permanently delete the older data? This action cannot be undone.',
+                    deleteAction
+                );
             });
         }
 
@@ -857,19 +1058,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-        previewSortableHeaders.forEach(header => {
-            header.addEventListener('click', () => {
-                const column = header.dataset.column;
-                if (previewSort.column === column) {
-                    previewSort.direction = previewSort.direction === 'asc' ? 'desc' : 'asc';
-                } else {
-                    previewSort.column = column;
-                    previewSort.direction = 'desc'; // Default to descending for a new column
-                }
-                applyPreviewSort();
-                renderPreviewTable();
-            });
-        });
+
         if (previewNextPageBtn) {
             previewNextPageBtn.addEventListener('click', () => {
                 const totalPages = Math.ceil(previewData.filtered.length / previewRowsPerPage);
@@ -879,6 +1068,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+
+        // --- Listeners for Data Retention Export ---
+        if (exportPreviewPdfBtn) exportPreviewPdfBtn.addEventListener('click', exportPreviewToPDF);
+        if (exportPreviewCsvBtn) exportPreviewCsvBtn.addEventListener('click', () => handlePreviewExport('csv'));
+        if (exportPreviewDbBtn) exportPreviewDbBtn.addEventListener('click', () => handlePreviewExport('db'));
+
     }
 
     // --- SCRIPT EXECUTION START ---
@@ -889,4 +1084,49 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSimulator();
     setupEventListeners();
     loadCurrentRetentionPolicy();
+    updateSortIcons();
 });
+
+
+// --- Confirmation Modal Selectors & Logic ---
+const confirmationModal = document.getElementById('confirmationModal');
+const confirmationModalTitle = document.getElementById('confirmationModalTitle');
+const confirmationModalText = document.getElementById('confirmationModalText');
+const closeConfirmationModalBtn = document.getElementById('closeConfirmationModalBtn');
+let confirmationConfirmBtn = document.getElementById('confirmationConfirmBtn'); // Use let to allow reassignment
+const confirmationCancelBtn = document.getElementById('confirmationCancelBtn');
+
+/**
+ * Shows a confirmation modal and executes a callback if the user confirms.
+ * @param {string} title - The title of the modal.
+ * @param {string} text - The descriptive text in the modal.
+ * @param {function} onConfirm - The function to call if the user clicks "Confirm".
+ */
+function showConfirmationModal(title, text, onConfirm) {
+    if (!confirmationModal) {
+        console.error("Confirmation modal not found in HTML. Falling back to default confirm.");
+        // Fallback to the browser's default confirm dialog if the modal doesn't exist
+        if (confirm(`${title}\n${text}`)) {
+            onConfirm();
+        }
+        return;
+    }
+    
+    confirmationModalTitle.textContent = title;
+    confirmationModalText.textContent = text;
+    
+    // Replace the confirm button to remove any old event listeners from previous calls
+    const newConfirmBtn = confirmationConfirmBtn.cloneNode(true);
+    confirmationConfirmBtn.parentNode.replaceChild(newConfirmBtn, confirmationConfirmBtn);
+    confirmationConfirmBtn = newConfirmBtn; // Update the variable to the new button
+    
+    // Add the new listeners
+    confirmationConfirmBtn.addEventListener('click', () => {
+        onConfirm();
+        confirmationModal.style.display = 'none';
+    });
+
+    confirmationCancelBtn.onclick = () => confirmationModal.style.display = 'none';
+    closeConfirmationModalBtn.onclick = () => confirmationModal.style.display = 'none';
+    confirmationModal.style.display = 'flex';
+}

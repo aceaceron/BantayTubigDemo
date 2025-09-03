@@ -20,65 +20,100 @@
     </video>
     
     <!-- // MAIN LOGIN CONTAINER // -->
+
     <div class="login-container">
         <div class="login-box">
-            <div class="login-header">
-                <h2>BantayTubig</h2>
-                <p>Smart Water Quality Monitoring System</p>
-            </div>
             
-            <!-- Display login error messages here -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash-message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+            {% if users_exist %}
 
-            <div id="js-flash-container"></div> 
+                <div class="login-header">
+                    <h2>BantayTubig</h2>
+                    <p>Smart Water Quality Monitoring System</p>
+                </div>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-            <form method="POST" action="{{ url_for('view_bp.login') }}" class="login-form" id="loginForm">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" required autocomplete="email">
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
-                </div>
-                <button type="submit" class="login-button">Login</button>
-            </form>
+                <div id="js-flash-container"></div> 
 
-            <form class="login-form" id="verifyCodeForm" style="display: none;">
-                <p class="form-instructions">A code has been sent to your mobile. Please enter it below.</p>
-                <div class="form-group">
-                    <label for="verificationCode">Verification Code</label>
-                    <input type="text" id="verificationCode" required>
-                </div>
-                <button type="submit" class="login-button">Verify Code</button>
-            </form>
+                <form method="POST" action="{{ url_for('view_bp.login') }}" class="login-form" id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="login-button">Login</button>
+                </form>
 
-            <form class="login-form" id="setNewPasswordForm" style="display: none;">
-                <p class="form-instructions">Verification successful. Please create a new password.</p>
-                <div class="form-group">
-                    <label for="newPassword">New Password</label>
-                    <input type="password" id="newPassword" required autocomplete="new-password">
-                    <small>Password must be at least 6 characters long.</small>
+                <form class="login-form" id="verifyCodeForm" style="display: none;">
+                    <p class="form-instructions">A code has been sent to your mobile. Please enter it below.</p>
+                    <div class="form-group">
+                        <label for="verificationCode">Verification Code</label>
+                        <input type="text" id="verificationCode" required>
+                    </div>
+                    <button type="submit" class="login-button">Verify Code</button>
+                </form>
+                <form class="login-form" id="setNewPasswordForm" style="display: none;">
+                    <p class="form-instructions">Verification successful. Please create a new password.</p>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" required autocomplete="new-password">
+                        <small>Password must be at least 6 characters long.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword">Confirm New Password</label>
+                        <input type="password" id="confirmNewPassword" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="login-button">Set New Password</button>
+                </form>
+                <div class="login-footer">
+                    <a href="#" id="forgotPasswordBtn" style="display: none;">Forgot Password?</a>
                 </div>
-                <div class="form-group">
-                    <label for="confirmNewPassword">Confirm New Password</label>
-                    <input type="password" id="confirmNewPassword" required autocomplete="new-password">
-                </div>
-                <button type="submit" class="login-button">Set New Password</button>
-            </form>
 
-            <div class="login-footer">
-                <a href="#" id="forgotPasswordBtn" style="display: none;">Forgot Password?</a>
-            </div>
+            {% else %}
+
+                <div class="login-header">
+                    <h2>Create Administrator Account</h2>
+                    <p>Welcome to BantayTubig! Let's set up the first user.</p>
+                </div>
+
+                <div id="js-flash-container"></div> 
+
+                <form class="login-form" id="registrationForm">
+                    <div class="form-group">
+                        <label for="regFullName">Full Name</label>
+                        <input type="text" id="regFullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">Email</label>
+                        <input type="email" id="regEmail" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Password</label>
+                        <input type="password" id="regPassword" required autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="regConfirmPassword">Confirm Password</label>
+                        <input type="password" id="regConfirmPassword" required autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPhoneNumber">Phone Number</label>
+                        <input type="tel" id="regPhoneNumber" placeholder="+639XXXXXXXXX" required>
+                    </div>
+                    <button type="submit" class="login-button">Create Account</button>
+                </form>
+
+            {% endif %}
         </div>
     </div>
-
     
     <div id="resetSuccessModal" class="modal-overlay" style="display: none;">
         <div class="modal-content text-center">

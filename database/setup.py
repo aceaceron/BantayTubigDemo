@@ -84,6 +84,7 @@ def create_tables():
             CREATE TABLE IF NOT EXISTS roles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL,
+                description TEXT,
                 permissions TEXT
             )
         ''')
@@ -254,15 +255,39 @@ def create_tables():
             )
         """)
             
-        # --- Populate initial data within the same function ---
-        
+         # <<< FIX: Define the default permissions for each role as a dictionary >>>
+        # This structure is based directly on your @role_required decorators.
+        admin_perms = {
+            "dashboard": True, "analytics": True, "devices": True, 
+            "alerts": True, "machine_learning": True, "users": True, "settings": True
+        }
+        technician_perms = {
+            "dashboard": True, "analytics": False, "devices": True, 
+            "alerts": True, "machine_learning": False, "users": False, "settings": True
+        }
+        data_scientist_perms = {
+            "dashboard": True, "analytics": True, "devices": False, 
+            "alerts": False, "machine_learning": True, "users": False, "settings": True
+        }
+        viewer_perms = {
+            "dashboard": True, "analytics": False, "devices": False, 
+            "alerts": False, "machine_learning": False, "users": False, "settings": True
+        }
+
+        # <<< Update the roles list to include the permissions object >>>
         roles_to_add = [
-            ('Administrator', 'Full access to all system features.'),
-            ('Technician', 'Manage devices, sensors, and alerts.'),
-            ('Viewer', 'Read-only access to dashboards and reports.'),
-            ('Data Scientist', 'Access to analytics and machine learning models.')
+            ('Administrator', 'Full access to all system features.', admin_perms),
+            ('Technician', 'Manage devices, sensors, and alerts.', technician_perms),
+            ('Data Scientist', 'Access to analytics and machine learning models.', data_scientist_perms),
+            ('Viewer', 'Read-only access to dashboards and reports.', viewer_perms)
         ]
-        cursor.executemany("INSERT OR IGNORE INTO roles (name, permissions) VALUES (?, ?)", roles_to_add)
+
+        # <<< Iterate and insert roles one by one to handle JSON conversion >>>
+        for name, description, permissions in roles_to_add:
+            cursor.execute(
+                "INSERT OR IGNORE INTO roles (name, description, permissions) VALUES (?, ?, ?)",
+                (name, description, json.dumps(permissions))
+            )
 
         default_settings = [
             ('session_timeout', '15'),

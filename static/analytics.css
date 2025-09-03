@@ -816,6 +816,50 @@
     margin-top: 10px;
 }
 
+
+/* --- Styles for Export Preview in Modal --- */
+.export-preview-section {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.export-preview-section h4 {
+    text-align: left;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.export-buttons-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap; /* Allows buttons to stack on smaller screens */
+}
+
+.export-buttons-group .action-button {
+    flex: 1 1 150px; /* Allows buttons to grow and shrink */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #6c757d;
+    color: white;
+    font-weight: 600;
+}
+
+.export-buttons-group .action-button:hover {
+    background-color: #5a6268;
+}
+
+.btn-icon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
 /* --- AI REASONING MODAL STYLES --- */
 
 /* You can reuse the keyframes if it's already in your CSS file.

@@ -133,6 +133,13 @@ body::before {
     border: 1px solid #e74c3c;
 }
 
+/* <<< NEW: Styling for success messages. >>> */
+.flash-message.success {
+    background-color: #eaf7f0;
+    color: #28a745;
+    border: 1px solid #a3d9b8;
+}
+
 /* --- RESPONSIVE ADJUSTMENTS --- */
 @media (max-width: 480px) {
     .login-box {

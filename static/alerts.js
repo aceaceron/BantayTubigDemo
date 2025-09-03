@@ -3,19 +3,6 @@
  * ------------------------------------------------------------------------
  * UNIVERSAL SIDEBAR & HEADER SCRIPT
  * ------------------------------------------------------------------------
- * This section contains the logic for the sidebar navigation menu and
- * the dynamic timestamp, which are present on all pages.
- */
-
-/**
- * Toggles the visibility of the sidebar navigation menu.
- * On smaller screens, it also changes the hamburger icon to an 'X'.
- */
-
-/**
- * ------------------------------------------------------------------------
- * UNIVERSAL SIDEBAR & HEADER SCRIPT
- * ------------------------------------------------------------------------
  */
 function setupGlobalNavigation() {
     const sidebar = document.getElementById('sidebarMenu');
@@ -50,11 +37,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const { showToast, svgSuccess, svgError } = setupToastNotifications();
 
     // --- STATE MANAGEMENT ---
-    let allUsers = []; // Cache for user list to populate forms
-    let allGroups = []; // Cache for group list
-    let allPolicies = []; // Cache for policy list
+    let allUsers = []; 
+    let allGroups = []; 
+    let allPolicies = []; 
     let allThresholds = []; 
-    let alertHistoryData = []; // Cache for all alert history logs
+    let alertHistoryData = []; 
     let historyCurrentPage = 1;
     const historyRowsPerPage = 10;
 
@@ -63,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabContents = document.querySelectorAll('.tab-content');
     tabLinks.forEach(link => {
         link.addEventListener('click', () => {
-            // --- This part handles the visual switching ---
             tabLinks.forEach(l => l.classList.remove('active'));
             tabContents.forEach(c => c.classList.remove('active'));
             link.classList.add('active');
@@ -73,10 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (tabId === 'rules') {
                 loadAlertRules();
             } else if (tabId === 'settings') {
-                // The settings tab contains two tables
                 loadNotificationGroups();
                 loadEscalationPolicies();
-            }  else if (tabId === 'thresholds') { 
+            } else if (tabId === 'thresholds') { 
                 loadThresholds();
             } else if (tabId === 'history') {
                 loadAlertHistory();
@@ -86,6 +71,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- MODAL HANDLING ---
     const { openModal, closeModal } = setupModalHandlers();
+
+    // --- NEW: CONFIRMATION MODAL LOGIC ---
+    const confirmationModalTitle = document.getElementById('confirmationModalTitle');
+    const confirmationModalText = document.getElementById('confirmationModalText');
+    // **FIX 1 of 2**: Changed from const to let to allow reassignment
+    let confirmationConfirmBtn = document.getElementById('confirmationConfirmBtn');
+    const confirmationCancelBtn = document.getElementById('confirmationCancelBtn');
+
+    /**
+     * Shows a confirmation modal and executes a callback if the user confirms.
+     * @param {string} title - The title of the modal.
+     * @param {string} text - The descriptive text in the modal.
+     * @param {function} onConfirm - The function to call if the user clicks "Confirm".
+     */
+    function showConfirmationModal(title, text, onConfirm) {
+        confirmationModalTitle.textContent = title;
+        confirmationModalText.textContent = text;
+        
+        const newConfirmBtn = confirmationConfirmBtn.cloneNode(true);
+        confirmationConfirmBtn.parentNode.replaceChild(newConfirmBtn, confirmationConfirmBtn);
+        
+        // **FIX 2 of 2**: Update the variable to reference the new button
+        confirmationConfirmBtn = newConfirmBtn;
+        
+        confirmationConfirmBtn.addEventListener('click', () => {
+            onConfirm();
+            closeModal('confirmationModal');
+        });
+
+        confirmationCancelBtn.onclick = () => closeModal('confirmationModal');
+        openModal('confirmationModal');
+    }
 
     // --- API HELPER FUNCTION ---
     async function apiFetch(url, options = {}) {
@@ -124,7 +141,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const snoozeRuleIdInput = document.getElementById('snoozeRuleId');
     const snoozeModalTitle = document.getElementById('snoozeModalTitle');
     
-    // --- Rule Creation Constants ---
     const RULE_PARAMETERS = ['Temperature', 'pH', 'TDS', 'Turbidity'];
     const RULE_OPERATORS = ['>', '<', '=', '>=', '<='];
 
@@ -147,8 +163,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const now = new Date();
         rules.forEach(rule => {
             const tr = document.createElement('tr');
-            
-            // Check if the rule is currently snoozed
             const snoozedUntil = rule.snoozed_until ? new Date(rule.snoozed_until) : null;
             const isSnoozed = snoozedUntil && snoozedUntil > now;
 
@@ -178,7 +192,6 @@ document.addEventListener('DOMContentLoaded', function() {
         ruleEscalationPolicySelect.innerHTML = '<option value="">None</option>' + policyOptions;
     }
 
-    // Function to dynamically add a condition row to the UI
     function addConditionRow(condition = {}) {
         const div = document.createElement('div');
         div.className = 'condition-row';
@@ -193,10 +206,6 @@ document.addEventListener('DOMContentLoaded', function() {
         ruleConditionsContainer.appendChild(div);
     }
 
-
-    // --- Rule Modal Event Listeners ---
-
-    // Listener for the "Add New Rule" button
     addNewRuleBtn.addEventListener('click', () => {
         ruleForm.reset();
         ruleIdInput.value = '';
@@ -210,13 +219,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     restoreDefaultRulesBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to restore the default alert rules? Any changes you made to them will be lost.')) {
-            apiFetch('/api/alerts/rules/restore_defaults', { method: 'POST' })
-                .then(() => {
-                    showToast('Default rules have been restored.', svgSuccess);
-                    loadAlertRules();
-                });
-        }
+        showConfirmationModal(
+            'Restore Default Rules?',
+            'Any changes you made to default rules will be lost. This cannot be undone.',
+            () => {
+                apiFetch('/api/alerts/rules/restore_defaults', { method: 'POST' })
+                    .then(() => {
+                        showToast('Default rules have been restored.', svgSuccess);
+                        loadAlertRules();
+                    });
+            }
+        );
     });
     
     addConditionBtn.addEventListener('click', () => addConditionRow());
@@ -249,20 +262,21 @@ document.addEventListener('DOMContentLoaded', function() {
             openModal('ruleModal');
         } 
         else if (target.classList.contains('delete-rule-btn')) {
-            
             if (target.classList.contains('protected-rule-btn')) {
                 showToast('Default rules cannot be deleted.', svgError);
-                return; // Stop the function here
+                return;
             }
-            
-            // If not protected, proceed with the confirmation and deletion.
-            if (confirm('Are you sure you want to delete this rule?')) {
-                apiFetch(`/api/alerts/rules/${ruleId}`, { method: 'DELETE' })
-                    .then(() => {
-                        showToast('Rule deleted successfully.', svgSuccess);
-                        loadAlertRules();
-                    });
-            }
+            showConfirmationModal(
+                'Delete this Rule?',
+                'This action cannot be undone.',
+                () => {
+                    apiFetch(`/api/alerts/rules/${ruleId}`, { method: 'DELETE' })
+                        .then(() => {
+                            showToast('Rule deleted successfully.', svgSuccess);
+                            loadAlertRules();
+                        });
+                }
+            );
         }
         else if (target.classList.contains('snooze-btn')) {
             const ruleId = target.dataset.id;
@@ -320,9 +334,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         showToast('Rule has been snoozed.', svgSuccess);
         closeModal('snoozeModal');
-        loadAlertRules(); // Refresh the table to show the "Snoozed" badge
+        loadAlertRules();
     });
-
 
     // --- NOTIFICATION SETTINGS TAB ---
     const notificationGroupsTableBody = document.querySelector('#notificationGroupsTable tbody');
@@ -404,20 +417,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!path || !Array.isArray(path) || path.length === 0) {
             return 'No path defined.';
         }
-        // The 'allGroups' variable is already loaded by your script
         if (!allGroups || allGroups.length === 0) {
             return 'Loading group names...';
         }
 
         const steps = path.map(step => {
-            // Find the group's name from its ID
             const group = allGroups.find(g => g.id == step.group_id);
             const groupName = group ? group.name : `Unknown Group (ID: ${step.group_id})`;
             
             return `Notify <b>${groupName}</b> & wait ${step.wait_minutes} min`;
         });
 
-        return steps.join(' → '); // Join steps with an arrow
+        return steps.join(' → ');
     }
 
     async function openGroupModalForEdit(groupId) {
@@ -439,7 +450,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // --- Group Modal Logic ---
     addNewGroupBtn.addEventListener('click', () => {
         groupForm.reset();
         groupIdInput.value = '';
@@ -448,7 +458,6 @@ document.addEventListener('DOMContentLoaded', function() {
         openModal('groupModal');
     });
 
-    // Add click listener for the "Add New Policy" button
     addNewPolicyBtn.addEventListener('click', () => {
         document.getElementById('policyForm').reset();
         openModal('policyModal');
@@ -477,7 +486,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch(error) { /* Handled by apiFetch */ }
     });
 
-
     notificationGroupsTableBody.addEventListener('click', async e => {
         const target = e.target;
         const groupId = target.dataset.id;
@@ -490,14 +498,18 @@ document.addEventListener('DOMContentLoaded', function() {
             renderGroupMembersChecklist(allUsers, groupDetails.members);
             openModal('groupModal');
         } else if (target.classList.contains('delete-group-btn')) {
-             if (confirm('Are you sure you want to delete this group?')) {
-                apiFetch(`/api/alerts/groups/${groupId}`, { method: 'DELETE' })
-                    .then(() => {
-                        showToast('Group deleted.', svgSuccess);
-                        loadNotificationGroups();
-                        loadEscalationPolicies(); // Reload in case a policy used this group
-                    });
-            }
+            showConfirmationModal(
+                'Delete this Group?',
+                'This action cannot be undone. Rules using this group will no longer send notifications.',
+                () => {
+                    apiFetch(`/api/alerts/groups/${groupId}`, { method: 'DELETE' })
+                        .then(() => {
+                            showToast('Group deleted.', svgSuccess);
+                            loadNotificationGroups();
+                            loadEscalationPolicies();
+                        });
+                }
+            );
         }
     });
 
@@ -513,9 +525,8 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast(`Group ${groupId ? 'updated' : 'added'} successfully.`, svgSuccess);
         closeModal('groupModal');
         loadNotificationGroups();
-        loadEscalationPolicies(); // A group name might have changed
+        loadEscalationPolicies();
     });
-
 
     function renderGroupMembersChecklist(users, selectedMemberIds = []) {
         groupMembersChecklist.innerHTML = users.map(user => `
@@ -526,13 +537,12 @@ document.addEventListener('DOMContentLoaded', function() {
         `).join('');
     }
 
-    // --- Policy Modal Logic ---
     addNewPolicyBtn.addEventListener('click', () => {
         policyForm.reset();
         policyIdInput.value = '';
         policyModalTitle.textContent = 'Add New Escalation Policy';
-        policyStepsContainer.innerHTML = ''; // Clear previous steps
-        addPolicyStep(); // Add one empty step to start with
+        policyStepsContainer.innerHTML = '';
+        addPolicyStep();
         openModal('policyModal');
     });
 
@@ -549,13 +559,17 @@ document.addEventListener('DOMContentLoaded', function() {
             policy.path.forEach(step => addPolicyStep(step));
             openModal('policyModal');
         } else if (target.classList.contains('delete-policy-btn')) {
-            if (confirm('Are you sure you want to delete this policy?')) {
-                apiFetch(`/api/alerts/policies/${policyId}`, { method: 'DELETE' })
-                    .then(() => {
-                        showToast('Policy deleted.', svgSuccess);
-                        loadEscalationPolicies();
-                    });
-            }
+            showConfirmationModal(
+                'Delete this Policy?',
+                'This action cannot be undone. Rules using this policy will no longer escalate.',
+                () => {
+                    apiFetch(`/api/alerts/policies/${policyId}`, { method: 'DELETE' })
+                        .then(() => {
+                            showToast('Policy deleted.', svgSuccess);
+                            loadEscalationPolicies();
+                        });
+                }
+            );
         }
     });
 
@@ -627,7 +641,6 @@ document.addEventListener('DOMContentLoaded', function() {
         thresholdsTableBody.innerHTML = '';
         thresholds.forEach(t => {
             const tr = document.createElement('tr');
-            // Use ?? to show 'N/A' for null values, which is more user-friendly
             tr.innerHTML = `
                 <td>${t.parameter_name}</td>
                 <td>${t.quality_level} (${t.range_identifier})</td>
@@ -641,18 +654,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Event listener for the restore defaults button
     restoreDefaultThresholdsBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to restore all thresholds to their default values? This cannot be undone.')) {
-            apiFetch('/api/thresholds/restore', { method: 'POST' })
-                .then(() => {
-                    showToast('Default thresholds have been restored.', svgSuccess);
-                    loadThresholds(); // Refresh the table
-                });
-        }
+        showConfirmationModal(
+            'Restore Default Thresholds?',
+            'This will reset all thresholds to their original values. This action cannot be undone.',
+            () => {
+                apiFetch('/api/thresholds/restore', { method: 'POST' })
+                    .then(() => {
+                        showToast('Default thresholds have been restored.', svgSuccess);
+                        loadThresholds();
+                    });
+            }
+        );
     });
 
-    // Event listener for the table (to catch clicks on "Edit" buttons)
     thresholdsTableBody.addEventListener('click', e => {
         if (e.target.classList.contains('edit-threshold-btn')) {
             const thresholdId = e.target.dataset.id;
@@ -667,13 +682,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Event listener for the modal form submission
     thresholdForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const thresholdId = thresholdIdInput.value;
         const thresholdData = {
-            min_value: thresholdMinValueInput.value,
-            max_value: thresholdMaxValueInput.value
+            min_value: thresholdMinValueInput.value || null,
+            max_value: thresholdMaxValueInput.value || null
         };
 
         try {
@@ -684,14 +698,13 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             showToast('Threshold updated successfully.', svgSuccess);
             closeModal('thresholdModal');
-            loadThresholds(); // Refresh the table with new values
+            loadThresholds();
         } catch (error) {
             // Error is already handled by apiFetch
         }
     });
     
     // --- ALERT HISTORY TAB ---
-    // *** Element selectors for filters and pagination ***
     const alertHistoryTableBody = document.querySelector('#alertHistoryTable tbody');
     const historyDateFilter = document.getElementById('historyDateFilter');
     const historyRuleFilter = document.getElementById('historyRuleFilter');
@@ -700,7 +713,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const historyNextPageBtn = document.getElementById('historyNextPageBtn');
     const historyPageInfo = document.getElementById('historyPageInfo');
 
-    // *** Initialize flatpickr on the date filter input ***
     const historyDatePicker = flatpickr(historyDateFilter, {
         mode: "range",
         dateFormat: "Y-m-d",
@@ -712,10 +724,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadAlertHistory() {
         try {
-            // Data is now stored in the global state variable
             alertHistoryData = await apiFetch('/api/alerts/history');
-            historyCurrentPage = 1; // Reset to first page
-            renderFilteredHistory(); // Call the new central rendering function
+            historyCurrentPage = 1;
+            renderFilteredHistory();
         } catch (error) {
             alertHistoryTableBody.innerHTML = `<tr><td colspan="6">Failed to load history.</td></tr>`;
         }
@@ -724,7 +735,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderFilteredHistory() {
         let filteredData = [...alertHistoryData];
 
-        // Apply date range filter from flatpickr
         if (historyDatePicker.selectedDates.length === 2) {
             const startDate = historyDatePicker.selectedDates[0].setHours(0, 0, 0, 0);
             const endDate = historyDatePicker.selectedDates[1].setHours(23, 59, 59, 999);
@@ -734,23 +744,19 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Apply rule name filter
         const ruleFilter = historyRuleFilter.value.toLowerCase();
         if (ruleFilter) {
             filteredData = filteredData.filter(log => log.rule_name.toLowerCase().includes(ruleFilter));
         }
 
-        // Apply status filter
         const statusFilter = historyStatusFilter.value;
         if (statusFilter) {
             filteredData = filteredData.filter(log => log.status === statusFilter);
         }
 
-        // Pass the final filtered data to the table renderer
         renderHistoryTable(filteredData);
     }
 
-    // *** MODIFIED: This function now handles pagination ***
     function renderHistoryTable(history) {
         alertHistoryTableBody.innerHTML = '';
         const start = (historyCurrentPage - 1) * historyRowsPerPage;
@@ -779,7 +785,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHistoryPagination(history.length);
     }
 
-    // *** Function to update pagination controls ***
     function updateHistoryPagination(totalLogs) {
         const totalPages = Math.ceil(totalLogs / historyRowsPerPage) || 1;
         historyPageInfo.textContent = `Page ${historyCurrentPage} of ${totalPages}`;
@@ -787,7 +792,6 @@ document.addEventListener('DOMContentLoaded', function() {
         historyNextPageBtn.disabled = historyCurrentPage >= totalPages;
     }
 
-   // *** Event listeners for filters and pagination buttons ***
     historyRuleFilter.addEventListener('input', () => { historyCurrentPage = 1; renderFilteredHistory(); });
     historyStatusFilter.addEventListener('change', () => { historyCurrentPage = 1; renderFilteredHistory(); });
 
@@ -795,7 +799,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.classList.contains('ack-btn')) {
             apiFetch(`/api/alerts/history/${e.target.dataset.id}/acknowledge`, { method: 'POST' }).then(() => {
                 showToast('Alert acknowledged.', svgSuccess);
-                loadAlertHistory(); // Reload all data after acknowledging
+                loadAlertHistory();
             });
         }
     });
@@ -808,7 +812,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     historyNextPageBtn.addEventListener('click', () => {
-        // The check for disabling the button is now in updateHistoryPagination
         historyCurrentPage++;
         renderFilteredHistory();
     });
@@ -820,19 +823,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     async function loadInitialData() {
-    try {
-        [allUsers, allGroups] = await Promise.all([
-            apiFetch('/api/alerts/users_for_groups'),
-            apiFetch('/api/alerts/groups')
-        ]);
-    } catch (error) {
-        console.error("Failed to load initial data for settings tab.");
+        try {
+            [allUsers, allGroups, allPolicies] = await Promise.all([
+                apiFetch('/api/alerts/users_for_groups'),
+                apiFetch('/api/alerts/groups'),
+                apiFetch('/api/alerts/policies')
+            ]);
+        } catch (error) {
+            console.error("Failed to load initial data for settings tab.");
+        }
+        loadAlertRules();
+        renderGroupsTable(allGroups); 
+        loadEscalationPolicies();
+        loadAlertHistory();
     }
-    loadAlertRules();
-    renderGroupsTable(allGroups); 
-    loadEscalationPolicies();
-    loadAlertHistory();
-}
 
     // --- INITIALIZATION ---
     loadInitialData();
@@ -882,4 +886,48 @@ function setupToastNotifications() {
     };
 
     return { showToast, svgSuccess, svgError };
+}
+
+
+// --- Confirmation Modal Selectors & Logic ---
+const confirmationModal = document.getElementById('confirmationModal');
+const confirmationModalTitle = document.getElementById('confirmationModalTitle');
+const confirmationModalText = document.getElementById('confirmationModalText');
+const closeConfirmationModalBtn = document.getElementById('closeConfirmationModalBtn');
+let confirmationConfirmBtn = document.getElementById('confirmationConfirmBtn'); // Use let to allow reassignment
+const confirmationCancelBtn = document.getElementById('confirmationCancelBtn');
+
+/**
+ * Shows a confirmation modal and executes a callback if the user confirms.
+ * @param {string} title - The title of the modal.
+ * @param {string} text - The descriptive text in the modal.
+ * @param {function} onConfirm - The function to call if the user clicks "Confirm".
+ */
+function showConfirmationModal(title, text, onConfirm) {
+    if (!confirmationModal) {
+        console.error("Confirmation modal not found in HTML. Falling back to default confirm.");
+        // Fallback to the browser's default confirm dialog if the modal doesn't exist
+        if (confirm(`${title}\n${text}`)) {
+            onConfirm();
+        }
+        return;
+    }
+    
+    confirmationModalTitle.textContent = title;
+    confirmationModalText.textContent = text;
+    
+    // Replace the confirm button to remove any old event listeners from previous calls
+    const newConfirmBtn = confirmationConfirmBtn.cloneNode(true);
+    confirmationConfirmBtn.parentNode.replaceChild(newConfirmBtn, confirmationConfirmBtn);
+    confirmationConfirmBtn = newConfirmBtn; // Update the variable to the new button
+    
+    // Add the new listeners
+    confirmationConfirmBtn.addEventListener('click', () => {
+        onConfirm();
+        confirmationModal.style.display = 'none';
+    });
+
+    confirmationCancelBtn.onclick = () => confirmationModal.style.display = 'none';
+    closeConfirmationModalBtn.onclick = () => confirmationModal.style.display = 'none';
+    confirmationModal.style.display = 'flex';
 }

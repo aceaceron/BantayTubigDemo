@@ -35,6 +35,7 @@ from .device_manager import (
     update_sensor_calibration,
 )
 
+
 # --- User, Role & Auth Management ---
 from .user_manager import (
     add_role,
@@ -54,6 +55,7 @@ from .user_manager import (
     hash_password,
     is_user_admin,
     reset_password_for_user,
+    set_new_password_for_user,
     set_user_status,
     update_last_login,
     update_role,

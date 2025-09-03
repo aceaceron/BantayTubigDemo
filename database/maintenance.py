@@ -63,7 +63,8 @@ def get_deletable_data_preview(table_name, retention_days):
 
     # Define valid tables and their relevant columns for preview
     valid_tables = {
-        'measurements': "id, timestamp, water_quality as Details",
+        # **THE FIX:** Changed from specific columns to '*' to select ALL columns for measurements.
+        'measurements': "*",
         'audit_log': "id, timestamp, action || ' on ' || target as Details",
         'device_logs': "id, timestamp, notes as Details"
     }

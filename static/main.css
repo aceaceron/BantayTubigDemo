@@ -437,6 +437,95 @@ h1 {
     bottom: 0;
 }
 
+
+/* This is the wrapper for the disabled select element that will show a tooltip. */
+.disabled-wrapper {
+    position: relative; /* Establishes a positioning context for the tooltip */
+    cursor: not-allowed; /* Shows the 'not-allowed' cursor on hover */
+}
+
+/* The tooltip message box itself. Hidden by default. */
+.disabled-wrapper::after {
+    content: attr(data-tooltip); /* The text comes from a data-tooltip attribute */
+    position: absolute;
+    bottom: 100%; /* Position it above the element */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #343a40; /* Dark background like other tooltips */
+    color: #f8f9fa;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+    width: 300px;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none; /* Prevents the tooltip from interfering with mouse events */
+    margin-bottom: 5px; /* Adds some space between the tooltip and the element */
+}
+
+/* Show the tooltip on hover */
+.disabled-wrapper:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+#confirmationModal {
+    display: none;
+}
+
+/* Scoped styles ONLY for the confirmation modal's body */
+.confirm-modal-content .modal-body {
+    position: relative;
+    padding-left: 70px; 
+    min-height: 40px;
+}
+
+.confirm-modal-content .modal-body::before {
+    content: '⚠️'; 
+    position: absolute;
+    left: 15px;
+    top: 0;
+    font-size: 2.5em; 
+    line-height: 1;
+}
+
+/*
+ Use the modal's ID to make these styles more specific.
+ This ensures they only apply to buttons inside the confirmation modal.
+*/
+
+/* General style for any action button inside the confirmation modal */
+#confirmationModal .action-button {
+    font-weight: 600;
+    border-radius: 20px; /* Example of a specific style */
+    padding: 10px 20px;
+    margin-left: 5px;
+
+}
+
+/* Style for the red 'Confirm' button */
+#confirmationModal .action-button.deactivate {
+    background-color: #c0392b; /* A strong red for confirmation */
+}
+
+#confirmationModal .action-button.deactivate:hover {
+    background-color: #a93226; /* A darker red on hover */
+}
+
+/* Style for the gray 'Cancel' button */
+#confirmationModal .action-button.secondary {
+    background-color: #6c757d; /* Gray */
+    color: white;
+}
+
+#confirmationModal .action-button.secondary:hover {
+    background-color: #5a6268; /* Darker gray on hover */
+}
+
 /* --- RESPONSIVE STYLES --- */
 /* Adjustments for tablet and mobile screens. */
 

@@ -224,73 +224,22 @@
             </div>
         </div>
     </div>
-
-    <!-- // MODAL for DATA CLEANUP CONFIRMATION // -->
-    <!-- <div id="dataCleanupModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content wide-modal">
+    
+    <div id="confirmationModal" class="modal-overlay">
+        <div class="modal-content confirm-modal-content">
             <div class="modal-header">
-                <div class="modal-title-icon-wrapper">
-                    <div class="modal-icon-svg warning-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                            <path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480H40c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24V296c0 13.3 10.7 24 24 24s24-10.7 24-24V184c0-13.3-10.7-24-24-24zm32 224c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="#f39c12"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2>Confirm Data Deletion</h2>
-                    </div>
-                </div>
+                <h2 id="confirmationModalTitle">Are you sure?</h2>
+                <button id="closeConfirmationModalBtn" class="modal-close-btn">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="confirmation-text">
-                    <p class="taglish-warning">
-                        Magde-delete ka ng data na mas luma sa iyong bagong retention policy. <b>Hindi na ito maibabalik.</b>
-                        <span class="english-translation">You are about to delete data older than your new retention policy. <b>This action is irreversible.</b></span>
-                    </p>
-                    <div class="tooltip-container inline">
-                        <span class="tooltip-icon small">?</span>
-                        <div class="tooltip-message">
-                            <p>Ipinapakita nito ang isang preview ng data na permanenteng tatanggalin base sa iyong bagong polisiya.</p>
-                            <p><em>This shows a preview of the data that will be permanently deleted based on your new policy.</em></p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="preview-controls">
-                    <div class="preview-control-group">
-                        <label for="tablePreviewSelect">Preview Data From:</label>
-                        <select id="tablePreviewSelect">
-                            <option value="measurements">Sensor Measurements</option>
-                            <option value="audit_log">Audit Logs</option>
-                            <option value="device_logs">Device Maintenance Logs</option>
-                        </select>
-                    </div>
-                    <input type="text" id="previewSearchInput" class="filter-input" placeholder="Search by ID, Date (YYYY-MM-DD), or Time (e.g., 7:28pm)...">
-                </div>
-                <div class="table-wrapper">
-                    <table id="cleanupPreviewTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th class="sortable" data-column="timestamp">Timestamp <span class="sort-icon"></span></th>
-                                <th class="sortable" data-column="Details">Details <span class="sort-icon"></span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            </tbody>
-                    </table>
-                </div>
-                <div class="pagination-controls" id="previewPagination">
-                    <button id="previewPrevPageBtn" disabled>Previous</button>
-                    <span id="previewPageInfo">Page 1 of 1</span>
-                    <button id="previewNextPageBtn" disabled>Next</button>
-                </div>
-                <div class="form-actions">
-                    <button id="cancelDeleteBtn" class="action-button secondary">Cancel</button>
-                    <button id="confirmDeleteBtn" class="action-button danger">Yes, Delete Old Data</button>
-                </div>
+                <p id="confirmationModalText">This action cannot be undone.</p>
+            </div>
+            <div class="form-actions">
+                <button id="confirmationCancelBtn" class="action-button secondary">Cancel</button>
+                <button id="confirmationConfirmBtn" class="action-button deactivate">Confirm</button>
             </div>
         </div>
-    </div> -->
+    </div>
 
      <!-- // MODAL for TOAST NOTIFICATIONS (SUCCESS/INFO) // -->
     <div id="toastModal" class="toast-modal">

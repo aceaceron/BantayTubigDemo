@@ -1,15 +1,54 @@
 # routes/view_routes.py
-from flask import render_template, Blueprint, redirect, url_for, request, flash, session
-from database import get_user_for_login, verify_password, update_last_login, add_audit_log
+from flask import render_template, Blueprint, redirect, url_for, request, flash, session, get_flashed_messages
+from database import get_user_for_login, verify_password, update_last_login, add_audit_log, get_all_users_with_roles
 from auth.decorators import role_required
+import subprocess
+import platform
 
 view_bp = Blueprint('view_bp', __name__)
 
+
+# --- Helper Function to Check Network Mode ---
+
+def is_on_wifi_client_mode():
+    """
+    Checks if the device is connected to a Wi-Fi network as a client.
+    Returns False if it's in hotspot mode, disconnected, or not on a Linux system.
+    """
+    if platform.system() != "Linux":
+        return False
+
+    HOTSPOT_CONNECTION_NAME = "BantayTubig-Hotspot"
+
+    try:
+        result = subprocess.run(
+            ['nmcli', '-t', '-f', 'NAME,TYPE', 'con', 'show', '--active'],
+            check=True, capture_output=True, text=True, timeout=5
+        )
+        active_connections = result.stdout.strip().split('\n')
+
+        for conn in active_connections:
+            parts = conn.split(':')
+            if len(parts) >= 2:
+                name = parts[0]
+                conn_type = parts[1]
+                if conn_type == '802-11-wireless' and name != HOTSPOT_CONNECTION_NAME:
+                    return True
+        
+        return False
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+    
 # --- Public Routes (No Login Required) ---
 
 @view_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """Handles the login process."""
+    """Handles the login process and the initial admin registration."""
+    
+    if 'user_id' in session:
+        return redirect(url_for('view_bp.index'))
+
+    users_exist = bool(get_all_users_with_roles())
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -40,8 +79,10 @@ def login():
                 details={'reason': 'Invalid credentials'}
             )
             flash('Invalid email or password. Please try again.', 'error')
-            return redirect(url_for('view_bp.login'))
-    return render_template('login.html')
+            return render_template('login.html', users_exist=users_exist)
+    
+    get_flashed_messages()
+    return render_template('login.html', users_exist=users_exist)
 
 @view_bp.route('/logout')
 def logout():
@@ -68,9 +109,17 @@ def unauthorized():
     """Renders the custom 'Access Denied' page."""
     return render_template('unauthorized.html')
 
+
 @view_bp.route('/setup')
 def setup():
-    """Renders the first-time setup page for WiFi."""
+    """
+    Renders the first-time setup page for WiFi.
+    If the device is already connected to a Wi-Fi network, this page is blocked.
+    """
+    if is_on_wifi_client_mode():
+        flash("The device is already connected to a Wi-Fi network. Setup is not available.", "error")
+        return redirect(url_for('view_bp.login'))
+    
     return render_template('setup.html')
 
 # --- Protected Routes (Login Required) ---
@@ -117,3 +166,9 @@ def users():
 def settings():
     # <<< Tell the template that 'settings' is the active page >>>
     return render_template('system_settings.html', active_page='settings')
+
+@view_bp.route('/about')
+@role_required('Administrator', 'Technician', 'Data Scientist', 'Viewer') 
+def about():
+    """Renders the About/Help page."""
+    return render_template('about.html', active_page='about')

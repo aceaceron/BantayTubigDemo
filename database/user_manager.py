@@ -48,7 +48,6 @@ def get_user_for_login(email):
         conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        # <<< FIX: Added u.phone_number to the SELECT query >>>
         cursor.execute("""
             SELECT u.id, u.full_name, u.hashed_password, u.salt, u.phone_number, r.name as role_name
             FROM users u
@@ -75,6 +74,24 @@ def update_last_login(user_id):
         )
         conn.commit()
         conn.close()
+
+def create_first_admin(full_name, email, password, role_id, phone_number):
+    """
+    Creates the first administrator user with a user-provided password.
+    """
+    hashed_pass, salt = hash_password(password) # Hash the provided password
+    
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO users (full_name, email, phone_number, role_id, hashed_password, salt, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')",
+            (full_name, email, phone_number, role_id, hashed_pass, salt)
+        )
+        new_user_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+    return new_user_id
 
 def create_user(full_name, email, password, role_name):
     """
@@ -252,7 +269,14 @@ def get_user_by_id(user_id):
         conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT id, full_name, email, phone_number, role_id, status FROM users WHERE id = ?", (user_id,))
+        
+        cursor.execute("""
+            SELECT u.id, u.full_name, u.email, u.phone_number, u.role_id, u.status, r.name as role_name
+            FROM users u
+            LEFT JOIN roles r ON u.role_id = r.id
+            WHERE u.id = ?
+        """, (user_id,))
+
         row = cursor.fetchone()
         conn.close()
     return dict(row) if row else None
@@ -318,51 +342,71 @@ def create_role(name, permissions):
 
 def get_all_roles():
     """
-    Retrieves all roles from the database.
+    Retrieves all roles from the database, parsing permissions from JSON.
     """
     with DB_LOCK:
         conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT id, name, permissions FROM roles ORDER BY name ASC")
+        cursor.execute("SELECT id, name, description, permissions FROM roles ORDER BY name ASC")
         rows = cursor.fetchall()
         conn.close()
-    return [dict(row) for row in rows]
+    
+    roles = []
+    for row in rows:
+        role_dict = dict(row)
+        try:
+            role_dict['permissions'] = json.loads(role_dict['permissions']) if role_dict['permissions'] else {}
+        except (json.JSONDecodeError, TypeError):
+            role_dict['permissions'] = {} # Default to empty if data is invalid
+        roles.append(role_dict)
+    return roles
 
 def get_role_by_id(role_id):
     """
-    Retrieves a single role by its ID.
+    Retrieves a single role by its ID, parsing permissions from JSON.
     """
     with DB_LOCK:
         conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("SELECT id, name, permissions FROM roles WHERE id = ?", (role_id,))
+        cursor.execute("SELECT id, name, description, permissions FROM roles WHERE id = ?", (role_id,))
         row = cursor.fetchone()
         conn.close()
-    return dict(row) if row else None
+    
+    if not row:
+        return None
+        
+    role_dict = dict(row)
+    try:
+        role_dict['permissions'] = json.loads(role_dict['permissions']) if role_dict['permissions'] else {}
+    except (json.JSONDecodeError, TypeError):
+        role_dict['permissions'] = {}
+    return role_dict
 
-def add_role(name, permissions):
+def add_role(name, description, permissions):
     """
     Adds a new role to the database.
     """
     with DB_LOCK:
         conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO roles (name, permissions) VALUES (?, ?)", (name, permissions))
+        permissions_json = json.dumps(permissions)
+        cursor.execute("INSERT INTO roles (name, description, permissions) VALUES (?, ?, ?)", (name, description, permissions_json))
         conn.commit()
         conn.close()
 
-def update_role(role_id, name, permissions):
+def update_role(role_id, name, description, permissions):
     """
     Updates an existing role's name and permissions.
     """
     with DB_LOCK:
         conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         cursor = conn.cursor()
+        permissions_json = json.dumps(permissions)
         cursor.execute(
-            "UPDATE roles SET name = ?, permissions = ? WHERE id = ?",
-            (name, permissions, role_id)
+            "UPDATE roles SET name = ?, description = ?, permissions = ? WHERE id = ?",
+            (name, description, permissions_json, role_id)
         )
         conn.commit()
         conn.close()

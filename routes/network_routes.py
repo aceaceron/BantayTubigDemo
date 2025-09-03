@@ -13,6 +13,26 @@ def is_linux():
     """Checks if the current operating system is Linux."""
     return platform.system() == "Linux"
 
+def restart_hotspot():
+    """
+    Attempts to restart the NetworkManager hotspot connection after a failed attempt.
+    NOTE: The connection name 'BantayTubig-Hotspot' must match the name 
+    configured in NetworkManager on the device.
+    """
+    try:
+        print("--- WiFi connection failed. Attempting to restart hotspot... ---")
+        # This command reactivates the hotspot connection profile.
+        subprocess.run(
+            ['sudo', 'nmcli', 'con', 'up', 'BantayTubig-Hotspot'],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=15
+        )
+        print("--- Hotspot restarted successfully. ---")
+    except Exception as e:
+        print(f"!!! CRITICAL: FAILED TO RESTART HOTSPOT: {e} !!!")
+
 def parse_nmcli_scan_output(output):
     """
     Parses the reliable, machine-readable (terse) output from nmcli.
@@ -48,8 +68,6 @@ def get_network_status():
             'status': 'connected'
         })
     try:
-        # This command directly asks for the SSID of the active Wi-Fi device.
-        # It's the most reliable way to get the network name.
         result = subprocess.run(
             ['nmcli', '-t', '-f', 'ACTIVE,SSID,DEVICE', 'dev', 'wifi'],
             check=True, capture_output=True, text=True
@@ -60,16 +78,14 @@ def get_network_status():
         wifi_device = None
         for conn in active_connections:
             parts = conn.split(':')
-            # Find the line where the first part is 'yes', indicating the active connection
             if len(parts) >= 3 and parts[0] == 'yes':
-                ssid = parts[1].replace('\\:', ':') # Un-escape colons in the SSID
+                ssid = parts[1].replace('\\:', ':')
                 wifi_device = parts[2]
-                break # Stop after finding the first active Wi-Fi connection
+                break 
 
         if not wifi_device:
             return jsonify({'status': 'disconnected'})
 
-        # Now that we have the correct device, get its IP address
         ip_result = subprocess.run(
             ['nmcli', '-t', '-f', 'IP4.ADDRESS', 'd', 'show', wifi_device],
             check=True, capture_output=True, text=True
@@ -82,7 +98,6 @@ def get_network_status():
             'status': 'connected'
         })
     except Exception:
-        # If any command fails, it's safest to assume disconnection
         return jsonify({'status': 'disconnected'})
 
 @network_bp.route('/system/network/scan', methods=['POST'])
@@ -108,9 +123,10 @@ def scan_wifi_networks():
 
 @network_bp.route('/system/network/connect', methods=['POST'])
 def connect_to_wifi():
-    """Connects to a specified Wi-Fi network."""
+    """Connects to a specified Wi-Fi network and restarts hotspot on failure."""
     if not is_linux():
         return jsonify({'status': 'success', 'message': 'Simulated connection successful.'})
+    
     data = request.get_json()
     ssid = data.get('ssid')
     password = data.get('password')
@@ -120,17 +136,17 @@ def connect_to_wifi():
         command = ['sudo', 'nmcli', 'dev', 'wifi', 'connect', ssid]
         if password:
             command.extend(['password', password])
+        # This will block until the connection succeeds or fails
         result = subprocess.run(command, check=True, capture_output=True, text=True, timeout=30)
-        time.sleep(10)
+        # If the command succeeds, we send a success message. The browser will disconnect.
         return jsonify({'status': 'success', 'message': result.stdout.strip()})
     except subprocess.CalledProcessError as e:
-        error_message = e.stderr.strip()
-        if "Secrets were required" in error_message:
-            error_message = "Connection failed: The password may be incorrect."
-        elif "Error: No network with SSID" in error_message:
-             error_message = "Connection failed: The network is no longer in range."
+        restart_hotspot() # Restart hotspot on failure
+        error_message = "Connection failed: The password may be incorrect."
         return jsonify({'status': 'error', 'message': error_message}), 500
     except subprocess.TimeoutExpired:
+        restart_hotspot() # Restart hotspot on failure
         return jsonify({'status': 'error', 'message': 'Connection timed out.'}), 500
     except Exception as e:
+        restart_hotspot() # Restart hotspot on any other failure
         return jsonify({'status': 'error', 'message': str(e)}), 500

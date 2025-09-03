@@ -50,13 +50,53 @@ function setupSidebar() {
     });
 }
 
+// --- Confirmation Modal Selectors & Logic ---
+const confirmationModal = document.getElementById('confirmationModal');
+const confirmationModalTitle = document.getElementById('confirmationModalTitle');
+const confirmationModalText = document.getElementById('confirmationModalText');
+const closeConfirmationModalBtn = document.getElementById('closeConfirmationModalBtn');
+let confirmationConfirmBtn = document.getElementById('confirmationConfirmBtn'); // Use let to allow reassignment
+const confirmationCancelBtn = document.getElementById('confirmationCancelBtn');
+
+/**
+ * Shows a confirmation modal and executes a callback if the user confirms.
+ * @param {string} title - The title for the modal.
+ * @param {string} text - The descriptive text for the modal.
+ * @param {function} onConfirm - The function to execute if the user clicks "Confirm".
+ */
+function showConfirmationModal(title, text, onConfirm) {
+    if (!confirmationModal) {
+        console.error("Confirmation modal HTML is missing from this page. Falling back to default confirm.");
+        if (confirm(`${title}\n${text}`)) {
+            onConfirm();
+        }
+        return;
+    }
+
+    confirmationModalTitle.textContent = title;
+    confirmationModalText.textContent = text;
+
+    const newConfirmBtn = confirmationConfirmBtn.cloneNode(true);
+    confirmationConfirmBtn.parentNode.replaceChild(newConfirmBtn, confirmationConfirmBtn);
+    confirmationConfirmBtn = newConfirmBtn;
+
+    confirmationConfirmBtn.addEventListener('click', () => {
+        onConfirm();
+        confirmationModal.style.display = 'none';
+    });
+
+    confirmationCancelBtn.onclick = () => confirmationModal.style.display = 'none';
+    closeConfirmationModalBtn.onclick = () => confirmationModal.style.display = 'none';
+    confirmationModal.style.display = 'flex';
+}
+
 /**
  * ------------------------------------------------------------------------
  * DEVICES PAGE SCRIPT
  * ------------------------------------------------------------------------
  * This script handles all functionality for the Device & Sensor Management page.
  */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
 
     // --- GLOBAL STATE & CACHE ---
     let systemDeviceCache = null; // Caches the main device data to avoid repeated API calls.
@@ -68,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Buttons
     const editDeviceBtn = document.getElementById('editDeviceBtn');
     const addLogBtn = document.getElementById('addLogBtn');
-    
+
     // Modals
     const deviceModal = document.getElementById('deviceModal');
     const maintenanceLogModal = document.getElementById('maintenanceLogModal');
@@ -76,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeDeviceModalBtn = document.getElementById('closeDeviceModalBtn');
     const closeLogModalBtn = document.getElementById('closeLogModalBtn');
     const closeCalibrationModalBtn = document.getElementById('closeCalibrationModalBtn');
-    
+
     // Forms
     const deviceForm = document.getElementById('deviceForm');
     const maintenanceLogForm = document.getElementById('maintenanceLogForm');
@@ -280,11 +320,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(logData),
             });
             if (!response.ok) throw new Error('Failed to add log');
-            await fetchSystemDevice(); 
+            await fetchSystemDevice();
 
             showToastModal('Log added successfully!', svgSuccess);
             maintenanceLogModal.style.display = 'none';
-        } catch(error) {
+        } catch (error) {
             console.error("Add log error:", error);
             showToastModal('Error: Could not add the log entry.', svgError, 5000);
         }
@@ -319,19 +359,24 @@ document.addEventListener('DOMContentLoaded', function() {
      * @param {string} sensorType - The sensor to restore.
      */
     async function restoreDefaults(sensorType) {
-        if (!confirm(`Are you sure you want to restore the default calibration for the ${sensorType} sensor? This will delete the current custom calibration.`)) return;
-        try {
-            await fetch('/api/devices/restore_default_calibration', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deviceId: systemDeviceCache.id, sensorType: sensorType })
-            });
-            await fetchSystemDevice(); // Refresh the UI to show the change.
-            showToastModal('Default calibration restored successfully!', svgSuccess);
-        } catch (error) {
-            console.error("Error restoring defaults:", error);
-            showToastModal('Could not restore default calibration. Please try again.', svgError, 5000);
-        }
+        showConfirmationModal(
+            `Restore Default Calibration?`,
+            `Are you sure you want to restore the default calibration for the ${sensorType} sensor? The current custom calibration will be deleted.`,
+            async () => { // The action to perform on confirmation
+                try {
+                    await fetch('/api/devices/restore_default_calibration', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ deviceId: systemDeviceCache.id, sensorType: sensorType })
+                    });
+                    await fetchSystemDevice(); // Refresh the UI to show the change.
+                    showToastModal('Default calibration restored successfully!', svgSuccess);
+                } catch (error) {
+                    console.error("Error restoring defaults:", error);
+                    showToastModal('Could not restore default calibration. Please try again.', svgError, 5000);
+                }
+            }
+        );
     }
 
 
@@ -342,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     async function renderDeviceStatus() {
         if (!systemDeviceCache) return;
-        
+
         // Populate System Details Card
         document.getElementById('deviceIdDisplay').textContent = systemDeviceCache.id;
         document.getElementById('deviceNameDisplay').textContent = systemDeviceCache.name;
@@ -351,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const statusSpan = document.getElementById('deviceStatusDisplay');
         statusSpan.textContent = systemDeviceCache.status;
         statusSpan.className = `status-indicator status-${systemDeviceCache.status.toLowerCase()}`;
-        
+
         // Parse and display location information.
         const locationDisplay = document.getElementById('deviceLocationDisplay');
         try {
@@ -371,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const item = document.createElement('div');
                 item.className = 'sensor-item';
                 const calDate = calibrationDates[sensor.type];
-                
+
                 item.innerHTML = `
                     <div class="sensor-item-header">
                         <h4>${sensor.type}</h4>
@@ -422,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
         deviceIdInput.value = systemDeviceCache.id;
         deviceNameInput.value = systemDeviceCache.name;
         deviceWaterSourceInput.value = systemDeviceCache.water_source;
-        
+
         let savedLocation = {};
         try {
             savedLocation = JSON.parse(systemDeviceCache.location) || {};
@@ -430,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
             savedLocation = { coordinates: systemDeviceCache.location }; // Fallback
         }
         deviceLocationInput.value = savedLocation.coordinates || '';
-        
+
         // Asynchronously load and set location dropdowns.
         await loadProvinces();
         const provinceOption = Array.from(deviceProvinceSelect.options).find(opt => opt.text === savedLocation.province);
@@ -442,13 +487,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 deviceMunicipalitySelect.value = municipalityOption.value;
             }
         }
-        
+
         // Initialize map with saved or default coordinates.
         let [lat, lng] = [14.2834, 122.6885]; // Default location
         if (savedLocation.coordinates && savedLocation.coordinates.includes(',')) {
             [lat, lng] = savedLocation.coordinates.split(',').map(parseFloat);
         }
-        
+
         deviceModal.style.display = 'flex';
         setTimeout(() => showMapInModal(lat, lng), 50); // Delay to ensure modal is visible before map init.
     }
@@ -468,7 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
             attribution: '© OpenStreetMap'
         }).addTo(map);
         marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-        
+
         const updateInput = () => {
             const latLng = marker.getLatLng();
             deviceLocationInput.value = `${latLng.lat.toFixed(6)}, ${latLng.lng.toFixed(6)}`;
@@ -589,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     runCalibrationAnalysis(bufferValue);
                 };
                 break;
-            
+
             case 3: // Final Confirmation
                 body.innerHTML = `
                     <h3>Calibration Complete!</h3>
@@ -633,7 +678,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Average the last half of the readings for stability.
                 const stableReadings = readings.slice(Math.floor(readings.length / 2));
                 const avgVoltage = stableReadings.reduce((a, b) => a + b, 0) / stableReadings.length;
-                
+
                 calibrationWizard.collectedData.push({ buffer: bufferValue, voltage: avgVoltage });
 
                 // ... inside runCalibrationAnalysis function
@@ -665,7 +710,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const selectedProvince = deviceProvinceSelect.options[deviceProvinceSelect.selectedIndex];
         const selectedMunicipality = deviceMunicipalitySelect.options[deviceMunicipalitySelect.selectedIndex];
-        
+
         const locationObject = {
             province: selectedProvince ? selectedProvince.text : "",
             municipality: selectedMunicipality ? selectedMunicipality.text : "",
@@ -679,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function() {
             deviceLocation: JSON.stringify(locationObject),
         });
     }
-    
+
     /** Handles the submission of the "Add Maintenance Log" form. */
     function handleMaintenanceLogSubmit(e) {
         e.preventDefault();
@@ -693,7 +738,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    
+
     // --- EVENT LISTENER SETUP ---
 
     // Modal Open/Close Buttons
@@ -735,7 +780,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const municipalityName = deviceMunicipalitySelect.options[deviceMunicipalitySelect.selectedIndex].text;
         geocodeAndUpdateMap(provinceName, municipalityName);
     });
-    
+
     // Event delegation for buttons inside the dynamically generated sensor list.
     document.getElementById('sensorList').addEventListener('click', (e) => {
         const target = e.target;

@@ -2,8 +2,12 @@
 """
 Handles all API endpoints for data analytics, reporting, and AI/ML features.
 """
-from flask import Blueprint, jsonify, request, abort, session
+from flask import Blueprint, jsonify, request, abort, session, send_file, Response
 from collections import Counter
+import io
+import csv
+import tempfile
+import os
 import sqlite3
 
 # Import shared config and functions
@@ -302,3 +306,91 @@ def run_cleanup_now():
             status='Failure', ip_address=request.remote_addr, details={'error': str(e)}
         )
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@analytics_bp.route('/export-deletable-data', methods=['POST'])
+@role_required('Administrator')
+def export_deletable_data():
+    """Exports data scheduled for deletion into CSV or a new SQLite DB file."""
+    data = request.get_json()
+    days = data.get('retention_days')
+    table_name = data.get('table_name')
+    export_format = data.get('format') # 'csv' or 'db'
+
+    if not all([days, table_name, export_format]):
+        return jsonify({'error': 'retention_days, table_name, and format are required'}), 400
+
+    # Fetch the exact same data the user is previewing
+    records_to_export = get_deletable_data_preview(table_name, int(days))
+
+    if not records_to_export:
+        return jsonify({'error': 'No data to export for the given criteria'}), 404
+
+    # --- CSV EXPORT LOGIC ---
+    if export_format == 'csv':
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=records_to_export[0].keys())
+        writer.writeheader()
+        writer.writerows(records_to_export)
+        
+        return Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={"Content-disposition": f"attachment; filename={table_name}_export.csv"}
+        )
+
+    # --- SQLITE DB EXPORT LOGIC ---
+    elif export_format == 'db':
+        """
+        This revised logic builds the database to a temporary file on disk to ensure it's
+        correctly structured and closed. It then reads this complete file into an
+        in-memory buffer (io.BytesIO) and sends that buffer. This prevents issues
+        where the file might be sent before it's fully written or gets deleted prematurely.
+        """
+        temp_db_path = None
+        try:
+            # 1. Create a temporary file with a unique name to avoid conflicts.
+            fd, temp_db_path = tempfile.mkstemp(suffix=".db")
+            os.close(fd)  # Close the initial file handle.
+
+            # 2. Get the table schema from the main database.
+            main_conn = get_db_connection()
+            schema_query = main_conn.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table_name}'").fetchone()
+            if not schema_query:
+                main_conn.close()
+                return jsonify({'error': f'Could not find schema for table {table_name}'}), 500
+            table_schema = schema_query['sql']
+            main_conn.close()
+
+            # 3. Connect to the new temporary file and populate it.
+            export_conn = sqlite3.connect(temp_db_path)
+            export_cursor = export_conn.cursor()
+            export_cursor.execute(table_schema)  # Create the table.
+
+            keys = records_to_export[0].keys()
+            placeholders = ', '.join(['?'] * len(keys))
+            insert_sql = f"INSERT INTO {table_name} ({', '.join(keys)}) VALUES ({placeholders})"
+            rows_to_insert = [tuple(rec.get(key) for key in keys) for rec in records_to_export]
+            export_cursor.executemany(insert_sql, rows_to_insert)
+            
+            export_conn.commit()
+            export_conn.close()  # CRITICAL: This closes and finalizes the database file.
+
+            # 4. Read the finalized database file into an in-memory byte buffer.
+            with open(temp_db_path, 'rb') as f:
+                db_bytes = f.read()
+
+            # 5. Send the file from the in-memory buffer.
+            return send_file(
+                io.BytesIO(db_bytes),
+                as_attachment=True,
+                download_name=f"{table_name}_export.db",
+                mimetype='application/vnd.sqlite3'  # Using the official MIME type for SQLite
+            )
+
+        finally:
+            # 6. Securely clean up the temporary file from the server's disk.
+            if temp_db_path and os.path.exists(temp_db_path):
+                os.remove(temp_db_path)
+
+    return jsonify({'error': 'Invalid format specified'}), 400

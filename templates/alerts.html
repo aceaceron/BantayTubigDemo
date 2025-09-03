@@ -17,26 +17,15 @@
         Your browser does not support the video tag.
     </video>
 
+    <!-- // UNIVERSAL HEADER & SIDEBAR NAVIGATION // -->
+    <!-- This structure is consistent across all pages. -->
     <div class="header-top-left">
-        <div class="menu-icon">&#9776;</div>
-    </div>
-
-    <div id="sidebarMenu" class="sidebar">
-        <ul class="sidebar-menu">
-            <li><a href="/">DASHBOARD</a></li>
-            <li><a href="/analytics">ANALYTICS & REPORTS</a></li>
-            <li><a href="/devices">DEVICE & SENSOR</a></li>
-            <li><a href="/alerts" class="active">ALERTS & NOTIFICATION</a></li>
-            <li><a href="/machine-learning">MACHINE LEARNING</a></li>
-            <li><a href="/users">USER MANAGEMENT</a></li>
-            <li><a href="/settings">SYSTEM SETTINGS</a></li>
-            <li><a href="#">ABOUT/HELP</a></li>
-        </ul>
-        <div class="sidebar-footer">
-            <span class="footer-title">BantayTubig</span><br>
-            <span class="footer-subtext">Smart Water Quality Monitoring System</span>
+        <div class="menu-icon" onclick="toggleMenu()">
+            &#9776; <!-- Hamburger menu icon -->
         </div>
     </div>
+
+    {% include '_sidebar.html' %}
 
     <div class="header-top-right">
         <h1>Alerts & Notification</h1>
@@ -334,6 +323,22 @@
                         <button type="submit" class="action-button">Save Policy</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="modal-overlay">
+        <div class="modal-content confirm-modal-content">
+            <div class="modal-header">
+                <h2 id="confirmationModalTitle">Are you sure?</h2>
+                <button class="modal-close-btn" data-modal-id="confirmationModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmationModalText">This action cannot be undone.</p>
+            </div>
+            <div class="form-actions">
+                <button id="confirmationCancelBtn" class="action-button secondary">Cancel</button>
+                <button id="confirmationConfirmBtn" class="action-button deactivate">Confirm</button>
             </div>
         </div>
     </div>

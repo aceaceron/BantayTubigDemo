@@ -25,6 +25,46 @@ function setupGlobalNavigation() {
     });
 }
 
+// --- Reusable Confirmation Modal ---
+const confirmationModal = document.getElementById('confirmationModal');
+const confirmationModalTitle = document.getElementById('confirmationModalTitle');
+const confirmationModalText = document.getElementById('confirmationModalText');
+const closeConfirmationModalBtn = document.getElementById('closeConfirmationModalBtn');
+let confirmationConfirmBtn = document.getElementById('confirmationConfirmBtn'); // Use let
+const confirmationCancelBtn = document.getElementById('confirmationCancelBtn');
+
+/**
+ * Shows a confirmation modal and executes a callback if the user confirms.
+ * @param {string} title - The title for the modal.
+ * @param {string} text - The descriptive text for the modal.
+ * @param {function} onConfirm - The function to execute if the user clicks "Confirm".
+ */
+function showConfirmationModal(title, text, onConfirm) {
+    if (!confirmationModal) {
+        console.error("Confirmation modal HTML is missing. Falling back to default confirm.");
+        if (confirm(`${title}\n${text}`)) {
+            onConfirm();
+        }
+        return;
+    }
+    
+    confirmationModalTitle.textContent = title;
+    confirmationModalText.textContent = text;
+    
+    const newConfirmBtn = confirmationConfirmBtn.cloneNode(true);
+    confirmationConfirmBtn.parentNode.replaceChild(newConfirmBtn, confirmationConfirmBtn);
+    confirmationConfirmBtn = newConfirmBtn;
+    
+    confirmationConfirmBtn.addEventListener('click', () => {
+        onConfirm();
+        confirmationModal.style.display = 'none';
+    });
+
+    confirmationCancelBtn.onclick = () => confirmationModal.style.display = 'none';
+    closeConfirmationModalBtn.onclick = () => confirmationModal.style.display = 'none';
+    confirmationModal.style.display = 'flex';
+}
+
 
 document.addEventListener('DOMContentLoaded', function() {
     setupGlobalNavigation();
@@ -69,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const userPrevPageBtn = document.getElementById('userPrevPageBtn');
     const userNextPageBtn = document.getElementById('userNextPageBtn');
     const userPageInfo = document.getElementById('userPageInfo');
+    const userRoleWrapper = document.getElementById('userRoleWrapper');
 
     // --- USER DATA STATE MANAGEMENT ---
     let allUsers = []; 
@@ -95,6 +136,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let auditCurrentPage = 1;
     const auditRowsPerPage = 10;
 
+    // --- Add a constant list of all available pages/permissions ---
+    const AVAILABLE_PERMISSIONS = {
+        'dashboard': 'Dashboard',
+        'analytics': 'Analytics & Reports',
+        'devices': 'Device & Sensor',
+        'alerts': 'Alerts & Notification',
+        'machine_learning': 'Machine Learning',
+        'users': 'User Management',
+        'settings': 'System Settings'
+    };
 
     // --- OTHER MODAL ELEMENTS ---
     const credentialsModal = document.getElementById('newUserCredentialsModal');
@@ -112,7 +163,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const roleForm = document.getElementById('roleForm');
     const roleIdInput = document.getElementById('roleId');
     const roleNameInput = document.getElementById('roleName');
-    const rolePermissionsTextarea = document.getElementById('rolePermissions');
+    const roleDescriptionTextarea = document.getElementById('roleDescription');
+    const rolePermissionsChecklist = document.getElementById('rolePermissionsChecklist');
+    
 
     // --- MODAL FOR PROTECTED ROLES ---
     const protectedRoleModal = document.getElementById('protectedRoleModal');
@@ -172,7 +225,8 @@ document.addEventListener('DOMContentLoaded', function() {
             usersTableBody.innerHTML = '<tr><td colspan="6">Loading users...</td></tr>';
             // Use the robust apiFetch to get the user list.
             const users = await apiFetch('/api/users');
-            renderUsersTable(users);
+            allUsers = users;
+            renderFilteredAndSortedUsers();
         } catch (error) {
             // The apiFetch function already handles the redirect, so this will catch other errors.
             usersTableBody.innerHTML = '<tr><td colspan="6">Failed to load users. Please try again.</td></tr>';
@@ -279,6 +333,11 @@ document.addEventListener('DOMContentLoaded', function() {
         userForm.reset();
         userRoleSelect.disabled = false;
 
+        if (userRoleWrapper) {
+            userRoleWrapper.classList.remove('disabled-wrapper');
+            userRoleWrapper.removeAttribute('data-tooltip');
+        }
+
         if (user) {
             userModalTitle.textContent = 'Edit User';
             userIdInput.value = user.id;
@@ -288,9 +347,15 @@ document.addEventListener('DOMContentLoaded', function() {
             userPhoneNumberInput.value = user.phone_number || '';
             userRoleSelect.value = user.role_id;
 
+            // Count how many users have the 'Administrator' role.
             const adminCount = allUsers.filter(u => u.role_name === 'Administrator').length;
+
+            // If the current user is an admin AND they are the only one, disable the role dropdown.
             if (user.role_name === 'Administrator' && adminCount === 1) {
+                // --- Apply the disabled state and tooltip ---
                 userRoleSelect.disabled = true;
+                userRoleWrapper.classList.add('disabled-wrapper');
+                userRoleWrapper.setAttribute('data-tooltip', 'Hindi maaaring baguhin ang role dahil kailangan ng system ng kahit isang Administrator.\n\nThis role cannot be changed as the system requires at least one Administrator.');
             }
 
         } else {
@@ -298,6 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
             userIdInput.value = '';
             userEmailInput.readOnly = false;
 
+            // This logic correctly handles creating the first-ever user
             if (allUsers.length === 0) {
                 const adminRole = allRoles.find(role => role.name === 'Administrator');
                 if (adminRole) {
@@ -356,9 +422,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 userModal.style.display = 'none';
                 loadUsers();
                 if (result.newUser) {
+                    showToastModal('User added successfully!', svgSuccess);
                     showCredentialsModal(result.newUser, false);
                 }
-            } catch (error) { /* Handled by apiFetch */ }
+            } catch (error) { /* Handled by apiFetch */ 
+            showToastModal(error.message, svgError, 5000);
+            }
         } else { // Updating an existing user
             const url = '/api/users/update';
             try {
@@ -367,45 +436,56 @@ document.addEventListener('DOMContentLoaded', function() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(userData)
                 });
+                showToastModal('User updated successfully!', svgSuccess);
                 userModal.style.display = 'none';
                 loadUsers();
-            } catch (error) { /* Handled by apiFetch */ }
+            }  catch (error) { /* Handled by apiFetch */ 
+            showToastModal(error.message, svgError, 5000);
+            }
         }
     }
 
     async function setUserStatus(userId, currentStatus) {
         const newStatus = currentStatus.toLowerCase() === 'active' ? 'Inactive' : 'Active';
-        if (!confirm(`Are you sure you want to set this user to '${newStatus}'?`)) return;
         
-        await apiFetch('/api/users/set_status', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: userId, status: newStatus })
-        });
-        loadUsers();
+        showConfirmationModal(
+            `Set user to '${newStatus}'?`,
+            `Are you sure you want to change this user's status to ${newStatus}?`,
+            async () => {
+                await apiFetch('/api/users/set_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: userId, status: newStatus })
+                });
+                loadUsers();
+            }
+        );
     }
-
     // --- PASSWORD RESET FUNCTION ---
     async function resetUserPassword(userId) {
-        if (!confirm('Are you sure you want to reset the password for this user? A new temporary password will be generated.')) return;
-        
-        try {
-            const result = await apiFetch('/api/users/reset_password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: userId })
-            });
+        showConfirmationModal(
+            'Reset User Password?',
+            'Are you sure you want to reset the password for this user? A new temporary password will be generated.',
+            async () => {
+                try {
+                    const result = await apiFetch('/api/users/reset_password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: userId })
+                    });
 
-            if (result.resetUser) {
-                showCredentialsModal(result.resetUser, true);
+                    if (result.resetUser) {
+                        showCredentialsModal(result.resetUser, true);
+                    }
+                } catch (error) { /* Handled by apiFetch */ }
             }
-        } catch (error) { /* Handled by apiFetch */ }
+        );
     }
 
     // --- ROLE MANAGEMENT FUNCTIONS ---
     async function loadRoles() {
-        const roles = await apiFetch('/api/roles');
-        renderRolesTable(roles);
+        allRoles = await apiFetch('/api/roles');
+        renderRolesTable(allRoles);
     }
 
     function renderRolesTable(roles) {
@@ -414,9 +494,20 @@ document.addEventListener('DOMContentLoaded', function() {
             rolesTableBody.innerHTML = `<tr><td colspan="3">No roles found.</td></tr>`;
             return;
         }
+
         roles.forEach(role => {
             const tr = document.createElement('tr');
             const isProtected = PROTECTED_ROLES.includes(role.name);
+
+            // << Generate permission badges instead of a simple description >>>
+            let permissionsHtml = Object.entries(role.permissions || {})
+                .filter(([key, value]) => value === true)
+                .map(([key]) => `<span class="permission-badge" data-permission="${key}">${AVAILABLE_PERMISSIONS[key] || key}</span>`)
+                .join(' ');
+
+            if (!permissionsHtml) {
+                permissionsHtml = '<em>No permissions assigned.</em>';
+            }
 
             let actionButtonsHtml;
 
@@ -439,7 +530,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             tr.innerHTML = `
                 <td>${role.name}</td>
-                <td>${role.permissions || ''}</td>
+                <td>${role.description || ''}</td>
+                <td>${permissionsHtml}</td>
                 <td class="action-buttons-cell">${actionButtonsHtml}</td>
             `;
             rolesTableBody.appendChild(tr);
@@ -448,11 +540,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function openRoleModal(role = null) {
         roleForm.reset();
+        rolePermissionsChecklist.innerHTML = ''; // Clear old content
+
+        // <<< Dynamically generate toggle switches instead of checkboxes >>>
+        for (const [key, label] of Object.entries(AVAILABLE_PERMISSIONS)) {
+            // Check permissions correctly from the now-parsed object
+            const isChecked = role ? (role.permissions && role.permissions[key] === true) : false;
+            
+            const toggleHtml = `
+                <div class="permission-toggle">
+                    <span>${label}</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="permission" value="${key}" ${isChecked ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            `;
+            rolePermissionsChecklist.insertAdjacentHTML('beforeend', toggleHtml);
+        }
+
         if (role) { // Editing
             roleModalTitle.textContent = 'Edit Role';
             roleIdInput.value = role.id;
             roleNameInput.value = role.name;
-            rolePermissionsTextarea.value = role.permissions;
+            roleDescriptionTextarea.value = role.description;
         } else { // Adding
             roleModalTitle.textContent = 'Add New Role';
             roleIdInput.value = '';
@@ -462,10 +573,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handleRoleFormSubmit(e) {
         e.preventDefault();
+        // <<< Build a permissions object from the checked boxes >>>
+        const permissions = {};
+        const permissionCheckboxes = rolePermissionsChecklist.querySelectorAll('input[name="permission"]');
+        permissionCheckboxes.forEach(cb => {
+            permissions[cb.value] = cb.checked;
+        });
+
         const roleData = {
             id: roleIdInput.value,
             name: roleNameInput.value,
-            permissions: rolePermissionsTextarea.value
+            description: roleDescriptionTextarea.value,
+            permissions: permissions
         };
         const isNewRole = !roleData.id;
         const url = isNewRole ? '/api/roles/add' : '/api/roles/update';
@@ -483,17 +602,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function deleteRole(roleId) {
-        if (!confirm('Are you sure you want to delete this role? This action cannot be undone.')) return;
-        
-        try {
-            await apiFetch('/api/roles/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: roleId })
-            });
-            loadRoles(); // Refresh the roles table
-            loadRolesForUserForm(); // Also refresh the dropdown in the user form
-        } catch (error) { /* Handled by apiFetch */ }
+        showConfirmationModal(
+            'Delete this Role?',
+            'Are you sure you want to delete this role? This action cannot be undone.',
+            async () => {
+                try {
+                    await apiFetch('/api/roles/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: roleId })
+                    });
+                    loadRoles(); // Refresh the roles table
+                    loadRolesForUserForm(); // Also refresh the dropdown in the user form
+                } catch (error) { /* Handled by apiFetch */ }
+            }
+        );
     }
 
     // --- AUDIT LOG FUNCTIONS ---

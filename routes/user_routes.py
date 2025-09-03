@@ -8,7 +8,7 @@ import secrets
 import time
 from auth.decorators import role_required
 from alerter import send_generic_sms
-from database.user_manager import set_new_password_for_user
+from database.user_manager import set_new_password_for_user, create_first_admin
 
 user_bp = Blueprint('user_bp', __name__)
 
@@ -120,6 +120,16 @@ def api_get_technicians():
     return jsonify(users)
 
 # --- Role Management API (Now Secured) ---
+@user_bp.route('/roles/setup', methods=['GET'])
+def api_get_roles_for_setup():
+    """
+    Publicly fetches roles, but ONLY if no users exist in the database.
+    This is used for the initial administrator setup.
+    """
+    if get_all_users_with_roles():
+        abort(403, "This endpoint is only available for initial setup.")
+    roles = get_all_roles()
+    return jsonify(roles)
 
 @user_bp.route('/roles', methods=['GET'])
 @role_required('Administrator')
@@ -140,18 +150,16 @@ def api_get_role(role_id):
 @user_bp.route('/roles/add', methods=['POST'])
 @role_required('Administrator')
 def api_add_role():
-    """Adds a new user role."""
     data = request.json
-    add_role(data['name'], data.get('permissions', ''))
+    add_role(data['name'], data.get('description', ''), data.get('permissions', {}))
     add_audit_log(user_id=session.get('user_id'), component='Role Management', action='Role Created', target=f"Name: {data['name']}", status='Success', ip_address=request.remote_addr)
     return jsonify({"status": "success", "message": "Role added."})
 
 @user_bp.route('/roles/update', methods=['POST'])
 @role_required('Administrator')
 def api_update_role():
-    """Updates an existing user role."""
     data = request.json
-    update_role(data['id'], data['name'], data.get('permissions', ''))
+    update_role(data['id'], data['name'], data.get('description', ''), data.get('permissions', {}))
     add_audit_log(user_id=session.get('user_id'), component='Role Management', action='Role Updated', target=f"Role ID: {data['id']}", status='Success', ip_address=request.remote_addr)
     return jsonify({"status": "success", "message": "Role updated."})
 
@@ -166,6 +174,62 @@ def api_delete_role():
     delete_role(role_id)
     add_audit_log(user_id=session.get('user_id'), component='Role Management', action='Role Deleted', target=target_name, status='Success', ip_address=request.remote_addr)
     return jsonify({"status": "success", "message": "Role deleted."})
+
+@user_bp.route('/users/setup/create_first_admin', methods=['POST'])
+def api_create_first_admin():
+    """
+    Creates the very first administrator account and logs them in.
+    This endpoint only works if the users table is empty.
+    """
+    if get_all_users_with_roles():
+        abort(403, "Cannot create first admin; user accounts already exist.")
+
+    data = request.json
+    password = data.get('password')
+    if not password:
+        abort(400, "Password is required.")
+    
+    if not all(k in data for k in ['full_name', 'email', 'role_id']):
+        abort(400, "Missing required fields: full_name, email, role_id.")
+
+    try:
+        new_user_id = create_first_admin(
+            data['full_name'], 
+            data['email'], 
+            password,
+            data['role_id'], 
+            data.get('phone_number')
+        )
+        
+        # --- Automatically log the user in by creating a session ---
+        session.clear()
+        session['user_id'] = new_user_id
+        session['user_name'] = data['full_name']
+        session['user_role'] = 'Administrator' 
+
+        add_audit_log(
+            user_id=new_user_id, 
+            component='System Setup', 
+            action='First Admin Created & Logged In', 
+            target=f"Email: {data['email']}", 
+            status='Success', 
+            ip_address=request.remote_addr
+        )
+
+        new_user_info = { "id": new_user_id, "name": data['full_name'], "email": data['email'] }
+        return jsonify({"status": "success", "newUser": new_user_info})
+
+    except Exception as e:
+        add_audit_log(
+            user_id=None, 
+            component='System Setup', 
+            action='First Admin Creation Failed', 
+            target=f"Email: {data.get('email', 'N/A')}", 
+            status='Failure', 
+            ip_address=request.remote_addr, 
+            details={'error': str(e)}
+        )
+        abort(400, f"Error creating first admin: {e}")
 
 
 @user_bp.route('/users/check-admin-status', methods=['POST'])
@@ -244,7 +308,6 @@ def verify_reset_code():
     stored_info['expires'] = time.time() + 300 # Token is valid for 5 minutes
     
     return jsonify({"status": "success", "message": "Verification successful.", "reset_token": reset_token})
-
 
 @user_bp.route('/users/set-new-password', methods=['POST'])
 def set_new_password():

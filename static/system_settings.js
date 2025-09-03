@@ -31,6 +31,46 @@ function setupGlobalNavigation() {
     });
 }
 
+// --- Reusable Confirmation Modal ---
+    const confirmationModal = document.getElementById('confirmationModal');
+    const confirmationModalTitle = document.getElementById('confirmationModalTitle');
+    const confirmationModalText = document.getElementById('confirmationModalText');
+    const closeConfirmationModalBtn = document.getElementById('closeConfirmationModalBtn');
+    let confirmationConfirmBtn = document.getElementById('confirmationConfirmBtn'); // Use let
+    const confirmationCancelBtn = document.getElementById('confirmationCancelBtn');
+
+    /**
+     * Shows a confirmation modal and executes a callback if the user confirms.
+     * @param {string} title - The title for the modal.
+     * @param {string} text - The descriptive text for the modal.
+     * @param {function} onConfirm - The function to execute if the user clicks "Confirm".
+     */
+    function showConfirmationModal(title, text, onConfirm) {
+        if (!confirmationModal) {
+            console.error("Confirmation modal HTML is missing. Falling back to default confirm.");
+            if (confirm(`${title}\n${text}`)) {
+                onConfirm();
+            }
+            return;
+        }
+        
+        confirmationModalTitle.textContent = title;
+        confirmationModalText.textContent = text;
+        
+        const newConfirmBtn = confirmationConfirmBtn.cloneNode(true);
+        confirmationConfirmBtn.parentNode.replaceChild(newConfirmBtn, confirmationConfirmBtn);
+        confirmationConfirmBtn = newConfirmBtn;
+        
+        confirmationConfirmBtn.addEventListener('click', () => {
+            onConfirm();
+            confirmationModal.style.display = 'none';
+        });
+
+        confirmationCancelBtn.onclick = () => confirmationModal.style.display = 'none';
+        closeConfirmationModalBtn.onclick = () => confirmationModal.style.display = 'none';
+        confirmationModal.style.display = 'flex';
+    }
+
 /**
  * ------------------------------------------------------------------------
  * API FETCH HELPER
@@ -351,144 +391,6 @@ function setupSettingsPage() {
         closeWifiModalBtn.addEventListener('click', () => wifiModal.style.display = 'none');
     }
 
-
-    // --- DATA CLEANUP MODAL FUNCTIONS ---
-    // async function openCleanupModal(retentionDays) {
-    //     dataCleanupModal.style.display = 'flex';
-    //     await fetchAndRenderPreview();
-    // }
-    
-    // async function fetchAndRenderPreview() {
-    //     const retentionDays = dataRetentionInput.value;
-    //     const selectedTable = tablePreviewSelect.value;
-        
-    //     try {
-    //         const data = await apiFetch('/api/system/retention-preview', {
-    //             method: 'POST',
-    //             headers: { 'Content-Type': 'application/json' },
-    //             body: JSON.stringify({
-    //                 retention_days: retentionDays,
-    //                 table_name: selectedTable
-    //             })
-    //         });
-    //         previewData.full = data;
-    //         applyPreviewFilters();
-    //     } catch (error) {
-    //         cleanupPreviewTableBody.innerHTML = `<tr><td colspan="3">Error loading preview.</td></tr>`;
-    //     }
-    // }
-
-
-    // function applyPreviewFilters() {
-    //     const searchTerm = previewSearchInput.value.trim().toLowerCase();
-
-    //     if (!searchTerm) {
-    //         previewData.filtered = [...previewData.full];
-    //         renderPreviewTable();
-    //         return;
-    //     }
-
-    //     previewData.filtered = previewData.full.filter(row => {
-    //         const rowTimestamp = new Date(row.timestamp);
-
-    //         // 1. Search by ID (if input is purely a number)
-    //         if (/^\d+$/.test(searchTerm)) {
-    //             return String(row.id).includes(searchTerm);
-    //         }
-
-    //         // 2. Search by Date (if input can be parsed as a valid date, e.g., "2025-08-19")
-    //         const searchDate = new Date(searchTerm);
-    //         if (!isNaN(searchDate.getTime())) {
-    //             return rowTimestamp.getFullYear() === searchDate.getFullYear() &&
-    //                    rowTimestamp.getMonth() === searchDate.getMonth() &&
-    //                    rowTimestamp.getDate() === searchDate.getDate();
-    //         }
-            
-    //         // 3. Search by Time (if input is like "7:28pm", searches for all records on the current day)
-    //         // This allows users to quickly see today's logs without typing the full date.
-    //         if (/^\d{1,2}:\d{2}\s*(am|pm)?$/i.test(searchTerm)) {
-    //             const today = new Date();
-    //             return rowTimestamp.getFullYear() === today.getFullYear() &&
-    //                    rowTimestamp.getMonth() === today.getMonth() &&
-    //                    rowTimestamp.getDate() === today.getDate();
-    //         }
-
-    //         // 4. Fallback to generic text search in details and full timestamp string
-    //         const details = row.Details ? String(row.Details).toLowerCase() : '';
-    //         const timestampString = row.timestamp ? String(row.timestamp).toLowerCase() : '';
-    //         return details.includes(searchTerm) || timestampString.includes(searchTerm);
-    //     });
-
-    //     previewCurrentPage = 1;
-    //     applyPreviewSort(); 
-    //     renderPreviewTable();
-    // }
-
-    // function applyPreviewSort() {
-    //     previewData.filtered.sort((a, b) => {
-    //         const col = previewSort.column;
-    //         const dir = previewSort.direction === 'asc' ? 1 : -1;
-            
-    //         let valA = a[col];
-    //         let valB = b[col];
-
-    //         if (col === 'timestamp') {
-    //             valA = valA ? new Date(valA).getTime() : 0;
-    //             valB = valB ? new Date(valB).getTime() : 0;
-    //         } else {
-    //             valA = valA ? String(valA).toLowerCase() : '';
-    //             valB = valB ? String(valB).toLowerCase() : '';
-    //         }
-
-    //         if (valA < valB) return -1 * dir;
-    //         if (valA > valB) return 1 * dir;
-    //         return 0;
-    //     });
-    //     updatePreviewSortIcons();
-    // }
-
-    // function renderPreviewTable() {
-    //     cleanupPreviewTableBody.innerHTML = '';
-    //     const start = (previewCurrentPage - 1) * previewRowsPerPage;
-    //     const end = start + previewRowsPerPage;
-    //     const paginatedData = previewData.filtered.slice(start, end);
-
-    //     if (paginatedData.length === 0) {
-    //         cleanupPreviewTableBody.innerHTML = `<tr><td colspan="3">No data matching the criteria will be deleted.</td></tr>`;
-    //     } else {
-    //         paginatedData.forEach(row => {
-    //             const tr = document.createElement('tr');
-    //             tr.innerHTML = `
-    //                 <td>${row.id}</td>
-    //                 <td>${new Date(row.timestamp).toLocaleString()}</td>
-    //                 <td>${row.Details || 'N/A'}</td>
-    //             `;
-    //             cleanupPreviewTableBody.appendChild(tr);
-    //         });
-    //     }
-    //     updatePreviewPagination();
-    // }
-
-    // function updatePreviewSortIcons() {
-    //     previewSortableHeaders.forEach(th => {
-    //         const icon = th.querySelector('.sort-icon');
-    //         if (th.dataset.column === previewSort.column) {
-    //             icon.textContent = previewSort.direction === 'asc' ? ' ▲' : ' ▼';
-    //         } else {
-    //             icon.textContent = '';
-    //         }
-    //     });
-    // }
-
-    // function updatePreviewPagination() {
-    //     const totalRows = previewData.filtered.length;
-    //     const totalPages = Math.ceil(totalRows / previewRowsPerPage) || 1;
-    //     previewPageInfo.textContent = `Page ${previewCurrentPage} of ${totalPages}`;
-    //     previewPrevPageBtn.disabled = previewCurrentPage === 1;
-    //     previewNextPageBtn.disabled = previewCurrentPage >= totalPages;
-    // }
-
-
     // --- TOAST MODAL FUNCTION ---
     function showToastModal(message, icon, duration = 3000) {
         if (!toastModal) return; // Exit if modal isn't on the page
@@ -545,22 +447,21 @@ function setupSettingsPage() {
     // Handles the device shutdown process.
     if (powerOffBtn) {
         powerOffBtn.addEventListener('click', () => {
-            // Asks the user for confirmation before proceeding.
-            if (!confirm("Are you sure you want to shut down the system? It will become unresponsive in a few seconds.")) {
-                return;
-            }
+            showConfirmationModal(
+                'Shut Down System?',
+                'The device will power off and the application will become unresponsive. This action requires a physical restart.',
+                () => { // This function runs only if the user clicks "Confirm"
+                    powerOffBtn.disabled = true;
+                    if (saveBtn) saveBtn.disabled = true;
 
-            powerOffBtn.disabled = true;
-            if (saveBtn) saveBtn.disabled = true;
+                    showToastModal('System will power off shortly.', svgPower, 10000);
 
-            showToastModal('System will power off shortly.', svgPower, 10000);
-
-            // Sends the shutdown command to the server.
-            fetch('/api/system/power-off', { method: 'POST' })
-                .catch(error => {
-                    // A network error is expected because the server is stopping.
-                    console.log("Shutdown initiated. Server connection lost as expected.");
-                });
+                    fetch('/api/system/power-off', { method: 'POST' })
+                        .catch(error => {
+                            console.log("Shutdown initiated. Server connection lost as expected.");
+                        });
+                }
+            );
         });
     }
 

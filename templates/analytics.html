@@ -345,14 +345,9 @@
                     <input type="text" id="previewSearchInput" class="filter-input" placeholder="Search by ID, Date (YYYY-MM-DD), or Time (e.g., 7:28pm)...">
                 </div>
                 <div class="table-wrapper">
-                    <table id="cleanupPreviewTable">
+                   <table id="cleanupPreviewTable">
                         <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th class="sortable" data-column="timestamp">Timestamp <span class="sort-icon"></span></th>
-                                <th class="sortable" data-column="Details">Details <span class="sort-icon"></span></th>
-                            </tr>
-                        </thead>
+                            </thead>
                         <tbody>
                             </tbody>
                     </table>
@@ -362,6 +357,25 @@
                     <span id="previewPageInfo">Page 1 of 1</span>
                     <button id="previewNextPageBtn" disabled>Next</button>
                 </div>
+                
+                <div class="export-preview-section">
+                    <h4>Export Data Before Deleting:</h4>
+                    <div class="export-buttons-group">
+                        <button id="exportPreviewPdfBtn" class="action-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="btn-icon"><path d="M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 64zM128 256a32 32 0 1 1 0 64 32 32 0 1 1 0-64zm82.3-6.7c-9.5-8.4-22.2-13.3-35.8-13.3H128c-35.3 0-64 28.7-64 64s28.7 64 64 64h48.5c13.6 0 26.3-4.9 35.8-13.3l85.5-75.1c4.6-4 7.2-9.5 7.2-15.3s-2.6-11.3-7.2-15.3l-85.5-75.1z"/></svg>
+                            Export as PDF
+                        </button>
+                        <button id="exportPreviewCsvBtn" class="action-button">
+                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="btn-icon"><path d="M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 64zM128 256a32 32 0 1 1 0 64 32 32 0 1 1 0-64zm82.3-6.7c-9.5-8.4-22.2-13.3-35.8-13.3H128c-35.3 0-64 28.7-64 64s28.7 64 64 64h48.5c13.6 0 26.3-4.9 35.8-13.3l85.5-75.1c4.6-4 7.2-9.5 7.2-15.3s-2.6-11.3-7.2-15.3l-85.5-75.1z"/></svg>
+                            Export as CSV
+                        </button>
+                        <button id="exportPreviewDbBtn" class="action-button">
+                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="btn-icon"><path d="M448 80v48c0 44.2-100.3 80-224 80S0 172.2 0 128V80C0 35.8 100.3 0 224 0S448 35.8 448 80zM393.2 214.7c20.8-7.4 39.9-16.9 54.8-28.6V288c0 44.2-100.3 80-224 80S0 332.2 0 288V186.1c14.9 11.8 34 21.2 54.8 28.6C99.1 229.3 157.1 240 224 240s124.9-10.7 169.2-25.3zM448 368v48c0 44.2-100.3 80-224 80S0 460.2 0 416V368c0-15.8 6.5-30.6 17.7-41.1C62.1 338.4 135.4 352 224 352s161.9-13.6 206.3-25.1c11.2 10.5 17.7 25.3 17.7 41.1z"/></svg>
+                            Export as .db
+                        </button>
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <button id="cancelDeleteBtn" class="action-button secondary">Cancel</button>
                     <button id="confirmDeleteBtn" class="action-button danger">Yes, Delete Old Data</button>
@@ -370,6 +384,21 @@
         </div>
     </div>
 
+    <div id="confirmationModal" class="modal-overlay">
+        <div class="modal-content confirm-modal-content">
+            <div class="modal-header">
+                <h2 id="confirmationModalTitle">Are you sure?</h2>
+                <button id="closeConfirmationModalBtn" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmationModalText">This action cannot be undone.</p>
+            </div>
+            <div class="form-actions">
+                <button id="confirmationCancelBtn" class="action-button secondary">Cancel</button>
+                <button id="confirmationConfirmBtn" class="action-button deactivate">Confirm</button>
+            </div>
+        </div>
+    </div>
 
     <!-- // MODAL for TOAST NOTIFICATIONS (SUCCESS/INFO) // -->
     <div id="toastModal" class="toast-modal">
