@@ -1,10 +1,48 @@
 # alerter.py
-import serial
+# alerter.py
 import time
-import RPi.GPIO as GPIO
 import threading
 import queue
 import json
+
+# --- Serial (mock if not available) ---
+try:
+    import serial
+    SerialBase = serial.Serial
+except ImportError:
+    class MockSerial:
+        def __init__(self, *args, **kwargs):
+            print("[MOCK SERIAL] Initialized with", args, kwargs)
+            self.is_open = True
+            self.in_waiting = 0
+
+        def flushInput(self): print("[MOCK SERIAL] flushInput()")
+        def flushOutput(self): print("[MOCK SERIAL] flushOutput()")
+        def write(self, data): print(f"[MOCK SERIAL] write: {data}")
+        def read(self, size=1): return b""  # Always returns empty
+        def close(self): print("[MOCK SERIAL] close()"); self.is_open = False
+
+    class serial:  # create a dummy serial namespace
+        Serial = MockSerial
+
+# --- GPIO (mock if not available) ---
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    class MockGPIO:
+        BCM = "BCM"
+        OUT = "OUT"
+        HIGH = 1
+        LOW = 0
+
+        def setwarnings(self, flag): print("[MOCK GPIO] setwarnings:", flag)
+        def setmode(self, mode): print("[MOCK GPIO] setmode:", mode)
+        def setup(self, pin, mode): print(f"[MOCK GPIO] setup pin {pin} mode {mode}")
+        def output(self, pin, state): print(f"[MOCK GPIO] output pin {pin} state {state}")
+        def cleanup(self): print("[MOCK GPIO] cleanup")
+
+    GPIO = MockGPIO()
+
 
 # Import only the necessary database functions
 from database import (
