@@ -55,7 +55,12 @@ from config import DEVICE_ID
 from extensions import socketio
 
 # Load thresholds from the DB once when the alerter starts up.
-THRESHOLDS = get_all_thresholds_as_dict()
+def get_thresholds_safe():
+    try:
+        return get_all_thresholds_as_dict()
+    except Exception as e:
+        print(f"[ALERTER] Could not load thresholds yet: {e}")
+        return {}
 
 # --- CONFIGURATION & STATE ---
 SERIAL_PORT = "/dev/ttyS0"  
