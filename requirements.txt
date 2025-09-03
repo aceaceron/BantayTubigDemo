@@ -55,7 +55,7 @@ pgzero==1.2
 pidng==4.0.9
 piexif==1.1.3
 pigpio==1.78
-Pillow==9.4.0
+Pillow==10.2.0
 platformdirs==2.6.0
 psutil==5.9.4
 ptyprocess==0.7.0
