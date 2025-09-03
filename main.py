@@ -47,11 +47,6 @@ print("Initializing and verifying database schema...")
 create_tables()
 print("Database setup complete.")
 
-# Run the function immediately to ensure all tables exist
-print("Initializing and verifying database schema...")
-create_tables()
-print("Database setup complete.")
-
 # === Step 2: Define the main application logic in its own function ===
 def run_monitoring_app():
     import json
