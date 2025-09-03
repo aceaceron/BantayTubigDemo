@@ -42,8 +42,10 @@ app.wsgi_app = BrokenPipeErrorHandler(app.wsgi_app)
 
 show_startup_banner()
 
-# Import the function that creates the tables
 from database.setup import create_tables
+print("Initializing and verifying database schema...")
+create_tables()
+print("Database setup complete.")
 
 # Run the function immediately to ensure all tables exist
 print("Initializing and verifying database schema...")
