@@ -51,10 +51,8 @@ oauthlib==3.2.2
 olefile==0.46
 parso==0.8.3
 pexpect==4.8.0
-pgzero==1.2
 pidng==4.0.9
 piexif==1.1.3
-pigpio==1.78
 platformdirs==2.6.0
 psutil==5.9.4
 ptyprocess==0.7.0
