@@ -1,7 +1,21 @@
 # lcd_display.py
-from RPLCD.i2c import CharLCD
 import time
 import threading
+# --- LCD Import with Mock ---
+try:
+    from RPLCD.i2c import CharLCD
+except ImportError:
+    class MockLCD:
+        def __init__(self, *args, **kwargs):
+            print("[MOCK LCD] Initialized with", args, kwargs)
+        def clear(self): print("[MOCK LCD] clear()")
+        def write_string(self, s): print(f"[MOCK LCD] write_string: {s}")
+        @property
+        def cursor_pos(self): return (0, 0)
+        @cursor_pos.setter
+        def cursor_pos(self, pos): print(f"[MOCK LCD] cursor_pos set to {pos}")
+    CharLCD = MockLCD
+
 
 # ================== CONFIG ==================
 _LCD_WIDTH = 20
