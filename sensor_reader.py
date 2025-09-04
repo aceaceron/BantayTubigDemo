@@ -1,4 +1,3 @@
-# sensor_reader.py
 import os
 import random
 import time
@@ -25,75 +24,45 @@ else:
     print("SPI not available. Running in mock mode.")
 
 # --- Mock Sensor Generators ---
+def _mock_voltage(sensor="generic"):
+    """Return a mock voltage (0–3.3V full range)."""
+    return round(random.uniform(0.0, 3.3), 3)
+
 def _mock_value(sensor="generic"):
-    if sensor == "temp":
-        return round(25 + random.uniform(-2, 2), 2)         # °C
-    if sensor == "ph":
-        return round(7 + random.uniform(-0.5, 0.5), 2)      # pH scale
-    if sensor == "tds":
-        return round(300 + random.uniform(-50, 50), 0)      # ppm
-    if sensor == "turbidity":
-        return round(2 + random.uniform(-0.5, 0.5), 2)      # NTU
+    """Return a mock processed value with wide ranges."""
+    if sensor == "temp": 
+        return round(random.uniform(-10, 50), 2)   # -10°C to 50°C
+    if sensor == "ph": 
+        return round(random.uniform(0, 14), 2)     # Full pH scale
+    if sensor == "tds": 
+        return round(random.uniform(0, 2000), 0)   # 0 to 2000 ppm
+    if sensor == "turbidity": 
+        return round(random.uniform(0, 100), 2)    # 0 to 100 NTU
     return 0.0
 
-# --- Reading Functions ---
+# --- Reading Functions (return voltage + value) ---
 def read_temp():
-    """Return temperature in Celsius."""
     if not spi:
-        return _mock_value("temp")
-    # TODO: Replace with actual ADC read from sensor
-    return 25.0
+        return _mock_voltage("temp"), _mock_value("temp")
+    # Replace with real ADC reading
+    return 0.75, 25.0
 
 def read_ph():
-    """Return pH value."""
     if not spi:
-        return _mock_value("ph")
-    # TODO: Replace with actual ADC read
-    return 7.0
+        return _mock_voltage("ph"), _mock_value("ph")
+    return 2.8, 7.0
 
 def read_tds():
-    """Return TDS in ppm."""
     if not spi:
-        return _mock_value("tds")
-    # TODO: Replace with actual ADC read
-    return 300.0
+        return _mock_voltage("tds"), _mock_value("tds")
+    return 1.8, 300.0
 
 def read_turbidity():
-    """Return turbidity in NTU."""
     if not spi:
-        return _mock_value("turbidity")
-    # TODO: Replace with actual ADC read
-    return 2.0
-
-# --- Graceful Shutdown ---
-def close_spi():
-    """Close SPI connection if opened."""
-    global spi
-    if spi:
-        try:
-            spi.close()
-            print("SPI connection closed.")
-        except Exception as e:
-            print(f"Error closing SPI: {e}")
-        spi = None
-
-
-def calculate_ph(voltage):
-    return float(voltage)
-
-def read_tds():
-    return _mock_value("tds") if not spi else 300.0  # Replace with real ADC read
-
-def calculate_tds(voltage):
-    return float(voltage)
-
-def read_turbidity():
-    return _mock_value("turbidity") if not spi else 2.0  # Replace with real ADC read
-
-def calculate_turbidity(voltage):
-    return float(voltage)
+        return _mock_voltage("turbidity"), _mock_value("turbidity")
+    return 3.0, 2.0
 
 def close_spi():
     if spi:
         spi.close()
-        print("SPI connection closed.")
+        print("SPI closed.")
