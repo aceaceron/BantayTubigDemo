@@ -11,6 +11,9 @@ import paho.mqtt.client as mqtt
 import network_manager
 import os
 
+# Detect if running in Render (they set RENDER environment variables)
+CLOUD_MODE = os.getenv("RENDER", "false").lower() == "true"
+
 # Prioritize importing the LCD module.
 from lcd_display import (
     show_startup_banner, start_status, update_status, stop_status,
@@ -267,30 +270,18 @@ def run_monitoring_app():
 
 # === Step 3: Entry point ===
 if __name__ == "__main__":
-    def run_flask_server():
-        print("Starting Flask-SocketIO server in a background thread...")
-        socketio.run(app, host='0.0.0.0', port=5000, debug=False, log_output=True)
+    start_status("Initializing...")
+    time.sleep(2)
 
-    server_thread = threading.Thread(target=run_flask_server, daemon=True)
-    server_thread.start()
-    time.sleep(3)
-
-    if not network_manager.check_wifi_connection():
-        print("No WiFi connection. Entering setup mode.")
-        stop_status("WiFi Setup Mode")
-        time.sleep(1)
-        if network_manager.start_hotspot():
-            display_hotspot_credentials(network_manager.HOTSPOT_SSID, network_manager.HOTSPOT_PASS)
-            while not network_manager.check_wifi_connection():
-                if network_manager.is_client_connected():
-                    display_config_instructions("10.42.0.1")
-                else:
-                    display_hotspot_credentials(network_manager.HOTSPOT_SSID, network_manager.HOTSPOT_PASS)
-                time.sleep(5)
-            stop_status("WiFi Connected!")
-            network_manager.stop_hotspot()
-        else:
-            stop_status("Hotspot Failed!")
-            sys.exit(1)
-
-    run_monitoring_app()
+    if CLOUD_MODE:
+        print("Running in CLOUD MODE (Render). Skipping WiFi setup...")
+        port = int(os.getenv("PORT", 5000))
+        server_thread = threading.Thread(
+            target=lambda: socketio.run(app, host="0.0.0.0", port=port), daemon=True
+        )
+        server_thread.start()
+        run_monitoring_app()
+    else:
+        # Your existing WiFi/hotspot setup flow
+        update_status("Checking Network...")
+        time.sleep(2)
