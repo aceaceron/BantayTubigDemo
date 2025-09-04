@@ -357,10 +357,17 @@ def create_tables():
 
         cursor.execute("""
             INSERT OR IGNORE INTO devices (id, name, location, water_source, firmware, status, sensors)
-            VALUES ('dev-1', 'Default Device', '{"coordinates":"14.156453,122.827182"}',
-                    'Water Service Provider', '1.0', 'Active', '["temp","ph","tds","turbidity"]')
+            VALUES (
+                'dev-1',
+                'BantayTubig',
+                '{"coordinates": "14.156453,122.827182", "municipality": "Labo", "province": "Camarines Norte"}',
+                'Water Service Provider',
+                '1.0',
+                'Active',
+                '["temp","ph","tds","turbidity"]'
+            )
         """)
-
         
+
         conn.commit()
         conn.close()
