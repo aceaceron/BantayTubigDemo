@@ -291,11 +291,21 @@ def stop_buzzer():
     global current_buzzer_thread
     if current_buzzer_thread and current_buzzer_thread.is_alive():
         stop_buzzer_flag.set()
-        current_buzzer_thread.join(timeout=1.0)
+        try:
+            # Skip blocking join in eventlet mode
+            import eventlet
+            if eventlet.patcher.is_monkey_patched('thread'):
+                print("[BUZZER] Skipping join under eventlet.")
+            else:
+                current_buzzer_thread.join(timeout=1.0)
+        except Exception as e:
+            print(f"[BUZZER] Error stopping thread: {e}")
     try:
         GPIO.output(BUZZER_PIN, GPIO.LOW)
-    except: pass
+    except:
+        pass
     current_buzzer_thread = None
+
 
 # --- ALERT MANAGER (FULL LIFECYCLE) ---
 def _format_conditions(conditions):
