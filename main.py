@@ -140,16 +140,20 @@ def run_monitoring_app():
     train_decision_tree()
 
     update_status("Initializing alerter")
-    if not alerter.setup_serial():
-        update_status("SIM module ERROR")
+    if CLOUD_MODE:
+        print("Cloud mode: Skipping SIM/GPIO setup...")
     else:
-        update_status("SIM module ready")
-    if not alerter.setup_gpio():
-        update_status("Buzzer ERROR")
-    else:
-        update_status("Buzzer ready")
+        if not alerter.setup_serial():
+            update_status("SIM module ERROR")
+        else:
+            update_status("SIM module ready")
+        if not alerter.setup_gpio():
+            update_status("Buzzer ERROR")
+        else:
+            update_status("Buzzer ready")
     alerter.start_sms_worker()
     update_status("SMS worker started")
+
 
     stop_status("BantayTubig Running")
     time.sleep(1)
