@@ -354,6 +354,13 @@ def create_tables():
             (name, conditions, notification_group_id, enabled, is_default, activate_buzzer, buzzer_duration_seconds, buzzer_mode) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, default_alert_rules)
+
+        cursor.execute("""
+            INSERT OR IGNORE INTO devices (id, name, location, water_source, firmware, status, sensors)
+            VALUES ('dev-1', 'Default Device', '{"coordinates":"14.156453,122.827182"}',
+                    'Water Service Provider', '1.0', 'Active', '["temp","ph","tds","turbidity"]')
+        """)
+
         
         conn.commit()
         conn.close()
