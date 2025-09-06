@@ -275,3 +275,162 @@ def get_thresholds_for_dashboard():
                     threshold_map['TEMP_AVERAGE_MAX'] = row['max_value']
 
     return threshold_map
+
+def get_recent_timeseries_data(days=None, hours=None, end_time=None, resample_freq=None, as_dataframe=False):
+    """
+    Fetches recent time-series data from the measurements table.
+    
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        
+        # Determine the time window for the query
+        if end_time is None:
+            end_time = datetime.now()
+        # Ensure end_time is a datetime object before doing calculations
+        elif isinstance(end_time, str):
+            end_time = datetime.fromisoformat(end_time)
+        # -----------------------
+        
+        if hours:
+            start_time = end_time - timedelta(hours=hours)
+        elif days:
+            start_time = end_time - timedelta(days=days)
+        else:
+            start_time = end_time - timedelta(days=1)
+
+        query = "SELECT timestamp, temperature, ph, tds, turbidity FROM measurements WHERE timestamp BETWEEN ? AND ? ORDER BY timestamp ASC"
+        
+        if as_dataframe:
+            df = pd.read_sql_query(query, conn, params=(start_time, end_time))
+            if resample_freq and not df.empty:
+                df['timestamp'] = pd.to_datetime(df['timestamp'])
+                df = df.set_index('timestamp').resample(resample_freq).mean().interpolate(method='time').reset_index()
+            return df
+        else:
+            cursor = conn.cursor()
+            cursor.execute(query, (start_time, end_time))
+            return cursor.fetchall()
+            
+    except sqlite3.Error as e:
+        print(f"Database error in get_recent_timeseries_data: {e}")
+        return pd.DataFrame() if as_dataframe else []
+    finally:
+        if conn:
+            conn.close()
+
+def get_environmental_context_for_anomaly(anomaly_timestamp):
+    """
+    Finds the closest environmental context reading to a given anomaly timestamp.
+    
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row 
+        cursor = conn.cursor()
+
+        # This query now JOINS the tables to order by the correct timestamp
+        query = """
+            SELECT ec.rainfall_mm, ec.air_temp_c
+            FROM environmental_context AS ec
+            JOIN measurements AS m ON ec.measurement_id = m.id
+            ORDER BY ABS(strftime('%s', m.timestamp) - strftime('%s', ?))
+            LIMIT 1
+        """
+        
+        cursor.execute(query, (anomaly_timestamp,))
+        result = cursor.fetchone()
+
+        return dict(result) if result else {}
+
+    except sqlite3.Error as e:
+        print(f"Database error in get_environmental_context_for_anomaly: {e}")
+        return {}
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_annotated_anomalies():
+    """
+    Fetches a history of all anomalies that have been annotated.
+    
+    It joins the anomalies, annotations, and users tables to create a
+    comprehensive log entry for each reviewed event.
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row 
+        cursor = conn.cursor()
+
+        # This query JOINS the three relevant tables to get all necessary info
+        query = """
+            SELECT
+                anom.id,
+                anom.timestamp,
+                anom.parameter,
+                anom.value,
+                anom.anomaly_type,
+                ann.label,
+                ann.comments,
+                ann.timestamp as annotated_at,
+                usr.full_name as annotated_by
+            FROM ml_anomalies AS anom
+            JOIN ml_annotations AS ann ON anom.id = ann.anomaly_id
+            JOIN users AS usr ON ann.user_id = usr.id
+            WHERE anom.is_annotated = 1
+            ORDER BY ann.timestamp DESC
+        """
+        
+        cursor.execute(query)
+        results = cursor.fetchall()
+        # Convert list of Row objects to list of dictionaries
+        return [dict(row) for row in results]
+
+    except sqlite3.Error as e:
+        print(f"Database error in get_annotated_anomalies: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def save_annotation(anomaly_id, user_id, label, comments):
+    """
+    Saves a user's annotation feedback to the database.
+
+    This function performs two critical steps:
+    1. Inserts the feedback (label, comments) into the 'ml_annotations' table.
+    2. Updates the original anomaly in the 'ml_anomalies' table to mark it
+       as 'is_annotated', which removes it from the pending queue and makes
+       it appear in the history.
+    """
+    with DB_LOCK:
+        conn = None
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            
+            # Step 1: Insert the new annotation record
+            cursor.execute("""
+                INSERT INTO ml_annotations (anomaly_id, user_id, label, comments, timestamp)
+                VALUES (?, ?, ?, ?, ?)
+            """, (anomaly_id, user_id, label, comments, datetime.now()))
+            
+            # Step 2: Update the original anomaly's status
+            cursor.execute("""
+                UPDATE ml_anomalies
+                SET is_annotated = 1
+                WHERE id = ?
+            """, (anomaly_id,))
+            
+            conn.commit()
+            print(f"Successfully saved annotation for anomaly_id: {anomaly_id}")
+
+        except sqlite3.Error as e:
+            print(f"Database error in save_annotation: {e}")
+        finally:
+            if conn:
+                conn.close()
