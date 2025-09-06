@@ -1,103 +1,142 @@
-# ml_models/llm_insights.py
-import os
-import google.generativeai as genai
-import json
-import textwrap
+# ml_models/forecasting.py
 
-# --- LLM Configuration ---
-LLM_ENABLED = False
-llm_model = None
+# === IMPORTS ==================================================================
+# Used for powerful data manipulation and analysis, particularly for its DataFrame
+# structures which are essential for handling time-series data.
+import pandas as pd
 
-try:
-    # The API key is now hardcoded directly into the script as requested.
-    GEMINI_API_KEY = "AIzaSyBv1HoaIzz4LUTL6Gxey5r37kmE8fdSyBE"
-    if not GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY environment variable not set.")
-    genai.configure(api_key=GEMINI_API_KEY)
-    llm_model = genai.GenerativeModel('gemini-1.5-flash')
-    LLM_ENABLED = True
-    print("Gemini LLM for insights configured successfully.")
-except Exception as e:
-    print(f"Warning: Gemini LLM for insights not configured. Error: {e}")
-    LLM_ENABLED = False
+# Imports the ARIMA model from the statsmodels library, a standard and powerful
+# tool for time-series forecasting.
+from statsmodels.tsa.arima.model import ARIMA
 
-# --- FEATURE 1: CURRENT STATUS ANALYSIS (from llm_analyzer.py) ---
-def generate_current_status_analysis(temp, pH, TDS, turb, water_quality_prediction, env_context=None):
+# Imports custom database functions to fetch historical data for model training
+# and to save the final forecast results.
+from database import get_recent_timeseries_data, save_forecast
+
+import warnings
+from statsmodels.tools.sm_exceptions import ValueWarning
+
+# ==============================================================================
+# === STANDARD FORECAST GENERATION =============================================
+# ==============================================================================
+# This function is responsible for creating the official, scheduled system forecast.
+
+def generate_forecasts():
     """
-    Calls the LLM to get a detailed reasoning, suggestions, and other uses
-    for the latest water quality readings.
+    Creates and saves the standard 24-hour forecast for all water quality parameters.
     """
-    if not LLM_ENABLED:
-        return { "reasoning": "AI analysis is currently unavailable." }
+    parameters_to_forecast = ['temperature', 'ph', 'tds', 'turbidity']
+    successful_params = []
+    
+    for param in parameters_to_forecast:
+        try:
+            df = get_recent_timeseries_data(days=30, resample_freq='h', as_dataframe=True)
+            if df.empty or len(df) < 50:
+                continue
 
-    prompt_text = textwrap.dedent(f"""
-    You are an AI assistant for BantayTubig, a water quality monitoring system in Jose Panganiban, Philippines.
-    Analyze the following real-time water quality data, which has been classified as '{water_quality_prediction}'.
-    
-    Your response MUST be a valid JSON object with three keys: "reasoning", "suggestions", and "other_uses".
-    
-    For EACH of the three key's values, you must follow these rules precisely:
-    
-    1.  **First, write the complete analysis in a single, conversational Taglish paragraph.**
-    2.  **Do NOT alternate between Taglish and English within this first part.** It must be a complete thought in Taglish.
-    3.  **After the complete Taglish paragraph, add an HTML line break: `<br>`**
-    4.  **Finally, write the complete English translation of the entire paragraph, enclosed in `<i>` tags.**
-    
-    **Correct Example for a value:**
-    "Ang kalidad ng tubig ay <b>'Good'</b> dahil ang lahat ng sukat ay pasok sa mga ligtas na pamantayan.<br><i>The water quality is <b>'Good'</b> because all measurements are within safe standards.</i>"
-    
-    **Incorrect Example (DO NOT DO THIS):**
-    "<b>Ang</b> <i>The</i> kalidad ng tubig ay <i>water quality is</i> <b>'Good'</b>..."
-    
-    CURRENT DATA:
-    - Temperature: {temp}°C
-    - pH: {pH}
-    - TDS: {TDS} ppm
-    - Turbidity: {turb} NTU
-    """)
-    
-    if env_context:
-        prompt_text += f"\nEnvironmental Context: Air Temp: {env_context.get('air_temp_c')}°C, Rainfall: {env_context.get('rainfall_mm')} mm."
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            df = df.set_index('timestamp')
+            
+            # Suppress the verbose ValueWarning from statsmodels during model fitting
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=ValueWarning)
+                model = ARIMA(df[param].dropna(), order=(5, 1, 0))
+                model_fit = model.fit()
+            
+            forecast_result = model_fit.get_forecast(steps=24)
+            forecast_df = forecast_result.summary_frame()
+            forecast_df.reset_index(inplace=True)
+            forecast_df.rename(columns={'index': 'timestamp', 'mean': 'forecast_value',
+                                        'mean_ci_lower': 'lower_bound', 'mean_ci_upper': 'upper_bound'}, inplace=True)
 
-    try:
-        response = llm_model.generate_content(prompt_text)
-        # Clean the response to remove markdown fences, just in case.
-        json_str = response.text.strip().replace('```json', '').replace('```', '').strip()
-        return json.loads(json_str)
-    except Exception as e:
-        return { "reasoning": f"Error generating AI analysis: {e}" }
+            # Select only the columns that exist in your database table to prevent errors.
+            columns_to_save = ['timestamp', 'forecast_value', 'lower_bound', 'upper_bound']
+            forecast_df_to_save = forecast_df[columns_to_save]
+            
+            save_forecast(param, forecast_df_to_save)
+            successful_params.append(param)
 
-# --- FEATURE 2: HISTORICAL REASONING ---
-def generate_historical_reasoning(primary_range, primary_summary, device_info):
+        except Exception as e:
+            # Print a cleaner error message if one parameter fails
+            print(f"  [ERROR] Forecasting {param}: {e}")
+
+    # Print a single summary line instead of one for each parameter
+    if successful_params:
+        print(f"  [SUCCESS] Forecasts generated for: {', '.join(successful_params)}")
+
+# ==============================================================================
+# === ON-DEMAND DEMO FORECASTS =================================================
+# ==============================================================================
+# This function generates live forecasts for the user interface demos.
+
+def generate_demo_forecasts(source='continuous_30d'):
     """
-    Generates a contextual analysis of summarized historical water quality data.
+    Generates a forecast on-the-fly for demonstration purposes.
+    
+    How it works:
+    1. This function is triggered by the API when a user selects a "Demo" option
+       on the "Forecasting" tab. Its results are NOT saved to the database.
+    2. It fetches 30 days of historical data as a baseline.
+    3. It checks the 'source' argument to determine the demo type:
+       - 'continuous_30d': Uses the data as-is to show the model's performance
+         under ideal conditions.
+       - 'non_continuous_7d': Artificially removes a chunk of data to simulate
+         a sensor outage, showing how the model handles missing information.
+    4. It cleans the data by interpolating (filling in) gaps and enforcing a
+       regular hourly frequency, which is critical for the model's stability.
+    5. It trains a new ARIMA model on this prepared demo data and generates a forecast.
+    6. The final forecast is returned directly to the API to be displayed on the chart.
     """
-    if not LLM_ENABLED:
-        return "<p>AI analysis is currently unavailable.</p>"
+    parameters = ['temperature', 'ph', 'tds', 'turbidity']
+    forecasts = {'temp': [], 'ph': [], 'tds': [], 'turbidity': []}
+    param_map_short = {'temperature': 'temp', 'ph': 'ph', 'tds': 'tds', 'turbidity': 'turbidity'}
 
-    device_location = device_info.get('location', 'Unknown Location')
-    device_water_source = device_info.get('water_source', 'Unknown Source')
+    for param in parameters:
+        try:
+            df = get_recent_timeseries_data(days=30, resample_freq='h', as_dataframe=True)
+            if df.empty or len(df) < 50:
+                print(f"Not enough base data for demo forecast: {param}")
+                continue
 
-    prompt = f"""
-        Bilang isang data analyst para sa BantayTubig, ipaliwanag ang data para sa lokasyon sa <b>{device_location}</b> mula sa isang <b>{device_water_source}</b>.
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            df = df.set_index('timestamp')
 
-        Pangunahing Saklaw ng Petsa: <b>{primary_range}</b>
-        - Average na Sensor Temp: <b>{primary_summary.get('avg_temp', 'N/A')}°C</b>
-        - Average na pH: <b>{primary_summary.get('avg_ph', 'N/A')}</b>
-        - Average na TDS: <b>{primary_summary.get('avg_tds', 'N/A')} ppm</b>
-        - Average na Turbidity: <b>{primary_summary.get('avg_turb', 'N/A')} NTU</b>
-        - Pinakamadalas na Kalidad: <b>{primary_summary.get('most_common_quality', 'N/A')}</b>
+            # If the demo is for non-continuous data, create an artificial gap.
+            if source == 'non_continuous_7d':
+                if len(df) > 100:
+                    start_drop = len(df) // 4
+                    end_drop = start_drop * 3
+                    df.iloc[start_drop:end_drop] = None
+            
+            # --- Data Cleaning and Preparation ---
+            # Interpolate to fill any major gaps in the time series.
+            df[param] = df[param].interpolate(method='time')
 
-        I-format ang sagot gamit ang HTML paragraphs <p>.
-        Magbigay ka ng pagsusuri sa TagLish, na sinusundan ng italicized na pagsasalin sa Ingles sa hiwalay na paragraph.
-    """
+            # Enforce a regular hourly frequency on the index. This is crucial for
+            # the model to understand the time intervals correctly.
+            df = df.asfreq('h')
+            
+            # Interpolate again to fill any minor gaps that `asfreq` might have created.
+            df[param] = df[param].interpolate(method='time')
+            df.dropna(subset=[param], inplace=True)
 
-    try:
-        response = llm_model.generate_content(textwrap.dedent(prompt))
-        
-        # Clean the AI's response to remove any markdown code fences.
-        cleaned_text = response.text.strip().replace("```html", "").replace("```", "")
-        return cleaned_text.strip()
-        
-    except Exception as e:
-        return f"<p>Error: {e}</p>"
+            # Train a new model on the prepared demo data.
+            model = ARIMA(df[param], order=(5, 1, 0))
+            model_fit = model.fit()
+            forecast_result = model_fit.get_forecast(steps=24)
+            
+            forecast_df = forecast_result.summary_frame()
+            forecast_df.reset_index(inplace=True)
+            forecast_df.rename(columns={'index': 'timestamp', 'mean': 'forecast_value',
+                                        'mean_ci_lower': 'lower_bound', 'mean_ci_upper': 'upper_bound'}, inplace=True)
+            
+            # Format the data to be sent back to the frontend.
+            short_name = param_map_short[param]
+            forecast_df['timestamp'] = forecast_df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            forecasts[short_name] = forecast_df.to_dict('records')
+
+        except Exception as e:
+            print(f"Error generating demo forecast for {param} ('{source}'): {e}")
+            continue
+    
+    return forecasts
