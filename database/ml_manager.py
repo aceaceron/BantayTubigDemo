@@ -49,15 +49,3 @@ def get_unannotated_anomalies():
         anomalies.append(anomaly)
     conn.close()
     return anomalies
-
-def save_annotation(anomaly_id, user_id, label, comments):
-    """Saves user feedback and marks the anomaly as annotated."""
-    conn = sqlite3.connect(DB_PATH)
-    # Insert the annotation
-    conn.execute("""
-        INSERT INTO ml_annotations (anomaly_id, user_id, label, comments) VALUES (?, ?, ?, ?)
-    """, (anomaly_id, user_id, label, comments))
-    # Mark the original anomaly as handled
-    conn.execute("UPDATE ml_anomalies SET is_annotated = 1 WHERE id = ?", (anomaly_id,))
-    conn.commit()
-    conn.close()
