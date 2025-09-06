@@ -14,7 +14,7 @@ try:
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY environment variable not set.")
     genai.configure(api_key=GEMINI_API_KEY)
-    llm_model = genai.GenerativeModel('gemini-2.5-flash')
+    llm_model = genai.GenerativeModel('gemini-1.5-flash')
     LLM_ENABLED = True
     print("Gemini LLM for insights configured successfully.")
 except Exception as e:
@@ -31,13 +31,29 @@ def generate_current_status_analysis(temp, pH, TDS, turb, water_quality_predicti
         return { "reasoning": "AI analysis is currently unavailable." }
 
     prompt_text = textwrap.dedent(f"""
-    Analyze the following water quality data, classified as '{water_quality_prediction}'.
-    Provide: 1. A concise reasoning for the classification. 2. Specific suggestions. 3. Possible other uses.
-    The output MUST be in JSON format with keys: "reasoning", "suggestions", "other_uses".
-    The values must be in TagLish, followed by an italicized English translation in a new paragraph.
-    Use HTML tags like <b> and <i>.
-
-    Data: Temp: {temp}°C, pH: {pH}, TDS: {TDS} ppm, Turbidity: {turb} NTU.
+    You are an AI assistant for BantayTubig, a water quality monitoring system in Jose Panganiban, Philippines.
+    Analyze the following real-time water quality data, which has been classified as '{water_quality_prediction}'.
+    
+    Your response MUST be a valid JSON object with three keys: "reasoning", "suggestions", and "other_uses".
+    
+    For EACH of the three key's values, you must follow these rules precisely:
+    
+    1.  **First, write the complete analysis in a single, conversational Taglish paragraph.**
+    2.  **Do NOT alternate between Taglish and English within this first part.** It must be a complete thought in Taglish.
+    3.  **After the complete Taglish paragraph, add an HTML line break: `<br>`**
+    4.  **Finally, write the complete English translation of the entire paragraph, enclosed in `<i>` tags.**
+    
+    **Correct Example for a value:**
+    "Ang kalidad ng tubig ay <b>'Good'</b> dahil ang lahat ng sukat ay pasok sa mga ligtas na pamantayan.<br><i>The water quality is <b>'Good'</b> because all measurements are within safe standards.</i>"
+    
+    **Incorrect Example (DO NOT DO THIS):**
+    "<b>Ang</b> <i>The</i> kalidad ng tubig ay <i>water quality is</i> <b>'Good'</b>..."
+    
+    CURRENT DATA:
+    - Temperature: {temp}°C
+    - pH: {pH}
+    - TDS: {TDS} ppm
+    - Turbidity: {turb} NTU
     """)
     
     if env_context:
@@ -45,18 +61,22 @@ def generate_current_status_analysis(temp, pH, TDS, turb, water_quality_predicti
 
     try:
         response = llm_model.generate_content(prompt_text)
+        # Clean the response to remove markdown fences, just in case.
         json_str = response.text.strip().replace('```json', '').replace('```', '').strip()
         return json.loads(json_str)
     except Exception as e:
         return { "reasoning": f"Error generating AI analysis: {e}" }
 
-# --- FEATURE 2: HISTORICAL REASONING (from llm_reasoning.py) ---
-def generate_historical_reasoning(primary_range, primary_summary, device_location="Jose Panganiban", device_water_source="River"):
+# --- FEATURE 2: HISTORICAL REASONING ---
+def generate_historical_reasoning(primary_range, primary_summary, device_info):
     """
     Generates a contextual analysis of summarized historical water quality data.
     """
     if not LLM_ENABLED:
         return "<p>AI analysis is currently unavailable.</p>"
+
+    device_location = device_info.get('location', 'Unknown Location')
+    device_water_source = device_info.get('water_source', 'Unknown Source')
 
     prompt = f"""
         Bilang isang data analyst para sa BantayTubig, ipaliwanag ang data para sa lokasyon sa <b>{device_location}</b> mula sa isang <b>{device_water_source}</b>.
@@ -74,6 +94,10 @@ def generate_historical_reasoning(primary_range, primary_summary, device_locatio
 
     try:
         response = llm_model.generate_content(textwrap.dedent(prompt))
-        return response.text
+        
+        # Clean the AI's response to remove any markdown code fences.
+        cleaned_text = response.text.strip().replace("```html", "").replace("```", "")
+        return cleaned_text.strip()
+        
     except Exception as e:
         return f"<p>Error: {e}</p>"
