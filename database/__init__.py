@@ -11,6 +11,7 @@ from .setup import create_tables
 # --- Data & Measurements ---
 from .data_manager import (
     get_context_for_latest_measurement,
+    get_environmental_context_for_anomaly,
     get_latest_data,
     get_latest_reading_with_env,
     get_recent_timeseries_data,
@@ -18,6 +19,7 @@ from .data_manager import (
     get_thresholds_for_dashboard,
     insert_environmental_context,
     insert_measurement,
+    save_annotation,
     summarize_context_for_range,
 )
 
@@ -98,7 +100,6 @@ from .ml_manager import (
     get_latest_forecasts,
     get_unannotated_anomalies,
     log_anomaly,
-    save_annotation,
     save_forecast,
 )
 
