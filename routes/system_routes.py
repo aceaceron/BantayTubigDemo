@@ -8,6 +8,8 @@ import os
 import signal 
 import subprocess 
 import threading
+
+from lcd_display import stop_status
 # from database.maintenance import cleanup_old_data, get_deletable_data_preview
 
 system_bp = Blueprint('system_bp', __name__)
@@ -98,6 +100,11 @@ def power_off_sequence():
     Schedules a system shutdown and then stops the application.
     This version includes enhanced error logging for diagnostics.
     """
+    try:
+        stop_status("Shutting Down...")
+    except Exception as e:
+        print(f"--- Could not update LCD: {e} ---")
+
     def shutdown_task():
         """The task that runs in a separate thread to shut down the Pi."""
         print("--- Shutdown scheduled. Powering off in 5 seconds. ---")
