@@ -40,6 +40,16 @@ def generate_secure_password(length=6):
 
 # --- User Management Functions ---
 
+def is_user_active(user_id):
+    """Checks if a user exists and their status is 'Active'."""
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        cursor = conn.cursor()
+        cursor.execute("SELECT status FROM users WHERE id = ?", (user_id,))
+        row = cursor.fetchone()
+        conn.close()
+    return row and row[0] == 'Active'
+
 def get_user_for_login(email):
     """
     Retrieves essential user details for the login process.
