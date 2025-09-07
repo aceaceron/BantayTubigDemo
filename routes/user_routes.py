@@ -9,6 +9,7 @@ import time
 from auth.decorators import role_required
 from alerter import send_generic_sms
 from database.user_manager import set_new_password_for_user, create_first_admin
+from lcd_display import stop_status
 
 user_bp = Blueprint('user_bp', __name__)
 
