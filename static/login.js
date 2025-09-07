@@ -14,6 +14,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const passwordInput = document.getElementById('regPassword');
         const confirmPasswordInput = document.getElementById('regConfirmPassword');
         const phoneInput = document.getElementById('regPhoneNumber');
+        const steps = document.querySelectorAll('.form-step');
+        const nextBtn = document.querySelector('.next-btn');
+        const prevBtn = document.querySelector('.prev-btn');
+
+        if (nextBtn && prevBtn) {
+            nextBtn.addEventListener('click', () => {
+                steps[0].classList.remove('active');
+                steps[1].classList.add('active');
+            });
+
+            prevBtn.addEventListener('click', () => {
+                steps[1].classList.remove('active');
+                steps[0].classList.add('active');
+            });
+        }
 
         registrationForm.addEventListener('submit', async (e) => {
             e.preventDefault();

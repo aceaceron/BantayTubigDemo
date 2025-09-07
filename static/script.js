@@ -59,6 +59,7 @@ async function init() {
         console.error('Initialization error:', error);
         // In a real application, you might want to display an error message to the user.
     }
+    setupGlobalNavigation();
 }
 
 // Add an event listener to call the init function once the DOM is ready.
@@ -676,21 +677,34 @@ returnStaticBtn.addEventListener('click', () => {
 });
 
 
-// --- SIDEBAR NAVIGATION ---
-
 /**
- * Toggles the visibility of the sidebar menu.
+ * ========================================================================
+ * UNIVERSAL SIDEBAR SCRIPT
+ * Manages the slide-out navigation menu, present on all pages.
+ * ========================================================================
  */
-function toggleMenu() {
+function setupGlobalNavigation() {
     const sidebar = document.getElementById('sidebarMenu');
     const menuIcon = document.querySelector('.menu-icon');
-    sidebar.classList.toggle('open');
+    
+    menuIcon.addEventListener('click', (event) => {
+        event.stopPropagation();
+        sidebar.classList.toggle('open');
+        if (window.innerWidth <= 992) {
+            menuIcon.classList.toggle('active');
+            menuIcon.innerHTML = menuIcon.classList.contains('active') ? "&#10006;" : "&#9776;";
+        }
+    });
 
-    // On smaller screens, toggle the menu icon between hamburger and 'X'.
-    if (window.innerWidth <= 992) {
-        menuIcon.classList.toggle('active');
-        menuIcon.innerHTML = menuIcon.classList.contains('active') ? "&#10006;" : "&#9776;";
-    }
+    document.addEventListener('click', (event) => {
+        if (!sidebar.contains(event.target) && !menuIcon.contains(event.target)) {
+            sidebar.classList.remove('open');
+            if (window.innerWidth <= 992 && menuIcon.classList.contains('active')) {
+                menuIcon.classList.remove('active');
+                menuIcon.innerHTML = "&#9776;";
+            }
+        }
+    });
 }
 
 // Event listener to close the sidebar when clicking outside of it.

@@ -1,30 +1,31 @@
 /**
- * ------------------------------------------------------------------------
- * UNIVERSAL SIDEBAR & HEADER SCRIPT
- * ------------------------------------------------------------------------
- * This section contains the logic for the sidebar navigation menu and
- * the dynamic timestamp, which are present on all pages.
+ * ========================================================================
+ * UNIVERSAL SIDEBAR SCRIPT
+ * Manages the slide-out navigation menu, present on all pages.
+ * ========================================================================
  */
-
-/**
- * Toggles the visibility of the sidebar navigation menu.
- * On smaller screens, it also changes the hamburger icon to an 'X'.
- */
-function toggleMenu() {
+function setupGlobalNavigation() {
     const sidebar = document.getElementById('sidebarMenu');
     const menuIcon = document.querySelector('.menu-icon');
-
-    sidebar.classList.toggle('open');
-
-    // On smaller screens, toggle the icon between hamburger and 'X'.
-    if (window.innerWidth <= 992) {
-        menuIcon.classList.toggle('active');
-        if (menuIcon.classList.contains('active')) {
-            menuIcon.innerHTML = "&#10006;"; // 'X' icon
-        } else {
-            menuIcon.innerHTML = "&#9776;"; // Hamburger icon
+    
+    menuIcon.addEventListener('click', (event) => {
+        event.stopPropagation();
+        sidebar.classList.toggle('open');
+        if (window.innerWidth <= 992) {
+            menuIcon.classList.toggle('active');
+            menuIcon.innerHTML = menuIcon.classList.contains('active') ? "&#10006;" : "&#9776;";
         }
-    }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!sidebar.contains(event.target) && !menuIcon.contains(event.target)) {
+            sidebar.classList.remove('open');
+            if (window.innerWidth <= 992 && menuIcon.classList.contains('active')) {
+                menuIcon.classList.remove('active');
+                menuIcon.innerHTML = "&#9776;";
+            }
+        }
+    });
 }
 
 // Global click listener to close the sidebar when clicking outside of it.
@@ -52,6 +53,9 @@ document.addEventListener('click', function(event) {
  */
 document.addEventListener('DOMContentLoaded', function() {
 
+    // --- INITIALIZE GLOBAL COMPONENTS ---
+    setupGlobalNavigation();
+    
     // --- GLOBAL CONFIGURATION & STATE MANAGEMENT ---
     const analysisLocation = "Jose Panganiban, Bicol, Philippines";
     let historicalChart, keyDriverChart;

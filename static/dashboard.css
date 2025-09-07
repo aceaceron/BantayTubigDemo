@@ -406,14 +406,6 @@
     animation: sliding-gradient-border 4s ease-in-out infinite;
 }
 
-/* --- REMOVED THE SEPARATE BACKGROUND-IMAGE DEFINITIONS --- */
-/* The color-specific classes are no longer needed for the border,
-   as the JavaScript will handle the text and progress bar colors. */
-.card.ml-active-border.good { /* No styles needed here anymore */ }
-.card.ml-active-border.average { /* No styles needed here anymore */ }
-.card.ml-active-border.poor { /* No styles needed here anymore */ }
-.card.ml-active-border.bad { /* No styles needed here anymore */ }
-
 /* --- LLM ANALYSIS BUTTON --- */
 /* Styles for the "Generate AI Analysis" button on the dashboard. */
 

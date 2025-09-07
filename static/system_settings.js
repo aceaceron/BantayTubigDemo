@@ -114,7 +114,6 @@ function setupSettingsPage() {
     });
 
     // --- STATE MANAGEMENT ---
-    let currentSettings = { dataRetention: '365' };
     let previewData = { full: [], filtered: [] };
     let previewCurrentPage = 1;
     const previewRowsPerPage = 5;
@@ -128,7 +127,6 @@ function setupSettingsPage() {
     const systemNameInput = document.getElementById('systemName');
 
     // Security & Account
-    const sessionTimeoutInput = document.getElementById('sessionTimeout');
     const changePasswordForm = document.getElementById('changePasswordForm');
     const currentPasswordInput = document.getElementById('currentPassword');
     const newPasswordInput = document.getElementById('newPassword');
@@ -147,20 +145,6 @@ function setupSettingsPage() {
     const ssidNameLabel = document.getElementById('ssidNameLabel');
     const wifiSsidInput = document.getElementById('wifiSsidInput');
     const wifiPasswordInput = document.getElementById('wifiPasswordInput');
-
-    // Data Management & Cleanup Modal
-    const dataRetentionInput = document.getElementById('dataRetention');
-    const dataCleanupModal = document.getElementById('dataCleanupModal');
-    const closeCleanupModalBtn = document.getElementById('closeCleanupModalBtn');
-    const tablePreviewSelect = document.getElementById('tablePreviewSelect');
-    const previewSearchInput = document.getElementById('previewSearchInput');
-    const cleanupPreviewTableBody = document.querySelector('#cleanupPreviewTable tbody');
-    const previewSortableHeaders = document.querySelectorAll('#cleanupPreviewTable th.sortable');
-    const previewPrevPageBtn = document.getElementById('previewPrevPageBtn');
-    const previewNextPageBtn = document.getElementById('previewNextPageBtn');
-    const previewPageInfo = document.getElementById('previewPageInfo');
-    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
     // Universal Toast Notifications
     const toastModal = document.getElementById('toastModal');
@@ -189,11 +173,6 @@ function setupSettingsPage() {
         try {
             const data = await apiFetch('/api/system/settings');
             if (systemNameInput) systemNameInput.value = data.systemName;
-            if (sessionTimeoutInput) sessionTimeoutInput.value = data.sessionTimeout;
-            if (dataRetentionInput) {
-                dataRetentionInput.value = data.dataRetention;
-                currentSettings.dataRetention = data.dataRetention; 
-            }
             if (showMlConfidenceToggle) showMlConfidenceToggle.checked = (data.showMlConfidence === 'true');
         } catch (error) {
             console.error("Could not load system settings:", error);
@@ -204,15 +183,10 @@ function setupSettingsPage() {
         saveBtn.addEventListener('click', async () => {
             saveBtn.classList.add('saving');
 
-            const oldRetention = currentSettings.dataRetention;
-            const newRetention = dataRetentionInput.value;
-
             try {
                 // Step 1: Save the new setting to the database
                 const settingsData = {
                     systemName: systemNameInput.value,
-                    sessionTimeout: sessionTimeoutInput.value,
-                    dataRetention: newRetention,
                     showMlConfidence: showMlConfidenceToggle.checked
                 };
                 localStorage.setItem('showMlConfidence', showMlConfidenceToggle.checked);
@@ -222,37 +196,13 @@ function setupSettingsPage() {
                     body: JSON.stringify(settingsData)
                 });
 
-                // Step 2: Check if the new policy is stricter
-                if (parseInt(newRetention) < parseInt(oldRetention)) {
-                    // Step 3: Before showing the modal, check if there is actually data to delete
-                    const previewCheckData = await apiFetch('/api/system/retention-preview', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            retention_days: newRetention,
-                            table_name: 'measurements' // Use a primary table for the check
-                        })
-                    });
-
-                    // Step 4: Only open the modal if the check returns data
-                    if (previewCheckData && previewCheckData.length > 0) {
-                        openCleanupModal(newRetention);
-                    } else {
-                        // If no data would be deleted, skip the modal
-                        showToastModal('Settings saved!', svgSuccess);
-                        currentSettings.dataRetention = newRetention;
-                    }
-                } else {
-                    // If the policy is not stricter, just confirm the save
-                    showToastModal('Settings saved successfully!', svgSuccess);
-                    currentSettings.dataRetention = newRetention;
-                }
             } catch (error) {
                 // Error is handled by apiFetch
             } finally {
                 setTimeout(() => {
                     saveBtn.classList.remove('saving');
                 }, 1500);
+                showToastModal('Settings saved!', svgSuccess);
             }
         });
     }

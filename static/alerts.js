@@ -1,8 +1,10 @@
 // static/alerts.js
+
 /**
- * ------------------------------------------------------------------------
- * UNIVERSAL SIDEBAR & HEADER SCRIPT
- * ------------------------------------------------------------------------
+ * ========================================================================
+ * UNIVERSAL SIDEBAR SCRIPT
+ * Manages the slide-out navigation menu, present on all pages.
+ * ========================================================================
  */
 function setupGlobalNavigation() {
     const sidebar = document.getElementById('sidebarMenu');
@@ -28,34 +30,46 @@ function setupGlobalNavigation() {
     });
 }
 
+/**
+ * ========================================================================
+ * MAIN EXECUTION BLOCK
+ * This is the primary function that runs after the entire HTML page
+ * has been loaded and is ready (thanks to 'DOMContentLoaded').
+ * ========================================================================
+ */
 document.addEventListener('DOMContentLoaded', function() {
     
-    // --- INITIALIZE GLOBAL NAVIGATION ---
+    // --- INITIALIZE GLOBAL COMPONENTS ---
     setupGlobalNavigation();
-    
-    // --- GLOBAL NAVIGATION AND TOAST SETUP ---
     const { showToast, svgSuccess, svgError } = setupToastNotifications();
+    const { openModal, closeModal } = setupModalHandlers();
 
     // --- STATE MANAGEMENT ---
+    // These variables store data fetched from the server. Caching them here avoids
+    // making unnecessary API calls every time a modal is opened.
     let allUsers = []; 
     let allGroups = []; 
     let allPolicies = []; 
     let allThresholds = []; 
-    let alertHistoryData = []; 
+    let alertHistoryData = []; // Stores the complete, unfiltered history log.
     let historyCurrentPage = 1;
-    const historyRowsPerPage = 10;
+    const historyRowsPerPage = 10; // How many history items to show per page.
 
     // --- TABS LOGIC ---
+    // This section handles the main navigation for the page (Rules, Settings, History, etc.).
     const tabLinks = document.querySelectorAll('.tab-link');
     const tabContents = document.querySelectorAll('.tab-content');
     tabLinks.forEach(link => {
         link.addEventListener('click', () => {
+            // Hide all tabs and content panels.
             tabLinks.forEach(l => l.classList.remove('active'));
             tabContents.forEach(c => c.classList.remove('active'));
+            // Show the clicked tab and its corresponding content panel.
             link.classList.add('active');
             const tabId = link.dataset.tab;
             document.getElementById(tabId).classList.add('active');
 
+            // Load data for the newly activated tab to ensure it's up-to-date.
             if (tabId === 'rules') {
                 loadAlertRules();
             } else if (tabId === 'settings') {
@@ -68,20 +82,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
-    // --- MODAL HANDLING ---
-    const { openModal, closeModal } = setupModalHandlers();
-
-    // --- NEW: CONFIRMATION MODAL LOGIC ---
+    
+    // --- CONFIRMATION MODAL LOGIC ---
+    // This sets up a reusable confirmation pop-up for dangerous actions like deleting.
     const confirmationModalTitle = document.getElementById('confirmationModalTitle');
     const confirmationModalText = document.getElementById('confirmationModalText');
-    // **FIX 1 of 2**: Changed from const to let to allow reassignment
     let confirmationConfirmBtn = document.getElementById('confirmationConfirmBtn');
     const confirmationCancelBtn = document.getElementById('confirmationCancelBtn');
 
     /**
-     * Shows a confirmation modal and executes a callback if the user confirms.
-     * @param {string} title - The title of the modal.
+     * Shows a confirmation modal and executes a specific action (callback) if the user confirms.
+     * How it works:
+     * 1. It takes a title, text, and a function (`onConfirm`) as arguments.
+     * 2. It populates the modal with the provided title and text.
+     * 3. It clones the 'Confirm' button to remove any old event listeners, preventing bugs where
+     * an action might be triggered multiple times. This is a crucial step for reusable modals.
+     * 4. It attaches a new event listener that, when clicked, runs the `onConfirm` function.
+     * @param {string} title - The title for the modal.
      * @param {string} text - The descriptive text in the modal.
      * @param {function} onConfirm - The function to call if the user clicks "Confirm".
      */
@@ -89,14 +106,13 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmationModalTitle.textContent = title;
         confirmationModalText.textContent = text;
         
+        // This trick removes any lingering event listeners from previous calls.
         const newConfirmBtn = confirmationConfirmBtn.cloneNode(true);
         confirmationConfirmBtn.parentNode.replaceChild(newConfirmBtn, confirmationConfirmBtn);
-        
-        // **FIX 2 of 2**: Update the variable to reference the new button
         confirmationConfirmBtn = newConfirmBtn;
         
         confirmationConfirmBtn.addEventListener('click', () => {
-            onConfirm();
+            onConfirm(); // Execute the specific action for this confirmation.
             closeModal('confirmationModal');
         });
 
@@ -105,6 +121,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- API HELPER FUNCTION ---
+    /**
+     * A wrapper for the native `fetch` API to centralize logic and error handling.
+     * How it works:
+     * 1. It makes the API call.
+     * 2. It automatically tries to parse the response as JSON.
+     * 3. It checks if the response was successful (e.g., status 200 OK).
+     * 4. If not successful, it throws an error using the message from the server's response.
+     * 5. It includes a global `catch` block to show a user-friendly error toast message.
+     * This simplifies all other functions because they don't need their own try/catch blocks.
+     */
     async function apiFetch(url, options = {}) {
         try {
             const response = await fetch(url, options);
@@ -116,11 +142,13 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('API Fetch Error:', error);
             showToast(`Error: ${error.message}`, svgError, 5000);
-            throw error;
+            throw error; // Re-throw the error so the calling function knows it failed.
         }
     }
 
-    // --- ALERT RULES TAB ---
+    // ========================================================================
+    // == ALERT RULES TAB LOGIC ===============================================
+    // ========================================================================
     const alertRulesTableBody = document.querySelector('#alertRulesTable tbody');
     const ruleForm = document.getElementById('ruleForm');
     const addNewRuleBtn = document.getElementById('addNewRuleBtn');
@@ -141,9 +169,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const snoozeRuleIdInput = document.getElementById('snoozeRuleId');
     const snoozeModalTitle = document.getElementById('snoozeModalTitle');
     
+   // Constants for populating dropdowns in the rule builder.
     const RULE_PARAMETERS = ['Temperature', 'pH', 'TDS', 'Turbidity'];
     const RULE_OPERATORS = ['>', '<', '=', '>=', '<='];
 
+    /** Fetches all alert rules from the server and triggers the rendering function. */
     async function loadAlertRules() {
         try {
             const rules = await apiFetch('/api/alerts/rules');
@@ -153,8 +183,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    /**
+     * Clears and repopulates the alert rules table with fresh data.
+     * @param {Array} rules - An array of rule objects from the server.
+     */
     function renderRulesTable(rules) {
-        alertRulesTableBody.innerHTML = '';
+        alertRulesTableBody.innerHTML = ''; // Clear existing content.
         if (rules.length === 0) {
             alertRulesTableBody.innerHTML = `<tr><td colspan="5">No alert rules configured.</td></tr>`;
             return;
@@ -164,8 +198,9 @@ document.addEventListener('DOMContentLoaded', function() {
         rules.forEach(rule => {
             const tr = document.createElement('tr');
             const snoozedUntil = rule.snoozed_until ? new Date(rule.snoozed_until) : null;
-            const isSnoozed = snoozedUntil && snoozedUntil > now;
+            const isSnoozed = snoozedUntil && snoozedUntil > now; // Check if the snooze is still active.
 
+            // Build the HTML for a single table row.
             tr.innerHTML = `
                 <td>
                     ${rule.name} 
@@ -185,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    /** Populates the dropdowns in the rule editor modal with the latest groups and policies. */
     function populateRuleModalDropdowns() {
         const groupOptions = allGroups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
         ruleNotifyGroupSelect.innerHTML = groupOptions;
@@ -192,6 +228,10 @@ document.addEventListener('DOMContentLoaded', function() {
         ruleEscalationPolicySelect.innerHTML = '<option value="">None</option>' + policyOptions;
     }
 
+    /**
+     * Dynamically creates the HTML for a single condition editor row and adds it to the form.
+     * @param {object} condition - An optional object with existing condition data (for editing).
+     */
     function addConditionRow(condition = {}) {
         const div = document.createElement('div');
         div.className = 'condition-row';
@@ -205,41 +245,13 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         ruleConditionsContainer.appendChild(div);
     }
-
-    addNewRuleBtn.addEventListener('click', () => {
-        ruleForm.reset();
-        ruleIdInput.value = '';
-        ruleModalTitle.textContent = 'Add New Alert Rule';
-        ruleEnabledCheckbox.checked = true;
-        ruleActivateBuzzerCheckbox.checked = false;
-        ruleConditionsContainer.innerHTML = '';
-        addConditionRow();
-        populateRuleModalDropdowns();
-        openModal('ruleModal');
-    });
-
-    restoreDefaultRulesBtn.addEventListener('click', () => {
-        showConfirmationModal(
-            'Restore Default Rules?',
-            'Any changes you made to default rules will be lost. This cannot be undone.',
-            () => {
-                apiFetch('/api/alerts/rules/restore_defaults', { method: 'POST' })
-                    .then(() => {
-                        showToast('Default rules have been restored.', svgSuccess);
-                        loadAlertRules();
-                    });
-            }
-        );
-    });
     
-    addConditionBtn.addEventListener('click', () => addConditionRow());
+    function formatConditions(conditions) {
+        if (!conditions || conditions.length === 0) return 'No conditions set.';
+        return conditions.map(c => `<b>${c.parameter}</b> ${c.operator} ${c.value}`).join('<br>');
+    }
 
-    ruleConditionsContainer.addEventListener('click', e => {
-        if (e.target.classList.contains('remove-condition-btn')) {
-            e.target.closest('.condition-row').remove();
-        }
-    });
-    
+    /** Event listener for the main table body to handle clicks on Edit, Delete, or Snooze buttons. */
     alertRulesTableBody.addEventListener('click', async e => {
         const target = e.target;
         const ruleId = target.dataset.id;
@@ -288,10 +300,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    /** Handles the submission of the "Add/Edit Rule" form. */
     ruleForm.addEventListener('submit', async e => {
         e.preventDefault();
         const conditions = [];
         const conditionRows = ruleConditionsContainer.querySelectorAll('.condition-row');
+        // 1. Gathers all data from the form inputs, including the dynamic condition rows.
+        // 2. Packages the data into a JSON object.
+        // 3. Determines if it's a new rule (POST) or an update (PUT) based on whether an ID exists.
+        // 4. Sends the data to the server via the `apiFetch` helper.
+        // 5. Closes the modal and reloads the rules table on success.
         conditionRows.forEach(row => {
             conditions.push({
                 parameter: row.querySelector('.rule-parameter').value,
@@ -321,23 +339,60 @@ document.addEventListener('DOMContentLoaded', function() {
         loadAlertRules();
     });
 
+    /** Handles the submission of the "Snooze Rule" form. */
     snoozeForm.addEventListener('submit', async e => {
         e.preventDefault();
         const ruleId = snoozeRuleIdInput.value;
         const duration = document.getElementById('snoozeDuration').value;
-
+        // Sends the snooze request to the server.
         await apiFetch(`/api/alerts/rules/${ruleId}/snooze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ duration_minutes: parseInt(duration) })
         });
-
         showToast('Rule has been snoozed.', svgSuccess);
         closeModal('snoozeModal');
-        loadAlertRules();
+        loadAlertRules(); // Reload to show the "Snoozed" badge.
     });
 
-    // --- NOTIFICATION SETTINGS TAB ---
+    addNewRuleBtn.addEventListener('click', () => {
+        ruleForm.reset();
+        ruleIdInput.value = '';
+        ruleModalTitle.textContent = 'Add New Alert Rule';
+        ruleEnabledCheckbox.checked = true;
+        ruleActivateBuzzerCheckbox.checked = false;
+        ruleConditionsContainer.innerHTML = '';
+        addConditionRow();
+        populateRuleModalDropdowns();
+        openModal('ruleModal');
+    });
+
+    restoreDefaultRulesBtn.addEventListener('click', () => {
+        showConfirmationModal(
+            'Restore Default Rules?',
+            'Any changes you made to default rules will be lost. This cannot be undone.',
+            () => {
+                apiFetch('/api/alerts/rules/restore_defaults', { method: 'POST' })
+                    .then(() => {
+                        showToast('Default rules have been restored.', svgSuccess);
+                        loadAlertRules();
+                    });
+            }
+        );
+    });
+    
+    addConditionBtn.addEventListener('click', () => addConditionRow());
+
+    ruleConditionsContainer.addEventListener('click', e => {
+        if (e.target.classList.contains('remove-condition-btn')) {
+            e.target.closest('.condition-row').remove();
+        }
+    });
+    
+    
+    // ========================================================================
+    // == NOTIFICATION SETTINGS TAB LOGIC =====================================
+    // ========================================================================
     const notificationGroupsTableBody = document.querySelector('#notificationGroupsTable tbody');
     const escalationPoliciesTableBody = document.querySelector('#escalationPoliciesTable tbody');
     const addNewGroupBtn = document.getElementById('addNewGroupBtn');
@@ -354,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const policyStepsContainer = document.getElementById('policyStepsContainer');
     const addPolicyStepBtn = document.getElementById('addPolicyStepBtn');
 
-
+    /** Fetches notification groups and triggers the render function. */
     async function loadNotificationGroups() {
         try {
             allGroups = await apiFetch('/api/alerts/groups');
@@ -364,6 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    /** Fetches escalation policies and triggers the render function. */
     async function loadEscalationPolicies() {
         try {
             allPolicies = await apiFetch('/api/alerts/policies');
@@ -373,6 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    /** Renders the table of notification groups. */
     function renderGroupsTable(groups) {
         notificationGroupsTableBody.innerHTML = '';
         if (groups.length === 0) { 
@@ -393,6 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    /** Renders the table of escalation policies. */
     function renderPoliciesTable(policies) {
         escalationPoliciesTableBody.innerHTML = '';
         if (policies.length === 0) {
@@ -413,6 +471,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    /**
+     * Converts a policy's path data into a human-readable string.
+     * e.g., "Notify On-Call Techs & wait 15 min → Notify Managers"
+     */
     function formatEscalationPath(path) {
         if (!path || !Array.isArray(path) || path.length === 0) {
             return 'No path defined.';
@@ -429,6 +491,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         return steps.join(' → ');
+    }
+
+    /** Dynamically creates the user checklist for the group editor modal. */
+    function renderGroupMembersChecklist(users, selectedMemberIds = []) {
+        groupMembersChecklist.innerHTML = users.map(user => `
+            <label class="checklist-item">
+                <input type="checkbox" value="${user.id}" ${selectedMemberIds.includes(user.id) ? 'checked' : ''}>
+                ${user.full_name}
+            </label>
+        `).join('');
     }
 
     async function openGroupModalForEdit(groupId) {
@@ -528,14 +600,6 @@ document.addEventListener('DOMContentLoaded', function() {
         loadEscalationPolicies();
     });
 
-    function renderGroupMembersChecklist(users, selectedMemberIds = []) {
-        groupMembersChecklist.innerHTML = users.map(user => `
-            <label class="checklist-item">
-                <input type="checkbox" value="${user.id}" ${selectedMemberIds.includes(user.id) ? 'checked' : ''}>
-                ${user.full_name}
-            </label>
-        `).join('');
-    }
 
     addNewPolicyBtn.addEventListener('click', () => {
         policyForm.reset();
@@ -619,7 +683,9 @@ document.addEventListener('DOMContentLoaded', function() {
         policyStepsContainer.appendChild(div);
     }
 
-    // --- THRESHOLDS TAB ---
+    // ========================================================================
+    // == THRESHOLDS TAB LOGIC ================================================
+    // ========================================================================
     const thresholdsTableBody = document.querySelector('#thresholdsTable tbody');
     const restoreDefaultThresholdsBtn = document.getElementById('restoreDefaultThresholdsBtn');
     const thresholdForm = document.getElementById('thresholdForm');
@@ -628,6 +694,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const thresholdMinValueInput = document.getElementById('thresholdMinValue');
     const thresholdMaxValueInput = document.getElementById('thresholdMaxValue');
 
+    /** Fetches the water quality thresholds and triggers the render function. */
     async function loadThresholds() {
         try {
             allThresholds = await apiFetch('/api/thresholds');
@@ -637,6 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    /** Renders the table of thresholds. */
     function renderThresholdsTable(thresholds) {
         thresholdsTableBody.innerHTML = '';
         thresholds.forEach(t => {
@@ -704,7 +772,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // --- ALERT HISTORY TAB ---
+
+    // ========================================================================
+    // == ALERT HISTORY TAB LOGIC =============================================
+    // ========================================================================
     const alertHistoryTableBody = document.querySelector('#alertHistoryTable tbody');
     const historyDateFilter = document.getElementById('historyDateFilter');
     const historyRuleFilter = document.getElementById('historyRuleFilter');
@@ -713,6 +784,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const historyNextPageBtn = document.getElementById('historyNextPageBtn');
     const historyPageInfo = document.getElementById('historyPageInfo');
 
+    /** Initializes the date range picker using the Flatpickr library. */
     const historyDatePicker = flatpickr(historyDateFilter, {
         mode: "range",
         dateFormat: "Y-m-d",
@@ -722,6 +794,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    /** Fetches the entire alert history log from the server once. */
     async function loadAlertHistory() {
         try {
             alertHistoryData = await apiFetch('/api/alerts/history');
@@ -732,6 +805,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    /**
+     * Applies all active filters (date, rule, status) to the cached history data
+     * before calling the function to render the table. This is efficient as it
+     * doesn't require a new API call for every filter change.
+     */
     function renderFilteredHistory() {
         let filteredData = [...alertHistoryData];
 
@@ -757,6 +835,10 @@ document.addEventListener('DOMContentLoaded', function() {
         renderHistoryTable(filteredData);
     }
 
+    /**
+     * Renders a single page of the history table.
+     * @param {Array} history - The filtered list of history logs.
+     */
     function renderHistoryTable(history) {
         alertHistoryTableBody.innerHTML = '';
         const start = (historyCurrentPage - 1) * historyRowsPerPage;
@@ -785,6 +867,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHistoryPagination(history.length);
     }
 
+    /** Updates the pagination controls (page info, button disabled states). */
     function updateHistoryPagination(totalLogs) {
         const totalPages = Math.ceil(totalLogs / historyRowsPerPage) || 1;
         historyPageInfo.textContent = `Page ${historyCurrentPage} of ${totalPages}`;
@@ -815,12 +898,14 @@ document.addEventListener('DOMContentLoaded', function() {
         historyCurrentPage++;
         renderFilteredHistory();
     });
-    
-    // --- UTILITY & HELPER FUNCTIONS ---
-    function formatConditions(conditions) {
-        if (!conditions || conditions.length === 0) return 'No conditions set.';
-        return conditions.map(c => `<b>${c.parameter}</b> ${c.operator} ${c.value}`).join('<br>');
-    }
+
+    // ========================================================================
+    // == INITIALIZATION ======================================================
+    // ========================================================================
+    /**
+     * Fetches all necessary initial data (users, groups, policies) in parallel
+     * to populate dropdowns and caches. Then, it loads the content for the default tab.
+     */
     
     async function loadInitialData() {
         try {
@@ -842,6 +927,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadInitialData();
 });
 
+/** A factory function that sets up generic open/close logic for all modals. */
 function setupModalHandlers() {
     const modals = document.querySelectorAll('.modal-overlay');
     const closeModalBtns = document.querySelectorAll('.modal-close-btn');
@@ -870,6 +956,7 @@ function setupModalHandlers() {
     return { openModal, closeModal };
 }
 
+/** A factory function that sets up the toast notification system. */
 function setupToastNotifications() {
     const toastModal = document.getElementById('toastModal');
     const toastIcon = document.getElementById('toastIcon');
@@ -886,48 +973,4 @@ function setupToastNotifications() {
     };
 
     return { showToast, svgSuccess, svgError };
-}
-
-
-// --- Confirmation Modal Selectors & Logic ---
-const confirmationModal = document.getElementById('confirmationModal');
-const confirmationModalTitle = document.getElementById('confirmationModalTitle');
-const confirmationModalText = document.getElementById('confirmationModalText');
-const closeConfirmationModalBtn = document.getElementById('closeConfirmationModalBtn');
-let confirmationConfirmBtn = document.getElementById('confirmationConfirmBtn'); // Use let to allow reassignment
-const confirmationCancelBtn = document.getElementById('confirmationCancelBtn');
-
-/**
- * Shows a confirmation modal and executes a callback if the user confirms.
- * @param {string} title - The title of the modal.
- * @param {string} text - The descriptive text in the modal.
- * @param {function} onConfirm - The function to call if the user clicks "Confirm".
- */
-function showConfirmationModal(title, text, onConfirm) {
-    if (!confirmationModal) {
-        console.error("Confirmation modal not found in HTML. Falling back to default confirm.");
-        // Fallback to the browser's default confirm dialog if the modal doesn't exist
-        if (confirm(`${title}\n${text}`)) {
-            onConfirm();
-        }
-        return;
-    }
-    
-    confirmationModalTitle.textContent = title;
-    confirmationModalText.textContent = text;
-    
-    // Replace the confirm button to remove any old event listeners from previous calls
-    const newConfirmBtn = confirmationConfirmBtn.cloneNode(true);
-    confirmationConfirmBtn.parentNode.replaceChild(newConfirmBtn, confirmationConfirmBtn);
-    confirmationConfirmBtn = newConfirmBtn; // Update the variable to the new button
-    
-    // Add the new listeners
-    confirmationConfirmBtn.addEventListener('click', () => {
-        onConfirm();
-        confirmationModal.style.display = 'none';
-    });
-
-    confirmationCancelBtn.onclick = () => confirmationModal.style.display = 'none';
-    closeConfirmationModalBtn.onclick = () => confirmationModal.style.display = 'none';
-    confirmationModal.style.display = 'flex';
 }

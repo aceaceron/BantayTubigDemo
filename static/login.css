@@ -133,15 +133,36 @@ body::before {
     border: 1px solid #e74c3c;
 }
 
-/* <<< NEW: Styling for success messages. >>> */
+/* <<< Styling for success messages. >>> */
 .flash-message.success {
     background-color: #eaf7f0;
     color: #28a745;
     border: 1px solid #a3d9b8;
 }
 
+/* Hide inactive steps */
+.form-step {
+    display: none;
+}
+.form-step.active {
+    display: block;
+}
+
+/* Navigation buttons on Step 2 */
+.step-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+.step-nav .login-button {
+    flex: 1;
+}
+
 /* --- RESPONSIVE ADJUSTMENTS --- */
-@media (max-width: 480px) {
+@media (max-width: 792px) {
+    .login-container {
+        width: 90%s;
+    }
     .login-box {
         padding: 25px;
     }
