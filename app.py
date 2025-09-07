@@ -1,13 +1,13 @@
 # app.py
 
-
-from flask import Flask, session, request
+from flask import Flask, session, request, redirect, url_for, flash
 from flask_socketio import join_room
 import os
 from datetime import timedelta
 import sqlite3 
 from extensions import socketio 
 import mimetypes
+from database.user_manager import is_user_active
 
 # --- Import Blueprints from the new 'routes' package ---
 # These blueprints contain the organized routes for different
@@ -54,6 +54,17 @@ def create_app():
         static_folder=static_folder_path,
         template_folder=template_folder_path
     )
+    
+    # THIS FUNCTION NOW HANDLES ALL PRE-REQUEST TASKS
+    @app.before_request
+    def before_request_tasks():
+        if 'user_id' in session:
+            if request.path.startswith('/static/') or request.path in [url_for('view_bp.logout'), url_for('view_bp.login')]:
+                return
+            if not is_user_active(session['user_id']):
+                session.clear()
+                flash('Your session has expired or your account has been deactivated. Please log in again.', 'error')
+                return redirect(url_for('view_bp.login'))
 
     # Add a secret key required for sessions
     app.config['SECRET_KEY'] = 'a-very-secret-key-that-you-should-change'
