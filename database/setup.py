@@ -290,7 +290,6 @@ def create_tables():
             )
 
         default_settings = [
-            ('session_timeout', '15'),
             ('data_retention_days', '365'),
             ('buzzer_duration_seconds', '1'),
             ('show_ml_confidence', 'true') 
