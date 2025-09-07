@@ -1,74 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Machine Learning - BantayTubig</title>
 
+    <!-- Main project styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='machine_learning.css') }}">
+
+    <!-- Poppins font for UI consistency -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Flatpickr CSS (date range picker) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
-<body>
 
+<body>
+    <!-- Background looping video -->
     <video autoplay muted loop id="backgroundVideo">
         <source src="{{ url_for('static', filename='BantayTubig.mp4') }}" type="video/mp4">
     </video>
 
-    <div class="header-top-left">
-        <div class="menu-icon">&#9776;</div> </div>
-
+    <!-- // UNIVERSAL HEADER & SIDEBAR NAVIGATION // -->
+    <!-- This structure is consistent across all pages for navigation. -->
     
+    <!-- Top-Left Header: Contains the menu icon to toggle the sidebar. -->
+    <div class="header-top-left">
+        <div class="menu-icon">
+            &#9776; <!-- HTML entity for the hamburger menu icon (☰). -->
+        </div>
+    </div>
+
     <!-- Sidebar Menu: A slide-out navigation panel. -->
     {% include '_sidebar.html' %}
 
-
+    <!-- Header right: Page title and tagline -->
     <div class="header-top-right">
         <h1>Machine Learning Hub</h1>
         <div id="timestamp">Panghuhula at Pagsusuri ng mga Hindi Pangkaraniwang Kaganapan</div>
     </div>
 
+    <!-- Main content area -->
     <div class="main-content ml-page">
-        
+
+        <!-- Tab navigation buttons -->
         <div class="tabs-container">
             <button class="tab-link active" data-tab="live">Live Analysis</button>
             <button class="tab-link" data-tab="historical">Historical Summary</button>
             <button class="tab-link" data-tab="forecast">Forecasting</button>
-            <button class="tab-link" data-tab="annotate">Event Annotation</button>
+            <button class="tab-link" data-tab="pending">Annotation Review</button>
+            <button class="tab-link" data-tab="history">Annotation History</button>
         </div>
 
+        <!-- LIVE ANALYSIS TAB -->
         <div id="live" class="tab-content active">
             <div class="content-card">
-                 <div class="tooltip-container">
+                <!-- Tooltip: explains feature -->
+                <div class="tooltip-container">
                     <span class="tooltip-icon">?</span>
                     <div class="tooltip-message">
                         <p>Ipinapakita nito ang real-time na pagsusuri ng AI sa kasalukuyang kalidad ng tubig, kasama ang mga posibleng dahilan at mungkahi.</p>
                         <p><em>This shows the AI's real-time analysis of the current water quality, including potential reasoning and suggestions.</em></p>
                     </div>
                 </div>
+
+                <!-- Card title -->
                 <div class="card-header">
                     <h2>AI Analysis of Current Water Quality</h2>
                 </div>
+
+                <!-- Container for AI results -->
                 <div id="current-analysis-container" class="analysis-container">
+                    <!-- Reasoning (skeleton loader until data arrives) -->
                     <div>
                         <h4>Reasoning</h4>
-                        <p id="ai-reasoning">Loading AI analysis...</p>
+                        <div class="skeleton-loader" id="ai-reasoning-loader"></div>
+                        <p id="ai-reasoning" style="display:none;"></p>
                     </div>
+                    <!-- Suggestions -->
                     <div>
                         <h4>Suggestions</h4>
-                        <p id="ai-suggestions">...</p>
+                        <div class="skeleton-loader" id="ai-suggestions-loader"></div>
+                        <p id="ai-suggestions" style="display:none;"></p>
                     </div>
+                    <!-- Other uses -->
                     <div>
                         <h4>Other Potential Uses</h4>
-                        <p id="ai-other-uses">...</p>
+                        <div class="skeleton-loader" id="ai-other-uses-loader"></div>
+                        <p id="ai-other-uses" style="display:none;"></p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- HISTORICAL SUMMARY TAB -->
         <div id="historical" class="tab-content">
             <div class="content-card">
+                <!-- Tooltip -->
                 <div class="tooltip-container">
                     <span class="tooltip-icon">?</span>
                     <div class="tooltip-message">
@@ -76,21 +106,28 @@
                         <p><em>Select a date range to generate an AI-powered summary of water quality trends and anomalies.</em></p>
                     </div>
                 </div>
+
                 <div class="card-header">
                     <h2>AI-Powered Historical Summary</h2>
                 </div>
+
+                <!-- Date range picker + button -->
                 <div class="historical-form">
                     <input type="text" id="dateRangePicker" placeholder="Select a date range">
                     <button id="generateAnalysisBtn" class="action-button">Generate Summary</button>
                 </div>
+
+                <!-- Output container -->
                 <div id="historical-reasoning-container" class="reasoning-container">
-                    <p>Select a date range and click "Generate Summary" to get an AI-powered explanation.</p>
+                    <p>Select a date range and click "Generate Summary"... </p>
                 </div>
             </div>
         </div>
 
+        <!-- FORECASTING TAB -->
         <div id="forecast" class="tab-content">
             <div class="content-card">
+                <!-- Tooltip -->
                 <div class="tooltip-container">
                     <span class="tooltip-icon">?</span>
                     <div class="tooltip-message">
@@ -98,12 +135,19 @@
                         <p><em>The AI forecasts water quality trends for the next 24 hours based on historical data patterns.</em></p>
                     </div>
                 </div>
+
                 <div class="card-header">
                     <h2>Predictive Forecasting (Next 24 Hours)</h2>
                 </div>
-                <p class="card-subtitle">
-                    This feature uses historical data to predict future trends. <strong>If no forecast is shown, the system has not yet collected enough data (typically a few days' worth) to learn reliable patterns.</strong>
-                </p>
+
+                <!-- Forecast source options (hidden by default) -->
+                <div class="forecast-options" style="display: none;">
+                    <label><input type="radio" name="forecastSource" value="database" checked> Show Standard Forecast</label>
+                    <label><input type="radio" name="forecastSource" value="continuous_30d"> Demo: Continuous 30-Day Data</label>
+                    <label><input type="radio" name="forecastSource" value="non_continuous_7d"> Demo: Non-Continuous 7-Day Data</label>
+                </div>
+
+                <!-- Charts grid -->
                 <div class="forecast-grid">
                     <div class="chart-container"><canvas id="tempForecastChart"></canvas></div>
                     <div class="chart-container"><canvas id="phForecastChart"></canvas></div>
@@ -112,34 +156,66 @@
                 </div>
             </div>
         </div>
-        
-        <div id="annotate" class="tab-content">
+
+        <!-- PENDING ANNOTATION REVIEW TAB -->
+        <div id="pending" class="tab-content">
             <div class="content-card">
-                 <div class="tooltip-container">
+                <!-- Tooltip -->
+                <div class="tooltip-container">
                     <span class="tooltip-icon">?</span>
                     <div class="tooltip-message">
                         <p>Tulungan ang AI na matuto sa pamamagitan ng pag-validate sa mga na-detect na event. Ang iyong feedback ay nagpapatalino sa system.</p>
                         <p><em>Help the AI learn by validating detected events. Your feedback makes the system smarter.</em></p>
                     </div>
                 </div>
+
                 <div class="card-header">
                     <h2>AI-Assisted Event Annotation (Feedback Loop)</h2>
+                    <button id="generateDemoEventBtn" class="action-button-small">Generate Demo Event</button>
                 </div>
-                <p class="card-subtitle">Help the AI learn by validating detected events. Your feedback makes the system smarter.</p>
-                <div id="annotation-container" class="annotation-container">
-                    <p id="no-anomalies-message">No new events require validation at this time. Check back later.</p>
+
+                <!-- Message when no anomalies -->
+                <p id="no-anomalies-message" style="display: none;">No new events require validation...</p>
+
+                <!-- Container for dynamically added annotation cards -->
+                <div id="annotation-container" class="annotation-container"></div>
+            </div>
+        </div>
+
+        <!-- ANNOTATION HISTORY TAB -->
+        <div id="history" class="tab-content">
+            <div class="content-card">
+                <!-- Tooltip -->
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Ipinapakita sa seksyong ito ang isang read-only na listahan ng lahat ng mga kaganapan na nasuri at nabigyan na ng label. Ang history na ito ay ginagamit para sanayin muli at pagbutihin ang AI.</p>
+                        <p><em>This section provides a read-only log of all events that have been previously reviewed and labeled. This history is used to retrain and improve the AI.</em></p>
+                    </div>
                 </div>
+
+                <div class="card-header">
+                    <h2>Annotation History</h2>
+                </div>
+
+                <!-- Message if no history -->
+                <p id="no-history-message" style="display: none;">No annotated events found...</p>
+
+                <!-- Container for annotation history logs -->
+                <div id="history-container" class="history-container"></div>
             </div>
         </div>
     </div>
 
+    <!-- Toast notifications (popups for success/error messages) -->
     <div id="toastModal" class="toast-modal">
         <div class="toast-content">
             <div id="toastIcon" class="toast-icon"></div>
             <p id="toastMessage" class="toast-message"></p>
         </div>
     </div>
-    
+
+    <!-- Live alert banner (real-time warnings) -->
     <div id="liveAlertBanner" class="live-alert-banner">
         <div class="live-alert-icon">🔔</div>
         <div class="live-alert-content">
@@ -153,16 +229,20 @@
         <button id="closeLiveAlertBtn" class="close-live-alert-btn">&times;</button>
     </div>
 
+    <!-- Network status banner -->
     <div id="networkStatusBanner" class="network-status-banner">
         <span id="networkStatusIcon">⚠️</span>
         <span id="networkStatusText">No network connection. Displayed data may not be live.</span>
     </div>
 
+    <!-- External JS Libraries -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='global_alerter.js') }}"></script> 
+    <script src="{{ url_for('static', filename='global_alerter.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+    <!-- Project-specific ML logic -->
     <script src="{{ url_for('static', filename='machine_learning.js') }}"></script>
 </body>
 </html>

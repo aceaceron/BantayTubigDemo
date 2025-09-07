@@ -23,14 +23,15 @@
         Your browser does not support the video tag.
     </video>
 
-    <!-- // UNIVERSAL HEADER & SIDEBAR NAVIGATION // -->
-    <!-- This structure is consistent across all pages. -->
+    <!-- UNIVERSAL HEADER & SIDEBAR NAVIGATION -->
+    <!-- Hamburger menu triggers sidebar -->
     <div class="header-top-left">
-        <div class="menu-icon" onclick="toggleMenu()">
-            &#9776; <!-- Hamburger menu icon -->
+        <div class="menu-icon">
+            &#9776; <!-- Hamburger icon -->
         </div>
     </div>
 
+    <!-- Sidebar included as a partial for reusability -->
     {% include '_sidebar.html' %}
 
     <div class="header-top-right">
