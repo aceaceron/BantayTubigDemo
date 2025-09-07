@@ -58,6 +58,8 @@ def run_monitoring_app():
     # === Initialize the LCD and MQTT Client Immediately ===
     start_status("Initializing...")
 
+    from ml_models.main_processor import run_ml_analysis
+    
     # Connect to MQTT Broker right after LCD
     update_status("Connecting to MQTT")
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
@@ -252,7 +254,17 @@ def run_monitoring_app():
                     lcd_display_state = 0
                 elif not is_connected and lcd_display_state > 2:
                     lcd_display_state = 0
-
+                
+                if last_ml_analysis_time is None or (now - last_ml_analysis_time) >= timedelta(minutes=15):
+                    print("PERIODIC TRIGGER: Running ML analysis for forecasts and anomalies...")
+                    try:
+                        # Run the entire ML pipeline in the background.
+                        # Using a thread prevents this from freezing the main sensor loop.
+                        ml_thread = threading.Thread(target=run_ml_analysis, daemon=True)
+                        ml_thread.start()
+                    except Exception as ml_err:
+                        print(f"!!! ML ANALYSIS ERROR: {ml_err}")
+                    last_ml_analysis_time = now
                 time.sleep(LOOP_DELAY_SECONDS)
 
             except Exception as e:
