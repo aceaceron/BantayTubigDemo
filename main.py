@@ -90,7 +90,12 @@ def run_monitoring_app():
     )
 
     update_status("Loading ML model...")
-    from water_quality import predict_water_quality, train_decision_tree
+    try:
+        from water_quality import predict_water_quality, train_decision_tree
+    except ImportError:
+        from water_quality import predict_water_quality
+        def train_decision_tree():
+            print("train_decision_tree not available (mock).")
 
     # --- Function Definitions ---
     def get_ip_address():
