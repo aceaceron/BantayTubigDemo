@@ -673,7 +673,7 @@
         flex-direction: column;
         align-items: center;
         gap: 20px;
-        margin-bottom: 26vh; /* Adds space at the bottom for the fixed gauge bar. */
+        margin-bottom: 32vh; /* Adds space at the bottom for the fixed gauge bar. */
     }
     .quality-explanation {
         width: 95% !important;

@@ -494,27 +494,66 @@ function updatePredictionDetails(data) {
  * @param {object} data - The full, flat data object from the /analytics/latest API endpoint.
  */
 function updateWaterQualityInfo(data) {
-
     // 1. Update the ML prediction display (which reads the localStorage setting).
     updatePredictionDetails(data);
 
-    // 2. Update the static analysis text.
-    document.getElementById('qualityExplanationTitle').textContent = data.title_text || "Water Quality Details";
-    document.getElementById('qualityReason').innerHTML = data.reason || "Loading details...";
-    document.getElementById('consumableStatus').textContent = `Consumable Status: ${data.consumableStatus || 'N/A'}`;
-    document.getElementById('otherUses').textContent = `Other Uses: ${data.otherUses || 'N/A'}`;
-    document.getElementById('qualitySuggestion').textContent = `Suggestion: ${data.suggestion || 'N/A'}`;
+    // 2. Update the static analysis text with null checks.
+    const title = document.getElementById('qualityExplanationTitle');
+    if (title) {
+        title.textContent = data.title_text || "Water Quality Details";
+    }
+    
+    const reason = document.getElementById('qualityReason');
+    if (reason) {
+        reason.innerHTML = data.reason || "Loading details...";
+    }
+    
+    // Add null checks for consumableStatus and other elements
+    const consumableStatus = document.getElementById('consumableStatus');
+    if (consumableStatus) {
+        consumableStatus.textContent = `Consumable Status: ${data.consumableStatus || 'N/A'}`;
+    }
+
+    const otherUses = document.getElementById('otherUses');
+    if (otherUses) {
+        otherUses.textContent = `Other Uses: ${data.otherUses || 'N/A'}`;
+    }
+    
+    const suggestion = document.getElementById('qualitySuggestion');
+    if (suggestion) {
+        suggestion.textContent = `Suggestion: ${data.suggestion || 'N/A'}`;
+    }
 
     // Update Tagalog translations.
-    document.getElementById('qualityExplanationTitleTL').textContent = data.title_text_tl || "Mga Detalye ng Kalidad ng Tubig";
-    document.getElementById('qualityReasonTL').innerHTML = data.reason_tl || "Loading Tagalog details...";
-    document.getElementById('consumableStatusTL').textContent = `Katayuan ng Pagkain: ${data.consumableStatus_tl || 'Hindi Matukoy'}`;
-    document.getElementById('otherUsesTL').textContent = `Iba Pang Gamit: ${data.otherUses_tl || 'Hindi Matukoy'}`;
-    document.getElementById('qualitySuggestionTL').textContent = `Mungkahi: ${data.suggestion_tl || 'Hindi Matutukoy'}`;
+    const titleTL = document.getElementById('qualityExplanationTitleTL');
+    if (titleTL) {
+        titleTL.textContent = data.title_text_tl || "Mga Detalye ng Kalidad ng Tubig";
+    }
+    
+    const reasonTL = document.getElementById('qualityReasonTL');
+    if (reasonTL) {
+        reasonTL.innerHTML = data.reason_tl || "Loading Tagalog details...";
+    }
+    
+    const consumableStatusTL = document.getElementById('consumableStatusTL');
+    if (consumableStatusTL) {
+        consumableStatusTL.textContent = `Katayuan ng Pagkain: ${data.consumableStatus_tl || 'Hindi Matukoy'}`;
+    }
+    
+    const otherUsesTL = document.getElementById('otherUsesTL');
+    if (otherUsesTL) {
+        otherUsesTL.textContent = `Iba Pang Gamit: ${data.otherUses_tl || 'Hindi Matukoy'}`;
+    }
+    
+    const suggestionTL = document.getElementById('qualitySuggestionTL');
+    if (suggestionTL) {
+        suggestionTL.textContent = `Mungkahi: ${data.suggestion_tl || 'Hindi Matutukoy'}`;
+    }
     
     // 3. Update the static analysis icons.
     updateAnalysisIcons(data);
 }
+
 /**
  * Updates the timestamp display on the dashboard.
  * @param {string} timestampISO - The ISO 8601 timestamp string from the server.

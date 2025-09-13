@@ -61,12 +61,93 @@ document.addEventListener('DOMContentLoaded', function () {
     const tabContents = document.querySelectorAll('.tab-content');
     tabLinks.forEach(link => {
         link.addEventListener('click', () => {
+            // This is your existing code to handle switching the active tab
             tabLinks.forEach(l => l.classList.remove('active'));
             tabContents.forEach(c => c.classList.remove('active'));
             link.classList.add('active');
             document.getElementById(link.dataset.tab).classList.add('active');
+
+            // If the clicked tab is the 'Live Analysis' tab, then call its specific function.
+            if (link.dataset.tab === 'live') {
+                loadCurrentAnalysis();
+            }
+            else if (link.dataset.tab === 'history') {
+                loadAnnotationHistory();
+            }
         });
     });
+
+    // ========================================================================
+    // === TAB: DECISION MODE =================================================
+    // ======================================================================== 
+
+    function setupDecisionModeToggle() {
+        const modeBtnThresholds = document.getElementById('modeBtnThresholds');
+        const modeBtnML = document.getElementById('modeBtnML');
+        const { showToast, svgError, svgSuccess } = setupToastNotifications();
+
+        const setActiveMode = (mode) => {
+            if (mode === 'ML') {
+                modeBtnML.classList.add('active');
+                modeBtnThresholds.classList.remove('active');
+            } else {
+                modeBtnThresholds.classList.add('active');
+                modeBtnML.classList.remove('active');
+            }
+        };
+
+        // Check model status first
+        fetch('/api/ml/status')
+            .then(res => res.json())
+            .then(statusData => {
+                if (!statusData.is_model_available) {
+                    // --- FIX: Use class instead of disabled attribute ---
+                    modeBtnML.classList.add('disabled');
+                    modeBtnML.title = "ML model cannot be used until there is enough data for training.";
+                } else {
+                    // Ensure it's not disabled if the model IS available
+                    modeBtnML.classList.remove('disabled');
+                }
+            })
+            .catch(err => console.error("Error fetching ML status:", err));
+
+        // Load the current decision mode setting
+        fetch('/api/ml/decision_mode')
+            .then(res => res.json())
+            .then(data => {
+                setActiveMode(data.mode);
+            })
+            .catch(err => console.error("Error loading decision mode:", err));
+
+        // Consolidated event listener
+        [modeBtnThresholds, modeBtnML].forEach(btn => {
+            btn.addEventListener('click', () => {
+                // --- FIX: Check for the .disabled class ---
+                if (btn.classList.contains('disabled')) {
+                    // If it's the disabled-styled ML button, show the toast.
+                    if (btn.id === 'modeBtnML') {
+                        showToast("Machine learning decision mode disabled: Insufficient data for training.", svgError, 5000);
+                    }
+                    return; // Stop further execution
+                }
+
+                // If not disabled, proceed with saving the new mode.
+                const newMode = btn.dataset.mode;
+                setActiveMode(newMode);
+                
+                fetch('/api/ml/decision_mode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: newMode })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    showToast(data.message, svgSuccess);
+                })
+                .catch(err => console.error("Error saving decision mode:", err));
+            });
+        });
+    }
 
     // ========================================================================
     // === TAB: LIVE ANALYSIS =================================================
@@ -127,6 +208,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const generateBtn = document.getElementById('generateAnalysisBtn');
     const historicalContainer = document.getElementById('historical-reasoning-container');
 
+    function formatDateLocal(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
     /**
      * Fires when the "Generate Summary" button is clicked.
      * How it works:
@@ -142,19 +230,40 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         historicalContainer.innerHTML = "<p>Generating AI summary, please wait...</p>";
+
         const payload = {
-            start_date: selectedDates[0].toISOString().split('T')[0],
-            end_date: selectedDates[1].toISOString().split('T')[0],
+            start_date: formatDateLocal(selectedDates[0]),
+            end_date: formatDateLocal(selectedDates[1]),
         };
+
         try {
-            const response = await fetch('/api/ml/historical_reasoning', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const response = await fetch('/api/ml/historical_reasoning', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}`);
+            }
+
             const data = await response.json();
             historicalContainer.innerHTML = data.html;
         } catch (error) {
             console.error('Failed to generate historical reasoning:', error);
+
+            // 🔥 Toast alert for no internet / failed communication
+            if (!navigator.onLine) {
+                showToast("No internet connection. Please reconnect.", svgError);
+            } else {
+                showToast("Unable to communicate with the AI service.", svgError);
+            }
+
             historicalContainer.innerHTML = "<p>An error occurred. Please try again.</p>";
         }
     });
+
+
 
     // ========================================================================
     // === TAB: FORECASTING ===================================================
@@ -359,7 +468,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     let isSwiping = false;
                     let startX = 0;
                     let swipeDistance = 0;
-                    const swipeThreshold = card.offsetWidth / 3;
+                    const swipeThreshold = card.offsetWidth / 2;
 
                     function onSwipeStart(e) {
                         if (e.target.closest('form')) return;
@@ -497,26 +606,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Failed to load annotation history:', error);
         }
     }
-    
-    /**
-     * Fires when the "Generate Demo Event" button is clicked.
-     * How it works:
-     * 1. Sends a POST request to '/api/ml/generate_demo_anomaly'.
-     * 2. The server creates a fake anomaly and saves it to the database.
-     * 3. After a successful response, it calls `loadAnomalies()` again to
-     * refresh the list and display the new demo card.
-     */
-    document.getElementById('generateDemoEventBtn').addEventListener('click', async () => {
-        showToast("Generating a demo event...", svgSuccess);
-        try {
-            const response = await fetch('/api/ml/generate_demo_anomaly', { method: 'POST' });
-            if (!response.ok) throw new Error('Failed to generate demo event on the server.');
-            await response.json();
-            loadAnomalies(); // Refresh the list
-        } catch (error) {
-            showToast(error.message, svgError);
-        }
-    });
 
     /**
      * Fires when a user submits an annotation form.
@@ -551,17 +640,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-
     // ========================================================================
     // === PAGE INITIALIZATION ================================================
     // ========================================================================
     // Call the main functions to load the initial state of the page.
-    loadCurrentAnalysis();
     loadForecasts();
     loadAnomalies();    
     loadAnnotationHistory();
+    setupDecisionModeToggle();
 });
-
 
 /**
  * ========================================================================

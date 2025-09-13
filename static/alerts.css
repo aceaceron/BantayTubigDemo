@@ -144,6 +144,7 @@ th {
     padding: 15px;
     margin-bottom: 15px;
     background-color: #fdfdfd;
+    overflow-x: auto;
 }
 
 .condition-row {
@@ -356,6 +357,19 @@ hr.form-divider {
     width: 16px;
     height: 16px;
 }
+
+.protected-btn {
+    opacity: 0.5;
+    pointer-events: auto; /* allow click */
+    cursor: not-allowed;
+}
+
+.protected-input {
+    background-color: #f5f5f5;
+    color: #888;
+    cursor: not-allowed;
+}
+
 
 /* --- Pagination Controls --- */
 .pagination-controls {

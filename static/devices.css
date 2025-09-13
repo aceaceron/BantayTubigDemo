@@ -208,59 +208,68 @@
 }
 
 
-/* --- Maintenance Log Specific Styles --- */
-/* Card containing the maintenance log.
-   Applied to: <div id="maintenance-log-card" class="info-card"> */
-#maintenance-log-card {
-    grid-column: span 1;
+/* --- Maintenance Log Cards --- */
+.log-card {
+    border-left: 4px solid #d1d5db;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: none; /* remove background color */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-/* Container for the list of log entries.
-   Applied to: <div id="maintenanceLog" class="card-body maintenance-log"> */
-.maintenance-log {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    overflow-y: auto;
-    max-height: 400px;
+/* Technician name styling */
+.log-tech {
+    font-weight: 600;
+    color: #1f2937; /* dark gray */
+    margin: 0;      /* remove default margin */
+    padding: 0;     /* remove any padding */
+    display: inline; /* inline to avoid extra block space */
+    font-size: 0.95em;
 }
 
-/* An individual log entry.
-   Applied to dynamically generated <div class="log-item"> */
-.log-item {
-    background-color: #f8f9fa;
-    border-radius: 10px;
-    padding: 15px;
-    border-left: 5px solid #6c757d;
+
+/* Date styling */
+.log-date {
+    font-size: 0.8em;
+    color: #6b7280; /* gray-500 */
 }
 
-/* Header of a log item, containing technician name and date.
-   Applied to: <div class="log-item-header"> */
-.log-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-size: 0.9em;
-    color: #555;
+/* Sensor name styling */
+.log-sensor {
+    font-style: italic;
+    color: #4b5563; /* gray-700 */
+    font-weight: 500;
 }
 
-/* Technician name in the log item header. */
-.log-item-header h4 {
-    margin: 0;
-    font-size: 1.1em;
-    color: #333;
-}
-
-/* The notes/details of the log entry. */
-.log-item p {
-    margin: 0;
-    font-size: 1em;
-}
-
-#addLogBtn {
-    background-color: #007bff;
+/* Status badge based on inspiration */
+.status-badge {
+    padding: 4px 10px;
+    margin-left: 5px;
+    border-radius: 12px;
     color: white;
+    font-weight: 600;
+    font-size: 0.8em;
+    text-align: center;
+}
+
+.status-success {
+    background-color: #273dff; /* blue */
+}
+
+.status-failure {
+    background-color: #dc3545; /* red */
+}
+
+/* Offset and slope styling */
+.log-details {
+    margin-top: 6px;
+    font-size: 0.85em;
+    color: #374151; /* gray-800 */
+}
+
+.log-details span {
+    font-weight: 500;
 }
 
 

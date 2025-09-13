@@ -305,3 +305,12 @@
     text-align: left; /* Ensure paragraphs are left-aligned */
     margin-bottom: 10px; /* Add space below paragraphs */
 }
+
+@media (max-width: 768px) {
+    .cv-modal-title {
+        font-size: 1em;
+    }
+    .cv-section h4 {
+        font-size: 0.8em;
+    }
+}

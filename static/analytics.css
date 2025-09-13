@@ -143,6 +143,25 @@
     font-weight: normal;
 }
 
+.input-with-clear {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.clear-btn {
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 1.2em;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: color 0.2s ease;
+}
+
+.clear-btn:hover {
+    color: #333;
+}
 
 /* --- HISTORICAL DATA CHART --- */
 /* Styles for the large line chart.

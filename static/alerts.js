@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'Restore Default Rules?',
             'Any changes you made to default rules will be lost. This cannot be undone.',
             () => {
-                apiFetch('/api/alerts/rules/restore_defaults', { method: 'POST' })
+                apiFetch('/api/alerts/rules/restore', { method: 'POST' })
                     .then(() => {
                         showToast('Default rules have been restored.', svgSuccess);
                         loadAlertRules();
@@ -432,23 +432,31 @@ document.addEventListener('DOMContentLoaded', function() {
     /** Renders the table of notification groups. */
     function renderGroupsTable(groups) {
         notificationGroupsTableBody.innerHTML = '';
-        if (groups.length === 0) { 
+        if (groups.length === 0) {
             notificationGroupsTableBody.innerHTML = `<tr><td colspan="3">No notification groups defined.</td></tr>`;
-            return; 
+            return;
         }
+
         groups.forEach(group => {
             const tr = document.createElement('tr');
+            const isProtected = group.name === 'Administrators';
             tr.innerHTML = `
                 <td>${group.name}</td>
-                <td>${group.member_count} users</td>
+                <td>${group.member_count} user/s</td>
                 <td class="action-buttons-cell">
                     <button class="action-button small edit-group-btn" data-id="${group.id}">Edit</button>
-                    <button class="action-button small deactivate delete-group-btn" data-id="${group.id}">Delete</button>
+                    <button 
+                        class="action-button small deactivate delete-group-btn ${isProtected ? 'protected-btn' : ''}" 
+                        data-id="${group.id}"
+                    >
+                        Delete
+                    </button>
                 </td>
             `;
             notificationGroupsTableBody.appendChild(tr);
         });
     }
+
 
     /** Renders the table of escalation policies. */
     function renderPoliciesTable(policies) {
@@ -473,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * Converts a policy's path data into a human-readable string.
-     * e.g., "Notify On-Call Techs & wait 15 min → Notify Managers"
+     * e.g., "Wait 15 minutes, then notify On-Call Techs → Wait 10 minutes, then notify Managers"
      */
     function formatEscalationPath(path) {
         if (!path || !Array.isArray(path) || path.length === 0) {
@@ -487,7 +495,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const group = allGroups.find(g => g.id == step.group_id);
             const groupName = group ? group.name : `Unknown Group (ID: ${step.group_id})`;
             
-            return `Notify <b>${groupName}</b> & wait ${step.wait_minutes} min`;
+            // Swap order: wait first, then notify
+            return `Wait <b>${step.wait_minutes} minute/s</b>, then notify <b>${groupName}</b>`;
         });
 
         return steps.join(' → ');
@@ -558,18 +567,46 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch(error) { /* Handled by apiFetch */ }
     });
 
+    // Event listener for the notification groups table body
     notificationGroupsTableBody.addEventListener('click', async e => {
         const target = e.target;
         const groupId = target.dataset.id;
+
+        // ✅ Delete button protection
+        if (target.classList.contains('delete-group-btn') && target.classList.contains('protected-btn')) {
+            showToast("The 'Administrators' group cannot be deleted.", svgError);
+            return;
+        }
+
+        // ✅ Edit button clicked
         if (target.classList.contains('edit-group-btn')) {
             groupForm.reset();
             groupModalTitle.textContent = 'Edit Group';
-            const groupDetails = await apiFetch(`/api/alerts/groups/${groupId}`);
-            groupIdInput.value = groupDetails.id;
-            groupNameInput.value = groupDetails.name;
-            renderGroupMembersChecklist(allUsers, groupDetails.members);
-            openModal('groupModal');
-        } else if (target.classList.contains('delete-group-btn')) {
+
+            try {
+                const [groupDetails, users] = await Promise.all([
+                    apiFetch(`/api/alerts/groups/${groupId}`),
+                    apiFetch('/api/alerts/users_for_groups')
+                ]);
+                
+                groupIdInput.value = groupDetails.id;
+                groupNameInput.value = groupDetails.name;
+
+                // 🔒 Protect Administrators group name
+                const isProtected = groupDetails.name === 'Administrators';
+                groupNameInput.readOnly = isProtected;   // use readOnly instead of disabled
+                groupNameInput.classList.toggle('protected-input', isProtected);
+
+                renderGroupMembersChecklist(users, groupDetails.members);
+                openModal('groupModal');
+
+            } catch (error) {
+                showToast('Failed to load group details.', svgError);
+            }
+        } 
+        
+        // ✅ Delete button (normal groups)
+        else if (target.classList.contains('delete-group-btn')) {
             showConfirmationModal(
                 'Delete this Group?',
                 'This action cannot be undone. Rules using this group will no longer send notifications.',
@@ -582,6 +619,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                 }
             );
+        }
+    });
+
+    // ✅ Toast on click of protected input
+    groupNameInput.addEventListener("click", e => {
+        if (e.target.readOnly && e.target.classList.contains("protected-input")) {
+            showToast("The 'Administrators' group name cannot be changed.", svgError);
         }
     });
 
@@ -670,18 +714,22 @@ document.addEventListener('DOMContentLoaded', function() {
     function addPolicyStep(step = {}) {
         const div = document.createElement('div');
         div.className = 'condition-row';
-        const groupOptions = allGroups.map(g => `<option value="${g.id}" ${step.group_id == g.id ? 'selected' : ''}>${g.name}</option>`).join('');
+
+        const groupOptions = allGroups
+            .map(g => `<option value="${g.id}" ${step.group_id == g.id ? 'selected' : ''}>${g.name}</option>`)
+            .join('');
 
         div.innerHTML = `
-            <span>Step:</span>
-            <select class="policy-group-select">${groupOptions}</select>
-            <span>Wait for</span>
+            <span>Wait</span>
             <input type="number" class="policy-wait-input" min="1" value="${step.wait_minutes || 15}">
-            <span>minutes, then escalate.</span>
+            <span>minutes, then notify</span>
+            <select class="policy-group-select">${groupOptions}</select>
             <button type="button" class="remove-condition-btn">&times;</button>
         `;
+
         policyStepsContainer.appendChild(div);
     }
+
 
     // ========================================================================
     // == THRESHOLDS TAB LOGIC ================================================

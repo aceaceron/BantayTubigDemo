@@ -115,6 +115,43 @@ document.addEventListener('DOMContentLoaded', () => {
     checkNetworkStatus();
 });
 
+/**
+ * Checks connectivity (both client internet and server reachability).
+ * If offline, shows a toast and blocks further execution.
+ * Returns true if connected, false if not.
+ */
+async function ensureInternetConnection() {
+    try {
+        // Quick client-side offline check
+        if (!navigator.onLine) {
+            showToastModal("No internet connection. Please reconnect.", svgError);
+            return false;
+        }
+
+        // Server health check (your API endpoint)
+        const response = await fetch("/api/check_internet", { method: "GET" });
+
+        if (!response.ok) {
+            showToastModal("Cannot reach server. Please try again later.", svgError);
+            return false;
+        }
+
+        // Parse server response
+        const data = await response.json();
+        if (data.status !== "ok") {
+            showToastModal("Server unavailable. Try again later.", svgError);
+            return false;
+        }
+
+        return true; // All good
+
+    } catch (err) {
+        console.error("Network check failed:", err);
+        showToastModal("Network unavailable. Please reconnect.", svgError);
+        return false;
+    }
+}
+
 
 // --- GLOBAL HELPERS (Accessible by all other scripts) ---
 

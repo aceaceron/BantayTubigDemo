@@ -415,6 +415,40 @@ function setupSettingsPage() {
         });
     }
 
+    // --- LCD INSTRUCTION MODAL LOGIC ---
+    const lcdInstructionModal = document.getElementById('lcdInstructionModal');
+    const showLcdModalBtn = document.getElementById('showLcdModalBtn');
+    const closeModalBtns = lcdInstructionModal.querySelectorAll('.lcd-close-modal-btn');
+
+    if (showLcdModalBtn) {
+        showLcdModalBtn.addEventListener('click', () => {
+            lcdInstructionModal.style.display = 'flex';
+        });
+    }
+
+    closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            lcdInstructionModal.style.display = 'none';
+        });
+    });
+
+    // Close the modal when clicking outside of it
+    window.addEventListener('click', (event) => {
+        if (event.target === lcdInstructionModal) {
+            lcdInstructionModal.style.display = 'none';
+        }
+    });
+
+        // --- ROLE-BASED UI CONTROL ---
+    const currentUserEl = document.getElementById('currentUser');
+    const userRole = currentUserEl ? currentUserEl.dataset.role : null;
+
+    if (powerOffBtn && userRole !== 'Administrator') {
+        powerOffBtn.disabled = true; // Disable button
+        powerOffBtn.classList.add('disabled-btn'); // Optional styling
+        powerOffBtn.title = "Only Administrators can shut down the system"; // Tooltip
+    }
+
     // --- INITIAL DATA LOADS ---
     loadDeviceSettings();
     loadUiSettings();

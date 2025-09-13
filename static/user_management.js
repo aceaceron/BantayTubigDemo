@@ -482,141 +482,47 @@ document.addEventListener('DOMContentLoaded', function() {
         );
     }
 
-    // --- ROLE MANAGEMENT FUNCTIONS ---
+    // --- ROLE MANAGEMENT FUNCTIONS (VIEW-ONLY) ---
     async function loadRoles() {
-        allRoles = await apiFetch('/api/roles');
-        renderRolesTable(allRoles);
-    }
-
-    function renderRolesTable(roles) {
-        rolesTableBody.innerHTML = '';
-        if (!roles || roles.length === 0) {
-            rolesTableBody.innerHTML = `<tr><td colspan="3">No roles found.</td></tr>`;
-            return;
-        }
-
-        roles.forEach(role => {
-            const tr = document.createElement('tr');
-            const isProtected = PROTECTED_ROLES.includes(role.name);
-
-            // << Generate permission badges instead of a simple description >>>
-            let permissionsHtml = Object.entries(role.permissions || {})
-                .filter(([key, value]) => value === true)
-                .map(([key]) => `<span class="permission-badge" data-permission="${key}">${AVAILABLE_PERMISSIONS[key] || key}</span>`)
-                .join(' ');
-
-            if (!permissionsHtml) {
-                permissionsHtml = '<em>No permissions assigned.</em>';
-            }
-
-            let actionButtonsHtml;
-
-            if (isProtected) {
-                actionButtonsHtml = `
-                    <button class="action-button small protected-role-btn">
-                        <i class="fas fa-lock"></i> Edit
-                    </button>
-                    <button class="action-button small deactivate protected-role-btn">
-                        <i class="fas fa-lock"></i> Delete
-                    </button>
-                `;
-            }  else {
-                // Render normal, functional buttons for custom roles
-                actionButtonsHtml = `
-                    <button class="action-button small edit-role-btn" data-id="${role.id}">Edit</button>
-                    <button class="action-button small deactivate delete-role-btn" data-id="${role.id}">Delete</button>
-                `;
-            }
-
-            tr.innerHTML = `
-                <td>${role.name}</td>
-                <td>${role.description || ''}</td>
-                <td>${permissionsHtml}</td>
-                <td class="action-buttons-cell">${actionButtonsHtml}</td>
-            `;
-            rolesTableBody.appendChild(tr);
-        });
-    };
-
-    function openRoleModal(role = null) {
-        roleForm.reset();
-        rolePermissionsChecklist.innerHTML = ''; // Clear old content
-
-        // <<< Dynamically generate toggle switches instead of checkboxes >>>
-        for (const [key, label] of Object.entries(AVAILABLE_PERMISSIONS)) {
-            // Check permissions correctly from the now-parsed object
-            const isChecked = role ? (role.permissions && role.permissions[key] === true) : false;
-            
-            const toggleHtml = `
-                <div class="permission-toggle">
-                    <span>${label}</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" name="permission" value="${key}" ${isChecked ? 'checked' : ''}>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            `;
-            rolePermissionsChecklist.insertAdjacentHTML('beforeend', toggleHtml);
-        }
-
-        if (role) { // Editing
-            roleModalTitle.textContent = 'Edit Role';
-            roleIdInput.value = role.id;
-            roleNameInput.value = role.name;
-            roleDescriptionTextarea.value = role.description;
-        } else { // Adding
-            roleModalTitle.textContent = 'Add New Role';
-            roleIdInput.value = '';
-        }
-        roleModal.style.display = 'flex';
-    }
-
-    async function handleRoleFormSubmit(e) {
-        e.preventDefault();
-        // <<< Build a permissions object from the checked boxes >>>
-        const permissions = {};
-        const permissionCheckboxes = rolePermissionsChecklist.querySelectorAll('input[name="permission"]');
-        permissionCheckboxes.forEach(cb => {
-            permissions[cb.value] = cb.checked;
-        });
-
-        const roleData = {
-            id: roleIdInput.value,
-            name: roleNameInput.value,
-            description: roleDescriptionTextarea.value,
-            permissions: permissions
-        };
-        const isNewRole = !roleData.id;
-        const url = isNewRole ? '/api/roles/add' : '/api/roles/update';
+        if (!rolesTableBody) return;
 
         try {
-            await apiFetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(roleData)
-            });
-            roleModal.style.display = 'none';
-            loadRoles(); // Refresh the roles table
-            loadRolesForUserForm(); // Also refresh the dropdown in the user form
-        } catch (error) { /* Handled by apiFetch */ }
+            rolesTableBody.innerHTML = '<tr><td colspan="3">Loading roles...</td></tr>';
+            const roles = await apiFetch('/api/roles');
+            allRoles = roles;
+            renderRolesTable(allRoles);
+        } catch (error) {
+            rolesTableBody.innerHTML = '<tr><td colspan="3">Failed to load roles. Please try again.</td></tr>';
+            console.error("Error in loadRoles:", error);
+        }
     }
 
-    async function deleteRole(roleId) {
-        showConfirmationModal(
-            'Delete this Role?',
-            'Are you sure you want to delete this role? This action cannot be undone.',
-            async () => {
-                try {
-                    await apiFetch('/api/roles/delete', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: roleId })
-                    });
-                    loadRoles(); // Refresh the roles table
-                    loadRolesForUserForm(); // Also refresh the dropdown in the user form
-                } catch (error) { /* Handled by apiFetch */ }
-            }
-        );
+    // Renders the role table 
+    function renderRolesTable(roles) {
+        rolesTableBody.innerHTML = '';
+
+        if (roles.length === 0) {
+            rolesTableBody.innerHTML = `<tr><td colspan="3">No roles found.</td></tr>`;
+        } else {
+            roles.forEach(role => {
+                const tr = document.createElement('tr');
+                const enabledPermissions = Object.keys(role.permissions).filter(key => role.permissions[key]);
+
+                tr.innerHTML = `
+                    <td>${role.name}</td>
+                    <td>${role.description || 'No description provided.'}</td>
+                    <td>
+                        <div class="permissions-badge">
+                            ${enabledPermissions.map(key => `
+                                <span class="permission-badge" data-permission="${key}">
+                                    ${AVAILABLE_PERMISSIONS[key] || key}
+                                </span>`).join('')}
+                        </div>
+                    </td>
+                `;
+                rolesTableBody.appendChild(tr);
+            });
+        }
     }
 
     // --- AUDIT LOG FUNCTIONS ---
@@ -796,7 +702,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadUsers();
     loadRolesForUserForm();
     loadRoles();
-    loadAuditLogs();
+    //loadAuditLogs();
 
     // User Tab Listeners
     addNewUserBtn.addEventListener('click', () => openUserModal());
@@ -877,31 +783,6 @@ document.addEventListener('DOMContentLoaded', function() {
             resetUserPassword(userId);
         }
     });
-
-    // Role Tab Listeners
-    addNewRoleBtn.addEventListener('click', () => openRoleModal());
-    closeRoleModalBtn.addEventListener('click', () => roleModal.style.display = 'none');
-    roleForm.addEventListener('submit', handleRoleFormSubmit);
-    rolesTableBody.addEventListener('click', (e) => {
-        const target = e.target.closest('button');
-        if (!target) return;
-
-        // If a disabled protected role button is clicked, show the modal
-        if (target.classList.contains('protected-role-btn')) {
-            protectedRoleModal.style.display = 'flex';
-            return; // Stop further execution
-        }
-
-        const roleId = target.dataset.id;
-        if (!roleId) return;
-
-        if (target.classList.contains('edit-role-btn')) {
-            apiFetch(`/api/roles/${roleId}`).then(role => openRoleModal(role));
-        } else if (target.classList.contains('delete-role-btn')) {
-            deleteRole(roleId);
-        }
-    });
-
 
     // Audit Log Listeners
     flatpickr(auditDateFilter, { mode: "range", dateFormat: "Y-m-d", onChange: () => { auditCurrentPage = 1; loadAuditLogs(); } });

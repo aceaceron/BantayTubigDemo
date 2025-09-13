@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupGlobalNavigation();
     
     // --- GLOBAL CONFIGURATION & STATE MANAGEMENT ---
-    const analysisLocation = "Jose Panganiban, Bicol, Philippines";
+    const analysisLocation = "";
     let historicalChart, keyDriverChart;
     let rawData = { primary: [], comparison: [] };
     let filteredData = [];
@@ -210,6 +210,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Initial data fetch for the default date range.
         fetchHistoricalData(new Date(), new Date(), 'primary');
+        initializeClearButtons(); 
+    }
+
+    function initializeClearButtons() {
+        const clearCompareBtn = document.getElementById('clearCompareDate');
+        const clearTimeBtn = document.getElementById('clearTimeRange');
+
+        // Clear comparison date
+        clearCompareBtn.addEventListener('click', () => {
+            compareDatePicker._flatpickr.clear();
+            rawData.comparison = [];
+            updateChartData();
+        });
+
+        // Clear time range
+        clearTimeBtn.addEventListener('click', () => {
+            timePickerStart._flatpickr.clear();
+            timePickerEnd._flatpickr.clear();
+            processAndDisplayData('primary'); // refresh with full data
+        });
     }
 
     /**
@@ -220,8 +240,14 @@ document.addEventListener('DOMContentLoaded', function() {
         runScenarioPrediction();
     }
 
-
     // --- DATA FETCHING & PROCESSING ---
+
+    function formatDateLocal(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
     /**
      * Fetches historical data from the server for a given date range and type.
@@ -230,9 +256,9 @@ document.addEventListener('DOMContentLoaded', function() {
      * @param {string} type - The type of data to fetch ('primary' or 'comparison').
      */
     async function fetchHistoricalData(startDate, endDate, type) {
-        const start = startDate.toISOString().split('T')[0];
-        const end = new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Include the full end day.
-        
+        const start = formatDateLocal(startDate);
+        const end = formatDateLocal(endDate);
+
         try {
             const response = await fetch(`/analytics/historical_data?start_date=${start}&end_date=${end}`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -242,11 +268,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Store and parse the fetched data.
             rawData[type] = jsonData.map(row => ({
                 ...row,
-                temperature: parseFloat(row.temperature),
-                ph: parseFloat(row.ph),
-                tds: parseFloat(row.tds),
-                turbidity: parseFloat(row.turbidity),
+                temperature: Number(parseFloat(row.temperature).toFixed(2)),
+                ph: Number(parseFloat(row.ph).toFixed(2)),
+                tds: Number(parseFloat(row.tds).toFixed(2)),
+                turbidity: Number(parseFloat(row.turbidity.toFixed(2)))
             }));
+
 
             processAndDisplayData(type);
         } catch (error) {
@@ -473,7 +500,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
 
     // --- "WHAT-IF" SIMULATOR FUNCTIONS ---
 

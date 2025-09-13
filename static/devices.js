@@ -155,6 +155,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 content.classList.remove('active');
                 if (content.id === tabId) {
                     content.classList.add('active');
+
+                    // 🔹 If switching to Maintenance tab → load logs
+                    if (tabId === 'maintenance') {
+                        fetch('/api/devices/calibration_logs')
+                            .then(res => res.json())
+                            .then(data => {
+                                // Case 1: Backend returns { status, logs }
+                                if (data.status && data.logs) {
+                                    renderCalibrationLogs(data.logs);
+
+                                // Case 2: Backend returns raw array
+                                } else if (Array.isArray(data)) {
+                                    renderCalibrationLogs(data);
+
+                                } else {
+                                    console.error('Unexpected response format:', data);
+                                }
+                            })
+                            .catch(err => console.error('Fetch error:', err));
+                    }
+
                 }
             });
         });
@@ -435,27 +456,63 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             sensorListContainer.innerHTML = '<p>No sensor data available.</p>';
         }
-
-        // Populate Maintenance Log Card
-        const logContainer = document.getElementById('maintenanceLog');
-        logContainer.innerHTML = '';
-        if (systemDeviceCache.logs && systemDeviceCache.logs.length > 0) {
-            systemDeviceCache.logs.forEach(log => {
-                const item = document.createElement('div');
-                item.className = 'log-item';
-                item.innerHTML = `
-                    <div class="log-item-header">
-                        <h4>${log.tech}</h4>
-                        <span>${new Date(log.date).toLocaleString()}</span>
-                    </div>
-                    <p>${log.notes}</p>
-                `;
-                logContainer.appendChild(item);
-            });
-        } else {
-            logContainer.innerHTML = '<p>No maintenance logs recorded.</p>';
-        }
     }
+
+    // Populate Maintenance Log Card (Sensor Calibration only)
+function renderCalibrationLogs(logs) {
+    const logContainer = document.getElementById('maintenanceLog');
+    logContainer.innerHTML = '';
+
+    if (!logs || logs.length === 0) {
+        logContainer.innerHTML = '<p class="text-gray-500">No calibration logs recorded.</p>';
+        return;
+    }
+
+    logs.forEach(log => {
+        const item = document.createElement('div');
+        item.className = 'log-card';
+
+        // Extract sensor name only
+        let sensorName = log.target;
+        if (sensorName.includes('Sensor:')) {
+            sensorName = sensorName.split('Sensor:')[1].trim();
+        }
+
+        // Format slope/offset details
+        let detailsText = '';
+        if (log.details && Object.keys(log.details).length > 0) {
+            if (log.details.slope !== undefined && log.details.offset !== undefined) {
+                detailsText = `
+                    <div class="log-details">
+                        <span>Slope:</span> ${log.details.slope.toFixed(3)} &nbsp;&nbsp;
+                        <span>Offset:</span> ${log.details.offset.toFixed(3)}
+                    </div>
+                `;
+            } else {
+                detailsText = `<div class="log-details">${JSON.stringify(log.details)}</div>`;
+            }
+        }
+
+        // Build inner content
+        item.innerHTML = `
+            <div class="flex justify-between items-center mb-1">
+                <h4 class="log-tech">${log.tech}</h4>
+                <span class="log-date">${new Date(log.date).toLocaleString()}</span>
+            </div>
+            <p class="text-sm">
+                <span class="font-semibold">${log.action}</span> 
+                on <span class="log-sensor">${sensorName}</span>
+                <span class="status-badge ${log.status === 'Success' ? 'status-success' : 'status-failure'}">
+                    ${log.status}
+                </span>
+            </p>
+            ${detailsText}
+        `;
+
+        logContainer.appendChild(item);
+    });
+}
+
 
     /**
      * Opens the "Edit System Details" modal and populates it with the current device data.
