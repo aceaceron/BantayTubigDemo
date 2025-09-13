@@ -11,7 +11,7 @@ def role_required(*allowed_roles):
         def decorated_function(*args, **kwargs):
             # Check if a user is logged in
             if 'user_role' not in session:
-                flash('You must be logged in to view this page.', 'error')
+                flash('You must be logged in to view BantayTubig web app.', 'error')
                 return redirect(url_for('view_bp.login'))
 
             # If the user's role is not in the allowed list, redirect to the 'unauthorized' page.
