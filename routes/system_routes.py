@@ -9,7 +9,7 @@ import signal
 import subprocess 
 import threading
 
-from lcd_display import stop_status
+from lcd_display import display_power_off, stop_status
 # from database.maintenance import cleanup_old_data, get_deletable_data_preview
 
 system_bp = Blueprint('system_bp', __name__)
@@ -101,7 +101,7 @@ def power_off_sequence():
     This version includes enhanced error logging for diagnostics.
     """
     try:
-        stop_status("Shutting Down...")
+        display_power_off()
     except Exception as e:
         print(f"--- Could not update LCD: {e} ---")
 
@@ -146,3 +146,5 @@ def power_off_sequence():
     except Exception as e:
         print(f"Error initiating power-off sequence: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+    

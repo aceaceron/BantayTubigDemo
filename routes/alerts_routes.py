@@ -6,6 +6,8 @@ from flask import Blueprint, jsonify, request, abort, session
 from database import * # Imports all functions from the database package
 from auth.decorators import role_required
 from database.alerts_manager import get_all_thresholds, restore_default_thresholds, update_threshold
+import sqlite3
+import json
 
 # A Blueprint is created to organize all alert-related routes.
 alerts_bp = Blueprint('alerts_bp', __name__)
@@ -90,6 +92,90 @@ def api_delete_alert_rule(rule_id):
         )
         return jsonify({"status": "error", "message": str(e)}), 500
     
+@alerts_bp.route('/alerts/rules/restore', methods=['POST'])
+@role_required('Administrator')
+def restore_default_alert_rules():
+    """
+    Deletes only non-default alert rules, then updates the existing default
+    rules to their pristine state, preserving their original IDs.
+    """
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        try:
+            # Step 1: Delete ONLY the custom rules
+            print("Deleting custom, non-default alert rules...")
+            cursor.execute("DELETE FROM alert_rules WHERE is_default = 0")
+
+            # Step 2: Get admin group id
+            cursor.execute("SELECT id FROM notification_groups WHERE name = 'Administrators'")
+            admin_group_row = cursor.fetchone()
+            admin_group_id = admin_group_row[0] if admin_group_row else 1
+
+            # Step 3: Pristine rules (make sure this matches setup.py)
+            default_rules_data = [
+                {
+                    'name': 'pH Level Critical (Low)', 'conditions': json.dumps([{'parameter': 'pH', 'operator': '<', 'value': '4.0'}]),
+                    'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 10, 'mode': 'repeating'
+                },
+                {
+                    'name': 'pH Level Critical (High)', 'conditions': json.dumps([{'parameter': 'pH', 'operator': '>', 'value': '10.0'}]),
+                    'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 10, 'mode': 'repeating'
+                },
+                {
+                    'name': 'High Turbidity Detected', 'conditions': json.dumps([{'parameter': 'Turbidity', 'operator': '>', 'value': '50.0'}]),
+                    'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 5, 'mode': 'repeating'
+                },
+                {
+                    'name': 'High TDS Detected', 'conditions': json.dumps([{'parameter': 'TDS', 'operator': '>', 'value': '700.0'}]),
+                    'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 3, 'mode': 'once'
+                },
+                {
+                    'name': 'High Temperature Detected', 'conditions': json.dumps([{'parameter': 'Temperature', 'operator': '>', 'value': '35.0'}]),
+                    'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 2, 'mode': 'once'
+                },
+                {
+                    'name': 'Low Temperature Detected', 'conditions': json.dumps([{'parameter': 'Temperature', 'operator': '<', 'value': '0.0'}]),
+                    'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 2, 'mode': 'once'
+                }
+            ]
+
+            # Step 4: Update rules
+            print("Restoring default alert rules to their original values...")
+            for rule in default_rules_data:
+                cursor.execute("""
+                    UPDATE alert_rules
+                    SET conditions = ?,
+                        notification_group_id = ?,
+                        escalation_policy_id = ?,
+                        enabled = ?,
+                        activate_buzzer = ?,
+                        buzzer_duration_seconds = ?,
+                        buzzer_mode = ?
+                    WHERE name = ? AND is_default = 1
+                """, (
+                    rule['conditions'],
+                    rule['group_id'],
+                    rule['policy_id'],
+                    rule['enabled'],
+                    rule['activate_buzzer'],
+                    rule['duration'],
+                    rule['mode'],
+                    rule['name']
+                ))
+
+            conn.commit()
+            return jsonify({"status": "success", "message": "Default alert rules restored"})
+
+        except Exception as e:
+            conn.rollback()
+            print(f"Error restoring alert rules: {e}")
+            return jsonify({"status": "error", "message": str(e)}), 500
+
+        finally:
+            conn.close()
+
 # --- Notification Groups API Endpoints ---
 
 @alerts_bp.route('/alerts/groups', methods=['GET'])
@@ -125,6 +211,7 @@ def api_add_notification_group():
         )
         return jsonify({"status": "error", "message": str(e)}), 400
 
+
 @alerts_bp.route('/alerts/groups/<int:group_id>', methods=['PUT'])
 def api_update_notification_group(group_id):
     """Updates a notification group."""
@@ -136,32 +223,39 @@ def api_update_notification_group(group_id):
             target=f"Group ID: {group_id}", status='Success', ip_address=request.remote_addr
         )
         return jsonify({"status": "success", "message": "Group updated successfully."})
+    except ValueError as e:
+        # Catch the specific error for protected groups
+        add_audit_log(
+            user_id=session.get('user_id'), component='Notification Groups', action='Group Updated',
+            target=f"Group ID: {group_id}", status='Failure', ip_address=request.remote_addr,
+            details={'error': str(e)}
+        )
+        return jsonify({"status": "error", "message": str(e)}), 403
     except Exception as e:
         add_audit_log(
             user_id=session.get('user_id'), component='Notification Groups', action='Group Updated',
             target=f"Group ID: {group_id}", status='Failure', ip_address=request.remote_addr,
             details={'error': str(e)}
         )
-        return jsonify({"status": "error", "message": str(e)}), 400
+        return jsonify({"status": "error", "message": "An error occurred while updating the group."}), 500
 
-@alerts_bp.route('/alerts/groups/<int:group_id>', methods=['DELETE'])
-def api_delete_notification_group(group_id):
-    """Deletes a notification group."""
-    try:
-        delete_notification_group(group_id)
-        add_audit_log(
-            user_id=session.get('user_id'), component='Notification Groups', action='Group Deleted',
-            target=f"Group ID: {group_id}", status='Success', ip_address=request.remote_addr
-        )
-        return jsonify({"status": "success", "message": "Group deleted successfully."})
-    except Exception as e:
-        add_audit_log(
-            user_id=session.get('user_id'), component='Notification Groups', action='Group Deleted',
-            target=f"Group ID: {group_id}", status='Failure', ip_address=request.remote_addr,
-            details={'error': str(e)}
-        )
-        return jsonify({"status": "error", "message": str(e)}), 400
-    
+def delete_notification_group(group_id):
+    """Deletes a notification group. Members are deleted automatically via CASCADE."""
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        # Check if the group is "Administrators" before allowing deletion
+        cursor.execute('SELECT name FROM notification_groups WHERE id = ?', (group_id,))
+        group_to_delete = cursor.fetchone()
+        if group_to_delete and group_to_delete[0] == 'Administrators':
+            conn.close()
+            raise ValueError("The 'Administrators' group cannot be deleted.")
+
+        cursor.execute('DELETE FROM notification_groups WHERE id = ?', (group_id,))
+        conn.commit()
+        conn.close()
+        
 # --- Escalation Policies API Endpoints ---
 
 @alerts_bp.route('/alerts/policies', methods=['GET'])
@@ -253,15 +347,16 @@ def api_update_threshold(threshold_id):
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @alerts_bp.route('/thresholds/restore', methods=['POST'])
+@role_required('Administrator', 'Technician')
 def api_restore_thresholds():
     """Restores the water quality thresholds to their default values."""
     try:
         restore_default_thresholds()
         add_audit_log(
-            user_id=session.get('user_id'), component='Thresholds', action='Defaults Restored',
-            status='Success', ip_address=request.remote_addr
+            user_id=session.get('user_id'), component='Thresholds', action='Defaults Restored', 
+            target='All Thresholds', status='Success', ip_address=request.remote_addr
         )
-        return jsonify({"status": "success", "message": "Default thresholds restored."})
+        return jsonify({"status": "success" , "message": "Default thresholds restored."})
     except Exception as e:
         add_audit_log(
             user_id=session.get('user_id'), component='Thresholds', action='Defaults Restored',

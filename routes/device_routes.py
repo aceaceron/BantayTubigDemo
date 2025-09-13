@@ -5,6 +5,7 @@ Handles all API endpoints related to device management, sensor data, and calibra
 from flask import Blueprint, jsonify, request, abort, session
 from datetime import datetime
 import numpy as np
+import json
 
 # Import shared config and database functions
 from config import DEVICE_ID
@@ -160,12 +161,32 @@ def api_restore_default():
     restore_default_calibration(device_id, sensor_type)
     add_audit_log(user_id=session.get('user_id'), component='Sensor Calibration', action='Calibration Restored', target=f"Device: {device_id}, Sensor: {sensor_type}", status='Success', ip_address=request.remote_addr)
     return jsonify({"status": "success", "message": f"Default calibration restored for {sensor_type}."})
+@device_bp.route('/devices/calibration_logs', methods=['GET'])
+def api_get_calibration_logs():
+    """Return only Sensor Calibration audit logs, formatted for frontend."""
+    try:
+        logs = get_audit_logs()
 
-@device_bp.route('/audit_log', methods=['GET'])
-def api_get_audit_log():
-    """Fetches the system audit log with optional filters."""
-    date_range = request.args.get('date_range')
-    user = request.args.get('user')
-    action = request.args.get('action')
-    logs = get_audit_logs(date_range, user_filter=user, action_filter=action)
-    return jsonify(logs)
+        calibration_logs = []
+        for log in logs:
+            if log.get("component") == "Sensor Calibration":
+                raw_details = log.get("details")
+                try:
+                    parsed_details = json.loads(raw_details) if raw_details else {}
+                except Exception:
+                    parsed_details = {"raw": raw_details}
+
+                calibration_logs.append({
+                    "date": log.get("timestamp"),
+                    "tech": log.get("user_name") or "Unknown User",
+                    "action": log.get("action"),
+                    "target": log.get("target"),
+                    "status": log.get("status"),
+                    "details": parsed_details
+                })
+
+        return jsonify(calibration_logs)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()  # print full error to console
+        return jsonify({"status": "error", "message": str(e)}), 500

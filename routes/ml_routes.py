@@ -2,6 +2,7 @@
 
 # === IMPORTS ==================================================================
 # --- Standard Library Imports ---
+import requests
 from datetime import datetime     # Used for timestamping the demo anomalies.
 import random                     # Used to generate random data for demo anomalies.
 import sqlite3                    # The driver for connecting to the SQLite database file.
@@ -9,7 +10,7 @@ import sqlite3                    # The driver for connecting to the SQLite data
 # --- Third-Party Imports ---
 import pandas as pd               # Used for data manipulation, specifically to handle the
                                   # SQL query result as a DataFrame for easy conversion.
-from flask import Blueprint, jsonify, request  # Core Flask components:
+from flask import Blueprint, jsonify, request, session  # Core Flask components:
                                   # Blueprint for organizing routes, jsonify for creating
                                   # JSON responses, and request to access incoming data.
 
@@ -23,15 +24,16 @@ from database.config import DB_PATH
 # Imports custom functions for interacting with the database.
 from database import (
     get_unannotated_anomalies, save_annotation, log_anomaly,
-    get_latest_reading_with_env, get_summarized_data_for_range, get_device_info
+    get_latest_reading_with_env, get_device_info, get_setting, get_summarized_data_for_range, update_setting, add_audit_log
 )
 
 from config import DEVICE_ID
 
+from water_quality import model as ml_model_status
+
 # Imports the specific machine learning functions for generating insights and forecasts.
 from database.data_manager import get_annotated_anomalies
 from ml_models.llm_insights import generate_current_status_analysis, generate_historical_reasoning
-from ml_models.forecasting import generate_demo_forecasts
 # ==============================================================================
 
 
@@ -39,6 +41,38 @@ from ml_models.forecasting import generate_demo_forecasts
 # keep the application's code organized.
 ml_bp = Blueprint('ml_bp', __name__)
 
+# ==============================================================================
+# === TAB: DECISION MODE CONFIGURATION =========================================
+# ==============================================================================
+# This section handles setting the system-wide decision mode for water quality.
+
+@ml_bp.route('/ml/decision_mode', methods=['GET'])
+def get_decision_mode():
+    """Fetches the current water quality decision mode from settings."""
+    # Default to 'Thresholds' if the setting is not yet in the database
+    mode = get_setting('decision_mode', default='Thresholds')
+    return jsonify({'mode': mode})
+
+@ml_bp.route('/ml/decision_mode', methods=['POST'])
+def set_decision_mode():
+    """Sets the water quality decision mode."""
+    data = request.get_json()
+    new_mode = data.get('mode')
+    if new_mode in ['ML', 'Thresholds']:
+        update_setting('decision_mode', new_mode)
+
+        add_audit_log (
+            user_id=session.get('user_id'),
+            component='Decision Mode',
+            action='Mode Changed',
+            target=f"Set to {new_mode}",
+            status='Success',
+            ip_address=request.remote_addr
+        )
+
+        # You could add an audit log entry here if desired
+        return jsonify({'message': f'Decision mode set to {new_mode}'}), 200
+    return jsonify({'error': 'Invalid mode specified'}), 400
 
 # ==============================================================================
 # === TAB: LIVE ANALYSIS =======================================================
@@ -136,10 +170,7 @@ def api_get_forecasts():
        forecast from the database.
     5. Returns a JSON object with the data points for all four sensor charts.
     """
-    source = request.args.get('source', 'database')
-    if source in ['continuous_30d', 'non_continuous_7d']:
-        return jsonify(generate_demo_forecasts(source))
-    
+
     conn = sqlite3.connect(DB_PATH)
     forecasts = {}
     param_map = {'temp': 'temperature', 'ph': 'ph', 'tds': 'tds', 'turbidity': 'turbidity'}
@@ -192,37 +223,18 @@ def api_annotate_event():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
-@ml_bp.route('/ml/generate_demo_anomaly', methods=['POST'])
-def api_generate_demo_anomaly():
-    """
-    Creates and logs a fake anomaly to the database for demonstration.
-    
-    How it works:
-    1. Triggered by a POST request from the "Generate Demo Event" button.
-    2. Creates a dictionary with plausible random data for a fake anomaly.
-    3. Calls the `log_anomaly` function to save this fake event to the database.
-    4. The frontend then refreshes its list, and the new demo event appears for annotation.
-    """
-    try:
-        demo_params = {
-            "parameter": random.choice(["ph", "turbidity"]),
-            "value": round(random.uniform(3.5, 4.5) if random.choice([True, False]) else random.uniform(800, 950), 2),
-            "severity": round(random.uniform(0.4, 0.8), 3),
-            "anomaly_type": "Issue",
-            "rca_suggestions": random.choice([
-                ["High Correlation with Rainfall (92%)", "Possible Agricultural Runoff"],
-                ["Sudden Spike without Rainfall", "Potential Industrial Discharge"]
-            ])
-        }
-        
-        log_anomaly(timestamp=datetime.now(), **demo_params)
-        return jsonify({"status": "success", "message": "Demo anomaly generated successfully."}), 201
-    except Exception as e:
-        print(f"Error generating demo anomaly: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
-    
 @ml_bp.route('/ml/anomalies/history', methods=['GET'])
 def api_get_annotation_history():
     """Provides a list of all previously annotated anomalies for the history log."""
     history = get_annotated_anomalies()
     return jsonify(history)
+
+# ==============================================================================
+# === API: MODEL STATUS ========================================================
+# ==============================================================================
+
+@ml_bp.route('/ml/status', methods=['GET'])
+def get_ml_model_status():
+    """Checks if the machine learning model is loaded and available."""
+    is_available = ml_model_status is not None
+    return jsonify({'is_model_available': is_available})

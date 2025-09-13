@@ -148,34 +148,6 @@ def api_get_role(role_id):
         return jsonify(role)
     abort(404, "Role not found")
 
-@user_bp.route('/roles/add', methods=['POST'])
-@role_required('Administrator')
-def api_add_role():
-    data = request.json
-    add_role(data['name'], data.get('description', ''), data.get('permissions', {}))
-    add_audit_log(user_id=session.get('user_id'), component='Role Management', action='Role Created', target=f"Name: {data['name']}", status='Success', ip_address=request.remote_addr)
-    return jsonify({"status": "success", "message": "Role added."})
-
-@user_bp.route('/roles/update', methods=['POST'])
-@role_required('Administrator')
-def api_update_role():
-    data = request.json
-    update_role(data['id'], data['name'], data.get('description', ''), data.get('permissions', {}))
-    add_audit_log(user_id=session.get('user_id'), component='Role Management', action='Role Updated', target=f"Role ID: {data['id']}", status='Success', ip_address=request.remote_addr)
-    return jsonify({"status": "success", "message": "Role updated."})
-
-@user_bp.route('/roles/delete', methods=['POST'])
-@role_required('Administrator')
-def api_delete_role():
-    """Deletes a user role."""
-    data = request.json
-    role_id = data.get('id')
-    role = get_role_by_id(role_id)
-    target_name = role['name'] if role else f"ID: {role_id}"
-    delete_role(role_id)
-    add_audit_log(user_id=session.get('user_id'), component='Role Management', action='Role Deleted', target=target_name, status='Success', ip_address=request.remote_addr)
-    return jsonify({"status": "success", "message": "Role deleted."})
-
 @user_bp.route('/users/setup/create_first_admin', methods=['POST'])
 def api_create_first_admin():
     """
@@ -343,3 +315,12 @@ def set_new_password():
     )
     
     return jsonify({"status": "success", "message": "Password has been successfully reset."})
+
+
+@user_bp.route('/audit_log')
+def api_audit_log():
+    date_range = request.args.get("date_range")
+    user_filter = request.args.get("user")
+    action_filter = request.args.get("action")
+    logs = get_audit_logs(date_range, user_filter, action_filter)
+    return jsonify(logs)
