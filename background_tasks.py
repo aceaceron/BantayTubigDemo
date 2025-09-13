@@ -1,7 +1,7 @@
 # background_tasks.py
 import time
 import threading
-from water_quality import train_decision_tree
+from water_quality import train_machine_learning
 
 from threading import Thread, Event
 from ml_models.main_processor import run_ml_analysis
@@ -11,7 +11,7 @@ def _train_model_thread_periodic():
     """The actual function that runs in the background."""
     # Run once at the start
     print("Initial model training initiated...")
-    train_decision_tree()
+    train_machine_learning()
     print("Initial model training completed.\n")
     
     # Then, run periodically
@@ -19,7 +19,7 @@ def _train_model_thread_periodic():
         # Wait for 30 minutes (1800 seconds) before the next run
         time.sleep(1800)
         print("Periodic model training initiated...")
-        train_decision_tree()
+        train_machine_learning()
         print("Periodic model training completed (if data available).\n")
 
 def start_training_thread():
