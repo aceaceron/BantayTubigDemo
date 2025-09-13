@@ -19,6 +19,9 @@ lcd = None
 _lcd_lock = threading.Lock()
 _last_error_time = 0
 
+# Global override flag
+_force_shutdown_display = False
+
 if _lcd_available:
     try:
         lcd = CharLCD(
@@ -103,27 +106,48 @@ def _status_loop():
         idx = (idx + 1) % len(dots)
         time.sleep(0.5)
 
-# ================== RUNTIME DISPLAYS ==================
+# ========== RUNTIME DISPLAYS ==========
 def display_readings(temp, ph, tds, turbidity):
+    if _force_shutdown_display:
+        return
     clear_lcd()
-    _write_row(0, f"Temp: {temp:.1f} C" if isinstance(temp, (int, float)) else "Temp: N/A")
-    _write_row(1, f"pH: {ph:.1f}" if isinstance(ph, (int, float)) else "pH: N/A")
-    _write_row(2, f"TDS: {tds:.0f} ppm" if isinstance(tds, (int, float)) else "TDS: N/A")
-    _write_row(3, f"Turb: {turbidity:.1f} NTU" if isinstance(turbidity, (int, float)) else "Turb: N/A")
+    temp_str = f"Temp: {temp:.1f} C" if isinstance(temp, (int, float)) else "Temp: N/A"
+    _write_row(0, temp_str)
+    _write_row(1, f"pH: {ph:.1f}")
+    tds_str = f"TDS: {tds:.0f} ppm" if isinstance(tds, (int, float)) else "TDS: N/A"
+    _write_row(2, tds_str)
+    turb_str = f"Turb: {turbidity:.1f} NTU" if isinstance(turbidity, (int, float)) else "Turb: N/A"
+    _write_row(3, turb_str)
+
 
 def display_water_quality(quality, ip_address=None):
+    if _force_shutdown_display:
+        return
+    """
+    Displays water quality and, if provided, the IP address for the dashboard.
+    """
     clear_lcd()
-    q_map = {'good': "Good!", 'average': "Average", 'poor': "Poor!", 'bad': "BAD!"}
     _write_row(0, "Water Quality:")
-    _write_row(1, q_map.get((quality or "").lower(), "Unknown"))
+    q_map = {'good': "Good!", 'average': "Average", 'poor': "Poor!", 'bad': "BAD!"}
+    display_text = q_map.get((quality or "").lower(), "Unknown")
+    _write_row(1, _fit(display_text))
+
     if ip_address:
-        _write_row(2, "View at:")
+        _write_row(2, "View dashboard at:")
         _write_row(3, f"{ip_address}:5000")
+    else:
+        _write_row(2, "")
+        _write_row(3, "")
 
 def display_network_status():
+    if _force_shutdown_display:
+        return
+    """ Displays a message indicating the device is not connected to WiFi. """
     clear_lcd()
     _write_row(0, "Network Error:")
     _write_row(1, "WiFi Not Connected")
+    _write_row(2, "")
+    _write_row(3, "")
 
 def display_hotspot_credentials(ssid, password):
     clear_lcd()
@@ -137,3 +161,20 @@ def display_config_instructions(ip_address):
     _write_row(0, "Device Connected!")
     _write_row(1, "Go to browser:")
     _write_row(2, f"{ip_address}:5000/setup")
+
+# ========== POWER OFF SYSTEM ==========
+def display_power_off():
+    """
+    Stops all LCD activity and shows a static 'System Power Off' message.
+    """
+    global _force_shutdown_display
+    _force_shutdown_display = True 
+
+    try:
+        clear_lcd()
+        _write_row(0, "System Power Off")
+        _write_row(1, "")
+        _write_row(2, "")
+        _write_row(3, "")
+    except Exception as e:
+        print(f"--- LCD shutdown display error: {e} ---")
