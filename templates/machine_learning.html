@@ -47,15 +47,42 @@
 
         <!-- Tab navigation buttons -->
         <div class="tabs-container">
-            <button class="tab-link active" data-tab="live">Live Analysis</button>
+            <button class="tab-link active" data-tab="mode">Decision Mode</button> 
+            <button class="tab-link" data-tab="live">Live Analysis</button>
             <button class="tab-link" data-tab="historical">Historical Summary</button>
             <button class="tab-link" data-tab="forecast">Forecasting</button>
-            <button class="tab-link" data-tab="pending">Annotation Review</button>
+            <button class="tab-link" data-tab="pending">Anomalies Detected</button>
             <button class="tab-link" data-tab="history">Annotation History</button>
         </div>
 
+        <!-- DECISION MODE TAB -->
+        <div id="mode" class="tab-content active">
+            <div class="content-card">
+                <div class="tooltip-container">
+                    <span class="tooltip-icon">?</span>
+                    <div class="tooltip-message">
+                        <p>Piliin kung paano tutukuyin ng system ang kalidad ng tubig. Gagamitin ba ang natutunang pattern ng AI o ang mga nakatakdang panuntunan sa database?</p>
+                        <p><em>Choose how the system determines water quality. Will it use the AI's learned patterns or the predefined rules in the database?</em></p>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <h2>Water Quality Decision Mode</h2>
+                </div>
+                <div class="settings-form">
+                    <div class="form-group-toggle">
+                        <label>Decision Method</label>
+                        <div class="decision-mode-toggle">
+                            <button id="modeBtnThresholds" class="toggle-option active" data-mode="Thresholds">Static Thresholds</button>
+                            <button id="modeBtnML" class="toggle-option" data-mode="ML">Machine Learning</button>
+                        </div>
+                        <small>Select whether to use the database thresholds or the trained Machine Learning model for predictions.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- LIVE ANALYSIS TAB -->
-        <div id="live" class="tab-content active">
+        <div id="live" class="tab-content">
             <div class="content-card">
                 <!-- Tooltip: explains feature -->
                 <div class="tooltip-container">
@@ -170,7 +197,7 @@
                 </div>
 
                 <div class="card-header">
-                    <h2>AI-Assisted Event Annotation (Feedback Loop)</h2>
+                    <h2>AI-Assisted Event Annotation</h2>
                     <button id="generateDemoEventBtn" class="action-button-small">Generate Demo Event</button>
                 </div>
 

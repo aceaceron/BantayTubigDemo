@@ -100,27 +100,23 @@
                 <div class="tooltip-container">
                     <span class="tooltip-icon">?</span>
                     <div class="tooltip-message">
-                        <p>Dito mo maaaring i-manage ang mga user role at ang kanilang mga permission. Magdagdag, mag-edit, o mag-delete ng role.</p>
-                        <p><em>Here you can manage user roles and their permissions. Add, edit, or delete a role.</em></p>
+                        <p>Dito mo maaaring tingnan ang iba't ibang role at ang kanilang mga permission sa system.</p>
+                        <p><em>Here you can view the different roles and their permissions in the system.</em></p>
                     </div>
                 </div>
                 <div class="card-header">
-                    <h2>Roles</h2>
-                    <button id="addNewRoleBtn" class="action-button">Add New Role</button>
-                </div>
+                    <h2>User Roles</h2>
+                    </div>
                 <div class="table-wrapper">
-                    <!-- Table to display all roles. The body is populated by JavaScript. -->
                     <table id="rolesTable">
                         <thead>
                             <tr>
-                                <th>Role Name</th>
+                                <th data-column="name" class="sortable">Role <span class="sort-icon"></span></th>
                                 <th>Description</th>
-                                <th>Permissions</th>
-                                <th>Actions</th>
-                            </tr>
+                                <th data-column="permissions">Permissions</th>
+                                </tr>
                         </thead>
                         <tbody>
-                            <!-- Role rows are inserted here dynamically. -->
                         </tbody>
                     </table>
                 </div>

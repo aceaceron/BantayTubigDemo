@@ -98,6 +98,7 @@
                             </table>
                         </div>
                     </div>
+                    <button id="showLcdModalBtn" class="form-btn secondary-btn full-width-btn">View LCD Instructions</button>
                 </div>
             </div>
         </div>
@@ -174,14 +175,8 @@
     <!-- // FLOATING ACTION BUTTONS // -->
     <!-- This container holds the Save, Logout, and Shutdown buttons. -->
     <div class="floating-actions">
-
-        <!-- This is a standard link styled as a button. It points to the '/logout' route. -->
-        <a href="{{ url_for('view_bp.logout') }}" id="logoutBtn" class="action-button primary" title="Logout">
-            <!-- This SVG creates the "log out" icon (door with an arrow). -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="logout-icon"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-        </a>
-        
         <!-- This button triggers the shutdown sequence for the device. -->
+        <div id="currentUser" data-role="{{ session['user_role'] }}"></div>
         <button id="powerOffBtn" class="action-button danger" title="Stop Application & Shut Down">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="power-icon"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
         </button>
@@ -193,6 +188,28 @@
     
     <!-- // MODALS (Password, Data Cleanup, Toasts, etc.) // -->
     <!-- These are hidden by default and shown by JavaScript for user interaction. -->
+    <div id="lcdInstructionModal" class="lcd-modal-overlay">
+        <div class="lcd-modal-content">
+            <div class="lcd-modal-header">
+                <h5 class="lcd-modal-title">Mga Tagubilin sa LCD Display <span class="english-translation">(LCD Display Instructions)</span></h5>
+                <button class="lcd-close-modal-btn">&times;</button>
+            </div>
+            <div class="lcd-modal-body">
+                <p>
+                    Pagkatapos magtagumpay na kumonekta sa WiFi network, ang LCD screen ng device ay magpapakita ng isang link o IP address.
+                    <span class="english-translation">
+                        (After successfully connecting to a WiFi network, the device's LCD screen will display a link or IP address.)
+                    </span>
+                </p>
+                <p>
+                    **Paki-check ang LCD screen para mahanap ang tamang address para ma-access ang web dashboard.**
+                    <span class="english-translation">
+                        (Please check the LCD screen to find the correct address for accessing the web dashboard.)
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
 
     <!-- // MODAL for WIFI PASSWORD // -->
     <div id="wifiPasswordModal" class="modal-overlay" style="display: none;">

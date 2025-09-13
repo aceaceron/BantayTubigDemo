@@ -60,16 +60,22 @@
             </div>
             <div class="control-group">
                 <label for="compareDateRangePicker">Comparison Date Range (Optional):</label>
-                <input type="text" id="compareDateRangePicker" placeholder="Select comparison range...">
+                <div class="input-with-clear">
+                    <input type="text" id="compareDateRangePicker" placeholder="Select comparison range...">
+                    <button type="button" class="clear-btn" id="clearCompareDate">&times;</button>
+                </div>
             </div>
+
             <div class="control-group">
                 <label>Hourly Range (Optional):</label>
-                <div class="time-picker-group">
+                <div class="time-picker-group input-with-clear">
                     <input type="text" id="timePickerStart" class="time-picker-input" placeholder="Start Time">
                     <span>to</span>
                     <input type="text" id="timePickerEnd" class="time-picker-input" placeholder="End Time">
+                    <button type="button" class="clear-btn" id="clearTimeRange">&times;</button>
                 </div>
             </div>
+
             <div class="control-group">
                 <label for="intervalSelector">Data Interval (minutes):</label>
                 <select id="intervalSelector">
@@ -79,7 +85,6 @@
                     <option value="15">15</option>
                     <option value="30">30</option>
                     <option value="60">60</option>
-                    <option value="120">120</option>
                 </select>
             </div>
             <div class="control-group">
