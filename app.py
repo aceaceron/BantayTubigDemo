@@ -54,26 +54,26 @@ def create_app():
         static_folder=static_folder_path,
         template_folder=template_folder_path
     )
-    
-# THIS FUNCTION NOW HANDLES ALL PRE-REQUEST TASKS
-@app.before_request
-def before_request_tasks():
-    # Skip checks for static files
-    if request.path.startswith('/static/'):
-        return
-    
-    # Skip checks for login/logout routes
-    login_url = url_for('view_bp.login')
-    logout_url = url_for('view_bp.logout')
-    if request.path in [login_url, logout_url]:
-        return
-    
-    # Check active session
-    if 'user_id' in session:
-        if not is_user_active(session['user_id']):
-            session.clear()
-            flash('Your session has expired or your account has been deactivated. Please log in again.', 'error')
-            return redirect(login_url)
+        
+    # THIS FUNCTION NOW HANDLES ALL PRE-REQUEST TASKS
+    @app.before_request
+    def before_request_tasks():
+        # Skip checks for static files
+        if request.path.startswith('/static/'):
+            return
+        
+        # Skip checks for login/logout routes
+        login_url = url_for('view_bp.login')
+        logout_url = url_for('view_bp.logout')
+        if request.path in [login_url, logout_url]:
+            return
+        
+        # Check active session
+        if 'user_id' in session:
+            if not is_user_active(session['user_id']):
+                session.clear()
+                flash('Your session has expired or your account has been deactivated. Please log in again.', 'error')
+                return redirect(login_url)
 
     # Add a secret key required for sessions
     app.config['SECRET_KEY'] = 'a-very-secret-key-that-you-should-change'
