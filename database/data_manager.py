@@ -57,7 +57,7 @@ def get_latest_data():
         conn.close()
     return dict(row) if row else None
 
-
+    
 # This helper function provides the AI with the most recent environmental data (weather, etc.).
 # It finds the "latest" context entry by retrieving the one with the highest ID,
 # since new data is always inserted with an incrementing ID.
@@ -74,7 +74,6 @@ def get_context_for_latest_measurement():
         row = cursor.fetchone()
         conn.close()
     return dict(row) if row else None     
-
 
 def summarize_context_for_range(start_date, end_date):
     """
@@ -111,7 +110,6 @@ def summarize_context_for_range(start_date, end_date):
         print(f"Error summarizing context data: {e}")
         return {}
     
-
 def get_latest_reading_with_env():
     """
     Fetches the most recent measurement and joins it with the latest 
@@ -142,7 +140,6 @@ def get_latest_reading_with_env():
     
     conn.close()
     return measurement_dict
-
 
 def get_summarized_data_for_range(start_date, end_date):
     """
@@ -175,7 +172,6 @@ def get_summarized_data_for_range(start_date, end_date):
             summary[key] = round(summary[key], 2)
             
     return summary
-
 
 def get_recent_timeseries_data(days=7, resample_freq=None, as_dataframe=False, end_time=None):
     """

@@ -339,17 +339,6 @@ def get_phone_numbers_for_group(group_id):
 
 # --- Role Management Functions ---
 
-def create_role(name, permissions):
-    """
-    Creates a new user role.
-    """
-    with DB_LOCK:
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO roles (name, permissions) VALUES (?, ?)", (name, json.dumps(permissions)))
-        conn.commit()
-        conn.close()
-
 def get_all_roles():
     """
     Retrieves all roles from the database, parsing permissions from JSON.
@@ -393,41 +382,3 @@ def get_role_by_id(role_id):
     except (json.JSONDecodeError, TypeError):
         role_dict['permissions'] = {}
     return role_dict
-
-def add_role(name, description, permissions):
-    """
-    Adds a new role to the database.
-    """
-    with DB_LOCK:
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        cursor = conn.cursor()
-        permissions_json = json.dumps(permissions)
-        cursor.execute("INSERT INTO roles (name, description, permissions) VALUES (?, ?, ?)", (name, description, permissions_json))
-        conn.commit()
-        conn.close()
-
-def update_role(role_id, name, description, permissions):
-    """
-    Updates an existing role's name and permissions.
-    """
-    with DB_LOCK:
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        cursor = conn.cursor()
-        permissions_json = json.dumps(permissions)
-        cursor.execute(
-            "UPDATE roles SET name = ?, description = ?, permissions = ? WHERE id = ?",
-            (name, description, permissions_json, role_id)
-        )
-        conn.commit()
-        conn.close()
-
-def delete_role(role_id):
-    """
-    Deletes a role from the database.
-    """
-    with DB_LOCK:
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM roles WHERE id = ?", (role_id,))
-        conn.commit()
-        conn.close()

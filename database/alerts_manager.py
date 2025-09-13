@@ -37,6 +37,35 @@ def get_all_thresholds_as_dict():
         })
     return thresholds
 
+# in alerts_manager.py (or better, database/data_manager.py if you want it central)
+def get_thresholds_for_rules():
+    """
+    Fetches all water quality thresholds from the database and organizes them
+    into a nested dictionary for classification and rule-based logic.
+    Safer version of get_all_thresholds_as_dict with logging.
+    """
+    thresholds = {}
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("SELECT * FROM water_quality_thresholds").fetchall()
+        conn.close()
+
+    for row in rows:
+        param = row['parameter_name']
+        level = row['quality_level']
+        if param not in thresholds:
+            thresholds[param] = {}
+        if level not in thresholds[param]:
+            thresholds[param][level] = []
+
+        thresholds[param][level].append({
+            'min_value': row['min_value'],
+            'max_value': row['max_value']
+        })
+
+    return thresholds
+
 def get_rule_by_id(rule_id):
     """Fetches a single alert rule by its ID."""
     with DB_LOCK:
@@ -152,42 +181,82 @@ def update_alert_rule(rule_id, data):
         conn.commit()
         conn.close()
 
+
 def restore_default_alert_rules():
     """
-    Deletes all current default rules and re-inserts the pristine default set.
+    Deletes only non-default alert rules, then updates the existing default
+    rules to their pristine state, preserving their original IDs.
     """
     with DB_LOCK:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
-        cursor.execute("DELETE FROM alert_rules WHERE is_default = 1")
+        # Step 1: Delete ONLY the custom rules (where is_default is 0).
+        print("Deleting custom, non-default alert rules...")
+        cursor.execute("DELETE FROM alert_rules WHERE is_default = 0")
 
-        # Get the 'Administrators' group ID, falling back to 1 if needed
+        # Step 2: Prepare the pristine data for the default rules.
         try:
             cursor.execute("SELECT id FROM notification_groups WHERE name = 'Administrators'")
             admin_group_row = cursor.fetchone()
             admin_group_id = admin_group_row[0] if admin_group_row else 1
         except:
             admin_group_id = 1
-
-        # This list includes the 'buzzer_mode' data at the end
-        default_alert_rules = [
-            ('pH Level Critical (Low)', json.dumps([{'parameter': 'pH', 'operator': '<', 'value': '4.0'}]), admin_group_id, 1, 1, 1, 10, 'repeating'),
-            ('pH Level Critical (High)', json.dumps([{'parameter': 'pH', 'operator': '>', 'value': '10.0'}]), admin_group_id, 1, 1, 1, 10, 'repeating'),
-            ('High Turbidity Detected', json.dumps([{'parameter': 'Turbidity', 'operator': '>', 'value': '50.0'}]), admin_group_id, 1, 1, 1, 5, 'repeating'),
-            ('High TDS Detected', json.dumps([{'parameter': 'TDS', 'operator': '>', 'value': '700.0'}]), admin_group_id, 1, 1, 1, 3, 'once')
+            
+        default_rules_data = [
+            {
+                'name': 'pH Level Critical (Low)', 'conditions': json.dumps([{'parameter': 'pH', 'operator': '<', 'value': '4.0'}]),
+                'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 10, 'mode': 'repeating'
+            },
+            {
+                'name': 'pH Level Critical (High)', 'conditions': json.dumps([{'parameter': 'pH', 'operator': '>', 'value': '10.0'}]),
+                'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 10, 'mode': 'repeating'
+            },
+            {
+                'name': 'High Turbidity Detected', 'conditions': json.dumps([{'parameter': 'Turbidity', 'operator': '>', 'value': '50.0'}]),
+                'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 5, 'mode': 'repeating'
+            },
+            {
+                'name': 'High TDS Detected', 'conditions': json.dumps([{'parameter': 'TDS', 'operator': '>', 'value': '700.0'}]),
+                'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 3, 'mode': 'once'
+            },
+            {
+                'name': 'High Temperature Detected', 'conditions': json.dumps([{'parameter': 'Temperature', 'operator': '>', 'value': '35.0'}]),
+                'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 2, 'mode': 'once'
+            },
+            {
+                'name': 'Low Temperature Detected', 'conditions': json.dumps([{'parameter': 'Temperature', 'operator': '<', 'value': '0.0'}]),
+                'group_id': admin_group_id, 'policy_id': 1, 'enabled': 1, 'activate_buzzer': 1, 'duration': 2, 'mode': 'once'
+            }
         ]
-        
-        # The INSERT statement includes the 'buzzer_mode' column
-        cursor.executemany("""
-            INSERT INTO alert_rules 
-            (name, conditions, notification_group_id, enabled, is_default, activate_buzzer, buzzer_duration_seconds, buzzer_mode) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, default_alert_rules)
+
+        # Step 3: Loop through the pristine data and UPDATE each default rule by name.
+        print("Restoring default alert rules to their original values...")
+        for rule in default_rules_data:
+            cursor.execute("""
+                UPDATE alert_rules
+                SET conditions = ?,
+                    notification_group_id = ?,
+                    escalation_policy_id = ?,
+                    enabled = ?,
+                    activate_buzzer = ?,
+                    buzzer_duration_seconds = ?,
+                    buzzer_mode = ?
+                WHERE name = ? AND is_default = 1
+            """, (
+                rule['conditions'],
+                rule['group_id'],
+                rule['policy_id'],
+                rule['enabled'],
+                rule['activate_buzzer'],
+                rule['duration'],
+                rule['mode'],
+                rule['name']
+            ))
         
         conn.commit()
         conn.close()
-    
+ 
 def delete_alert_rule(rule_id):
     """Deletes an alert rule from the database."""
     with DB_LOCK:
@@ -249,29 +318,49 @@ def add_notification_group(data):
         conn.close()
     return group_id
 
-def update_notification_group(group_id, data):
-    """Updates a group's name and members."""
+def update_notification_group(group_id, new_data):
+    """Updates a group's name and members. Prevents renaming of 'Administrators'."""
     with DB_LOCK:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute('UPDATE notification_groups SET name = ? WHERE id = ?', (data['name'], group_id))
+
+        # Check if the group is "Administrators" before allowing a name change
+        cursor.execute('SELECT name FROM notification_groups WHERE id = ?', (group_id,))
+        current_group = cursor.fetchone()
+        if current_group and current_group[0] == 'Administrators' and 'name' in new_data and new_data['name'] != 'Administrators':
+            conn.close()
+            raise ValueError("The 'Administrators' group cannot be renamed.")
+
+        # Update the group name
+        if 'name' in new_data:
+            cursor.execute('UPDATE notification_groups SET name = ? WHERE id = ?', (new_data['name'], group_id))
         
         # Easiest way to update members is to delete all existing and re-insert
         cursor.execute('DELETE FROM group_members WHERE group_id = ?', (group_id,))
         
-        members = [(group_id, int(user_id)) for user_id in data.get('members', [])]
-        if members:
-            cursor.executemany('INSERT INTO group_members (group_id, user_id) VALUES (?, ?)', members)
+        members_to_add = [(group_id, int(user_id)) for user_id in new_data.get('members', [])]
+        if members_to_add:
+            cursor.executemany('INSERT INTO group_members (group_id, user_id) VALUES (?, ?)', members_to_add)
 
         conn.commit()
         conn.close()
 
 def delete_notification_group(group_id):
-    """Deletes a notification group. Members are deleted automatically via CASCADE."""
+    """Deletes a notification group from the database."""
     with DB_LOCK:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM notification_groups WHERE id = ?', (group_id,))
+        
+        # Fetch group name by ID to prevent deletion of "Administrators"
+        cursor.execute("SELECT name FROM notification_groups WHERE id = ?", (group_id,))
+        group_name = cursor.fetchone()
+        if group_name and group_name[0] == 'Administrators':
+            conn.close()
+            # Return a specific error message or raise an exception
+            raise ValueError("The 'Administrators' group cannot be deleted.")
+
+        # Proceed with deletion if the group is not 'Administrators'
+        cursor.execute("DELETE FROM notification_groups WHERE id = ?", (group_id,))
         conn.commit()
         conn.close()
 
@@ -314,6 +403,7 @@ def get_alert_status_by_id(history_id):
         result = cursor.fetchone()
         conn.close()
     return result[0] if result else None
+
 def get_alert_history(filters=None):
     """Fetches alert history, joining with rules and users for more details."""
     with DB_LOCK:
@@ -494,35 +584,50 @@ def update_threshold(threshold_id, data):
         conn.commit()
         conn.close()
 
+# In database/alerts_manager.py
+
 def restore_default_thresholds():
     """Deletes all current thresholds and re-inserts the default set."""
     default_thresholds = [
         # pH Thresholds
-        ('pH', 'Good', 'primary', 6.5, 8.5), ('pH', 'Average', 'low', 6.0, 6.5),
-        ('pH', 'Average', 'high', 8.5, 9.0), ('pH', 'Poor', 'low', 4.0, 6.0),
-        ('pH', 'Poor', 'high', 9.0, 10.0), ('pH', 'Bad', 'low', None, 4.0),
+        ('pH', 'Good', 'primary', 6.5, 8.5),
+        ('pH', 'Average', 'low', 6.0, 6.5),
+        ('pH', 'Average', 'high', 8.5, 9.0),
+        ('pH', 'Poor', 'low', 4.0, 6.0),
+        ('pH', 'Poor', 'high', 9.0, 10.0),
+        ('pH', 'Bad', 'low', None, 4.0),
         ('pH', 'Bad', 'high', 10.0, None),
         # TDS Thresholds
-        ('TDS', 'Good', 'primary', None, 400.0), ('TDS', 'Average', 'primary', 400.0, 700.0),
-        ('TDS', 'Poor', 'primary', 700.0, 1000.0), ('TDS', 'Bad', 'primary', 1000.0, None),
+        ('TDS', 'Good', 'primary', None, 400.0),
+        ('TDS', 'Average', 'primary', 400.0, 700.0),
+        ('TDS', 'Poor', 'primary', 700.0, 1000.0),
+        ('TDS', 'Bad', 'primary', 1000.0, None),
         # Turbidity Thresholds
-        ('Turbidity', 'Good', 'primary', None, 5.0), ('Turbidity', 'Average', 'primary', 5.0, 50.0),
-        ('Turbidity', 'Poor', 'primary', 50.0, 200.0), ('Turbidity', 'Bad', 'primary', 200.0, None),
+        ('Turbidity', 'Good', 'primary', None, 5.0),
+        ('Turbidity', 'Average', 'primary', 5.0, 50.0),
+        ('Turbidity', 'Poor', 'primary', 50.0, 200.0),
+        ('Turbidity', 'Bad', 'primary', 200.0, None),
         # Temperature Thresholds
-        ('Temperature', 'Good', 'primary', 5.0, 30.0), ('Temperature', 'Average', 'low', 0.0, 5.0),
-        ('Temperature', 'Average', 'high', 30.0, 35.0), ('Temperature', 'Bad', 'low', None, 0.0),
+        ('Temperature', 'Good', 'primary', 5.0, 30.0),
+        ('Temperature', 'Average', 'low', 0.0, 5.0),
+        ('Temperature', 'Average', 'high', 30.0, 35.0),
+        ('Temperature', 'Bad', 'low', None, 0.0),
         ('Temperature', 'Bad', 'high', 35.0, None)
     ]
+    
     with DB_LOCK:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        # Delete all existing entries
+        
+        # Step 1: Delete all existing entries from the table
         cursor.execute('DELETE FROM water_quality_thresholds')
-        # Re-insert the default values
+        
+        # Step 2: Re-insert the complete default values with the correct columns
         cursor.executemany("""
             INSERT INTO water_quality_thresholds 
             (parameter_name, quality_level, range_identifier, min_value, max_value) 
             VALUES (?, ?, ?, ?, ?)
         """, default_thresholds)
+        
         conn.commit()
         conn.close()

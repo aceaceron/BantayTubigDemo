@@ -345,7 +345,9 @@ def create_tables():
             ('pH Level Critical (Low)', json.dumps([{'parameter': 'pH', 'operator': '<', 'value': '4.0'}]), admin_group_id, 1, 1, 1, 10, 'repeating'),
             ('pH Level Critical (High)', json.dumps([{'parameter': 'pH', 'operator': '>', 'value': '10.0'}]), admin_group_id, 1, 1, 1, 10, 'repeating'),
             ('High Turbidity Detected', json.dumps([{'parameter': 'Turbidity', 'operator': '>', 'value': '50.0'}]), admin_group_id, 1, 1, 1, 5, 'repeating'),
-            ('High TDS Detected', json.dumps([{'parameter': 'TDS', 'operator': '>', 'value': '700.0'}]), admin_group_id, 1, 1, 1, 3, 'once')
+            ('High TDS Detected', json.dumps([{'parameter': 'TDS', 'operator': '>', 'value': '700.0'}]), admin_group_id, 1, 1, 1, 3, 'once'),
+            ('High Temperature Detected', json.dumps([{'parameter': 'Temperature', 'operator': '>', 'value': '35.0'}]), admin_group_id, 1, 1, 1, 2, 'once'),
+            ('Low Temperature Detected', json.dumps([{'parameter': 'Temperature', 'operator': '<', 'value': '0.0'}]), admin_group_id, 1, 1, 1, 2, 'once')
         ]
         
         cursor.executemany("""
@@ -353,20 +355,6 @@ def create_tables():
             (name, conditions, notification_group_id, enabled, is_default, activate_buzzer, buzzer_duration_seconds, buzzer_mode) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, default_alert_rules)
-
-        cursor.execute("""
-            INSERT OR IGNORE INTO devices (id, name, location, water_source, firmware, status, sensors)
-            VALUES (
-                'dev-1',
-                'BantayTubig',
-                '{"coordinates": "14.156453,122.827182", "municipality": "Labo", "province": "Camarines Norte"}',
-                'Water Service Provider',
-                '1.0',
-                'Active',
-                '["temp","ph","tds","turbidity"]'
-            )
-        """)
         
-
         conn.commit()
         conn.close()

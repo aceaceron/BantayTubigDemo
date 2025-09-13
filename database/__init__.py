@@ -20,7 +20,7 @@ from .data_manager import (
     insert_environmental_context,
     insert_measurement,
     save_annotation,
-    summarize_context_for_range,
+    summarize_context_for_range
 )
 
 # --- Device & Sensor Management ---
@@ -40,12 +40,9 @@ from .device_manager import (
 
 # --- User, Role & Auth Management ---
 from .user_manager import (
-    add_role,
     add_user,
     change_user_password,
-    create_role,
     create_user,
-    delete_role,
     generate_secure_password,
     get_all_roles,
     get_all_users_with_roles,
@@ -60,9 +57,8 @@ from .user_manager import (
     set_new_password_for_user,
     set_user_status,
     update_last_login,
-    update_role,
     update_user,
-    verify_password,
+    verify_password
 )
 
 # --- Alerts & Notifications ---
@@ -87,6 +83,7 @@ from .alerts_manager import (
     get_latest_triggered_alert,
     get_notification_group_details,
     get_rule_by_id,
+    get_thresholds_for_rules,
     restore_default_alert_rules,
     resolve_alert_in_history,
     snooze_alert_rule,
@@ -106,3 +103,4 @@ from .ml_manager import (
 # --- System & Maintenance ---
 from .audit_logger import add_audit_log, get_audit_logs
 from .maintenance import cleanup_old_data, get_deletable_data_preview
+from .settings_manager import get_setting, update_setting
