@@ -8,7 +8,7 @@ import sqlite3
 import datetime
 import os
 
-from database import DB_LOCK, DB_PATH, get_all_thresholds_as_dict
+from database import DB_LOCK, DB_PATH, get_thresholds_for_rules, get_setting, update_setting, add_audit_log
 
 # --- Global Model & Feature Importance Storage ---
 MODEL_FILE = 'bantaytubig_model.joblib'
@@ -18,64 +18,92 @@ feature_importances = {}
 FEATURE_NAMES = ['temperature', 'ph', 'tds', 'turbidity']
 CLASS_NAMES = ['Good', 'Average', 'Poor', 'Bad'] 
 
-# <<< --- THIS ENTIRE FUNCTION HAS BEEN REWRITTEN FOR ROBUSTNESS --- >>>
 def _decide_with_static_rules(temp_val, ph_val, tds_val, turb_val, thresholds):
+    thresholds = get_thresholds_for_rules()
+
     """
     Decides water quality using robust rules fetched from the database.
-    This version safely handles any number of ranges per category.
+    This version applies a worst-case priority system:
+      Bad > Poor > Average > Good
     """
     print("Executing fallback: Deciding quality with robust rules from DATABASE.")
-    
+
     def is_in_any_range(value, ranges):
-        """Helper function to check if a value falls into any of a list of ranges."""
+        """Helper: check if value falls into any of the ranges."""
         if value is None or not ranges:
             return False
+
+        # Normalize: wrap dict into a list
+        if isinstance(ranges, dict):
+            ranges = [ranges]
+
         for r in ranges:
-            min_lim, max_lim = r.get('min_value'), r.get('max_value')
-            # Check if the value is within the defined min and max for this range
+            try:
+                min_lim = float(r.get('min_value')) if r.get('min_value') is not None else None
+                max_lim = float(r.get('max_value')) if r.get('max_value') is not None else None
+            except (ValueError, TypeError, AttributeError):
+                continue
+
             if (min_lim is None or value >= min_lim) and \
-               (max_lim is None or value <= max_lim):
+            (max_lim is None or value <= max_lim):
                 return True
+
         return False
 
-    quality = 'Unknown'
-    
     try:
-        if is_in_any_range(ph_val, thresholds.get('pH', {}).get('Bad', [])) or \
-           is_in_any_range(temp_val, thresholds.get('Temperature', {}).get('Bad', [])) or \
-           is_in_any_range(tds_val, thresholds.get('TDS', {}).get('Bad', [])) or \
-           is_in_any_range(turb_val, thresholds.get('Turbidity', {}).get('Bad', [])):
+        # --- Check BAD (highest priority) ---
+        if (
+            is_in_any_range(ph_val, thresholds.get('pH', {}).get('Bad', [])) or
+            is_in_any_range(temp_val, thresholds.get('Temperature', {}).get('Bad', [])) or
+            is_in_any_range(tds_val, thresholds.get('TDS', {}).get('Bad', [])) or
+            is_in_any_range(turb_val, thresholds.get('Turbidity', {}).get('Bad', []))
+        ):
             quality = 'Bad'
-        elif is_in_any_range(ph_val, thresholds.get('pH', {}).get('Poor', [])) or \
-             is_in_any_range(temp_val, thresholds.get('Temperature', {}).get('Poor', [])) or \
-             is_in_any_range(tds_val, thresholds.get('TDS', {}).get('Poor', [])) or \
-             is_in_any_range(turb_val, thresholds.get('Turbidity', {}).get('Poor', [])):
+
+        # --- Check POOR ---
+        elif (
+            is_in_any_range(ph_val, thresholds.get('pH', {}).get('Poor', [])) or
+            is_in_any_range(temp_val, thresholds.get('Temperature', {}).get('Poor', [])) or
+            is_in_any_range(tds_val, thresholds.get('TDS', {}).get('Poor', [])) or
+            is_in_any_range(turb_val, thresholds.get('Turbidity', {}).get('Poor', []))
+        ):
             quality = 'Poor'
-        elif is_in_any_range(ph_val, thresholds.get('pH', {}).get('Average', [])) or \
-             is_in_any_range(temp_val, thresholds.get('Temperature', {}).get('Average', [])) or \
-             is_in_any_range(tds_val, thresholds.get('TDS', {}).get('Average', [])) or \
-             is_in_any_range(turb_val, thresholds.get('Turbidity', {}).get('Average', [])):
+
+        # --- Check AVERAGE ---
+        elif (
+            is_in_any_range(ph_val, thresholds.get('pH', {}).get('Average', [])) or
+            is_in_any_range(temp_val, thresholds.get('Temperature', {}).get('Average', [])) or
+            is_in_any_range(tds_val, thresholds.get('TDS', {}).get('Average', [])) or
+            is_in_any_range(turb_val, thresholds.get('Turbidity', {}).get('Average', []))
+        ):
             quality = 'Average'
-        elif is_in_any_range(ph_val, thresholds.get('pH', {}).get('Good', [])) and \
-             is_in_any_range(temp_val, thresholds.get('Temperature', {}).get('Good', [])) and \
-             is_in_any_range(tds_val, thresholds.get('TDS', {}).get('Good', [])) and \
-             is_in_any_range(turb_val, thresholds.get('Turbidity', {}).get('Good', [])):
+
+        # --- Check GOOD (all must match) ---
+        elif (
+            is_in_any_range(ph_val, thresholds.get('pH', {}).get('Good', [])) and
+            is_in_any_range(temp_val, thresholds.get('Temperature', {}).get('Good', [])) and
+            is_in_any_range(tds_val, thresholds.get('TDS', {}).get('Good', [])) and
+            is_in_any_range(turb_val, thresholds.get('Turbidity', {}).get('Good', []))
+        ):
             quality = 'Good'
+
+        else:
+            quality = 'Unknown'
 
     except Exception as e:
         print(f"ERROR during rule-based decision: {e}")
         quality = 'Unknown'
 
     probabilities = {name: (1.0 if name == quality else 0.0) for name in CLASS_NAMES}
-    if quality == 'Unknown':
-        return { "quality": "Unknown", "confidence": "Rule-Based (Error)", "probabilities": {name: 0 for name in CLASS_NAMES} }
-    else:
-        return { "quality": quality, "confidence": "Rule-Based", "probabilities": probabilities }
+    return {
+        "quality": quality,
+        "confidence": "Rule-Based",
+        "probabilities": probabilities,
+    }
 
 def predict_water_quality(temp, ph, tds, turbidity):
     """
-    Predicts water quality using the ML model primarily, but falls back to
-    database-driven rules if the model is unavailable.
+    Predicts water quality based on the user-selected mode (ML or Thresholds).
     """
     global model
     
@@ -85,32 +113,48 @@ def predict_water_quality(temp, ph, tds, turbidity):
         tds_val = float(tds) if tds is not None else None
         turb_val = float(turbidity) if turbidity is not None else None
     except (ValueError, TypeError, AttributeError):
-        return { "quality": "Unknown", "confidence": 0, "probabilities": {name: 0 for name in CLASS_NAMES} }
+        return {
+            "quality": "Unknown",
+            "confidence": 0,
+            "probabilities": {name: 0 for name in CLASS_NAMES}
+        }
 
-    if model is None or not hasattr(model, 'predict_proba'):
-        print("Model not available. Fetching fallback rules from the database...")
-        thresholds = get_all_thresholds_as_dict()
-        if not thresholds:
-            print("ERROR: Could not fetch thresholds from the database for fallback rules.")
-            return { "quality": "Unknown", "confidence": "Rule-Based (Error)", "probabilities": {name: 0 for name in CLASS_NAMES} }
-        
-        return _decide_with_static_rules(temp_val, ph_val, tds_val, turb_val, thresholds)
-        
-    try:
-        features = pd.DataFrame([[temp_val, ph_val, tds_val, turb_val]], columns=FEATURE_NAMES)
-        probabilities_array = model.predict_proba(features)[0]
-        best_class_index = probabilities_array.argmax()
-        predicted_quality = CLASS_NAMES[best_class_index]
-        confidence_score = probabilities_array[best_class_index]
-        all_probabilities = {name: prob for name, prob in zip(CLASS_NAMES, probabilities_array)}
-        
-        return { "quality": predicted_quality, "confidence": confidence_score, "probabilities": all_probabilities }
-    except Exception as e:
-        print(f"Error during ML prediction: {e}")
-        return { "quality": "Unknown", "confidence": 0, "probabilities": {name: 0 for name in CLASS_NAMES} }
+    # --- Check the user's selected mode from the database ---
+    # Default to 'Thresholds' if the setting is not found.
+    decision_mode = get_setting('decision_mode', default='Thresholds')
 
+    # Condition 1: Use ML if mode is 'ML' AND the model is available.
+    if decision_mode == 'ML' and model is not None:
+        try:
+            features = pd.DataFrame([[temp_val, ph_val, tds_val, turb_val]], columns=FEATURE_NAMES)
+            probabilities_array = model.predict_proba(features)[0]
+            best_class_index = probabilities_array.argmax()
+            predicted_quality = CLASS_NAMES[best_class_index]
+            confidence_score = probabilities_array[best_class_index]
+            all_probabilities = {name: prob for name, prob in zip(CLASS_NAMES, probabilities_array)}
+            
+            return {
+                "quality": predicted_quality,
+                "confidence": confidence_score,
+                "probabilities": all_probabilities
+            }
+        except Exception:
+            print(f"Error during ML prediction, falling back to rules")
+            # If ML fails for any reason, it will fall through to the rule-based logic below.
 
-def train_decision_tree():
+    # Condition 2: Use Thresholds if mode is 'Thresholds' OR if ML mode was selected but failed/unavailable.
+
+    thresholds = get_thresholds_for_rules()
+    if not thresholds:
+        
+        return {
+            "quality": "Unknown",
+            "confidence": "Rule-Based (Error)",
+            "probabilities": {name: 0 for name in CLASS_NAMES}
+        }
+    
+    return _decide_with_static_rules(temp_val, ph_val, tds_val, turb_val, thresholds)
+def train_machine_learning():
     """
     Trains a Random Forest Classifier only if there are at least 250 samples
     for each of the four water quality categories.
@@ -198,7 +242,27 @@ try:
             print("Feature importances loaded from model.")
     else:
         print("No pre-trained model found. Training initial model...")
-        train_decision_tree()
+        train_machine_learning()
 except Exception as e:
     print(f"Could not load or train model on startup. Error: {e}")
     model = None
+finally:
+    # This block runs after the try/except, regardless of outcome
+    if model is None:
+        print("ML model is not available.")
+        # Check if the current mode is set to ML
+        current_mode = get_setting('decision_mode')
+        if current_mode == 'ML':
+            print("Decision mode is 'ML' but model is unavailable. Forcing mode to 'Thresholds'.")
+            # Force the setting back to Thresholds
+            update_setting('decision_mode', 'Thresholds')
+            # Log this automatic system action
+            add_audit_log(
+                user_id=None,  # No user is logged in at startup
+                component='System Startup',
+                action='Mode Changed Automatically',
+                target="Set to Thresholds",
+                status='Success',
+                ip_address='System', 
+                details="ML model was not available at startup."
+            )
