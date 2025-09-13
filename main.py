@@ -166,6 +166,7 @@ def run_monitoring_app():
     last_cleanup_time = None
     lcd_display_state = 0
     LOOP_DELAY_SECONDS = 1
+    last_ml_analysis_time = None
 
     try:
         while True:
