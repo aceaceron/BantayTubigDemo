@@ -115,6 +115,15 @@ def snooze_alert_rule(rule_id, duration_minutes):
         cursor.execute("UPDATE alert_rules SET snoozed_until = ? WHERE id = ?", (snooze_end_str, rule_id))
         conn.commit()
         conn.close()
+    
+def unsnooze_alert_rule(rule_id):
+    """Clears the snooze (snoozed_until) for the given alert rule."""
+    with DB_LOCK:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE alert_rules SET snoozed_until = NULL WHERE id = ?", (rule_id,))
+        conn.commit()
+        conn.close()
 
 def get_active_alert_rules():
     """Fetches all enabled and non-snoozed alert rules from the database."""
