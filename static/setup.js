@@ -1,6 +1,6 @@
 // static/setup.js
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
 
     // --- ELEMENT SELECTors ---
     const scanWifiBtn = document.getElementById('scanWifiBtn');
@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const wifiSsidInput = document.getElementById('wifiSsidInput');
     const wifiPasswordInput = document.getElementById('wifiPasswordInput');
     const statusContainer = document.getElementById('statusMessageContainer');
+    const statusContent = document.getElementById('statusMessageContent');
     const statusTitle = document.getElementById('statusTitle');
     const statusText = document.getElementById('statusText');
 
@@ -42,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
         iconPlaceholder.innerHTML = svgSync;
         scanWifiBtn.addEventListener('click', async () => {
             statusContainer.style.display = 'none';
-            
+
             scanWifiBtn.disabled = true;
             iconPlaceholder.innerHTML = svgLoader;
             wifiListBody.innerHTML = `<tr><td colspan="4">Scanning... Please wait.</td></tr>`;
@@ -80,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const ssid = e.target.dataset.ssid;
                 const security = e.target.dataset.security;
                 if (security === 'Open') {
-                    handleWifiConnect(ssid, ''); 
+                    handleWifiConnect(ssid, '');
                 } else {
                     ssidNameLabel.textContent = ssid;
                     wifiSsidInput.value = ssid;
@@ -91,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     if (wifiConnectForm) {
         wifiConnectForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -99,9 +100,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+
     function handleWifiConnect(ssid, password) {
         if (wifiModal) wifiModal.style.display = 'none';
 
+        // Show the initial status message
         statusTitle.textContent = `Sinusubukang Kumonekta sa "${ssid}"...`;
         statusText.textContent = 'Madidiskonekta ngayon ang hotspot ng device para subukang kumonekta sa iyong network. Maaaring abutin ito ng 30 segundo.';
         statusContainer.style.display = 'flex';
@@ -114,21 +117,37 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log("Browser disconnected as expected while device attempts to connect.", error);
         });
 
+        // After a delay, hide the status message and show the new instructions modal
         setTimeout(() => {
-            statusTitle.textContent = 'Tapos na ang Pagtangkang Kumonekta';
-            statusText.innerHTML = `
+            statusContainer.style.display = 'none';
+            lcdInstructionsContainer.style.display = 'flex';
+            lcdInstructionsTitle.textContent = 'Tapos na ang Pagtangkang Kumonekta';
+            lcdInstructionsText.innerHTML = `
                 Tingnan ang LCD screen ng device para sa susunod na hakbang.
                 <br><em><small><strong>Please look at the device's LCD screen for the next step.</strong></small></em>
                 <br><br>
+                <img src="static/lcd_instructions/appReady.jpg" 
+                    alt="LCD screen showing that the app is ready for use." 
+                    class="lcd-instruction-image">
+                <img src="static/lcd_instructions/viewDashboard.jpg" 
+                    alt="LCD screen displaying the new IP address to access the dashboard." 
+                    class="lcd-instruction-image">
                 <strong>Kung Nagtagumpay:</strong> Ipapakita ng LCD ang bagong IP address ng device (hal. 192.168.1.10). I-reconnect ang computer na ito sa iyong main Wi-Fi at gamitin ang IP address na iyon sa iyong browser.
                 <br><em><small><strong>If Successful:</strong> The LCD will display the device's new IP address (e.g., 192.168.1.10). Reconnect this computer to your main Wi-Fi and use that IP address in your browser.</small></em>
                 <br><br>
+                <img src="static/lcd_instructions/connectToDevice.jpg" 
+                    alt="LCD screen showing setup hotspot details for reconnecting." 
+                    class="lcd-instruction-image">
+                <img src="static/lcd_instructions/setup.jpg" 
+                    alt="LCD screen showing QR code for setup hotspot connection." 
+                    class="lcd-instruction-image">
                 <strong>Kung Nabigo:</strong> Ipapakita muli ng LCD ang mga detalye ng "BantayTubig-Setup" hotspot. Paki-reconnect sa hotspot na iyon at i-refresh ang page na ito para subukang muli.
                 <br><em><small><strong>If it Fails:</strong> The LCD will again display the "BantayTubig-Setup" hotspot details. Please reconnect to that hotspot and refresh this page to try again.</small></em>
             `;
+
         }, 8000);
     }
-    
+
     if (closeWifiModalBtn) {
         closeWifiModalBtn.addEventListener('click', () => wifiModal.style.display = 'none');
     }

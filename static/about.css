@@ -25,7 +25,6 @@
     color: white; /* This color is likely intended to stand out against a darker card header background. */
 }
 
-
 /* ======================================================================== */
 /* == ACCORDION STYLES (for FAQ, Support, etc.) =========================== */
 /* ======================================================================== */
@@ -100,6 +99,7 @@
     padding: 0 20px;
 }
 
+
 /* Styles the content wrapper *inside* an accordion panel. */
 .content-card-inner {
     padding: 15px;
@@ -116,6 +116,45 @@
     margin-bottom: 5px;
 }
 
+.faq-category-header {
+    text-align: left;
+    color: white;
+}
+
+
+.settings-toggle-btn {
+    flex-direction: column;
+}
+
+.settings-toggle-btn .english-translation {
+    display: block; /* Forces the text to a new line */
+    text-align: left; /* Ensures the text is left-aligned */
+    font-size: 0.8em;
+    font-style: italic;
+    color: #888;
+    margin-top: 5px;
+}
+
+/* This rule makes the English translation appear on a new line,
+   as well as making it smaller and italicized. */
+.accordion-content .english-translation {
+    display: block; /* The crucial part to break the line */
+    font-size: 0.8em;
+    font-style: italic;
+    color: #888;
+    margin-top: 5px;
+}
+
+/* This is a general rule for styling text within the FAQ answers. */
+.accordion-content p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* To avoid nested italics */
+.accordion-content p .english-translation i {
+    font-style: italic;
+}
 
 /* ======================================================================== */
 /* == DEVELOPER CARD STYLES =============================================== */
@@ -202,8 +241,8 @@
 }
 
 .cv-profile-pic {
-    width: 60px;
-    height: 60px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid #fff;

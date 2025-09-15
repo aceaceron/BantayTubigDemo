@@ -211,11 +211,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${rule.group_name || 'N/A'}</td>
                 <td><span class="status-badge ${rule.enabled ? 'status-active' : 'status-inactive'}">${rule.enabled ? 'Enabled' : 'Disabled'}</span></td>
                 <td class="action-buttons-cell">
-                    <button class="action-button small snooze-btn" data-id="${rule.id}" data-name="${rule.name}">Snooze</button>
+                    <button 
+                        class="action-button small snooze-btn ${isSnoozed ? 'unsnooze' : ''}" 
+                        data-id="${rule.id}" 
+                        data-name="${rule.name}">
+                        ${isSnoozed ? 'Unsnooze' : 'Snooze'}
+                    </button>
                     <button class="action-button small edit-rule-btn" data-id="${rule.id}">Edit</button>
                     <button class="action-button small deactivate delete-rule-btn ${rule.is_default ? 'protected-rule-btn' : ''}" data-id="${rule.id}">Delete</button>
                 </td>
             `;
+
             alertRulesTableBody.appendChild(tr);
         });
     }
@@ -289,15 +295,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                 }
             );
-        }
-        else if (target.classList.contains('snooze-btn')) {
+        } else if (target.classList.contains('snooze-btn')) {
             const ruleId = target.dataset.id;
             const ruleName = target.dataset.name;
-            snoozeRuleIdInput.value = ruleId;
-            snoozeModalTitle.textContent = `Snooze: ${ruleName}`;
-            snoozeForm.reset();
-            openModal('snoozeModal');
+
+            if (target.classList.contains('unsnooze')) {
+                // 🔹 If snoozed, unsnooze immediately
+                await apiFetch(`/api/alerts/rules/${ruleId}/unsnooze`, { method: 'POST' });
+                showToast(`Rule "${ruleName}" has been unsnoozed.`, svgSuccess);
+                loadAlertRules();
+            } else {
+                // 🔹 Otherwise, open Snooze modal
+                snoozeRuleIdInput.value = ruleId;
+                snoozeModalTitle.textContent = `Snooze: ${ruleName}`;
+                snoozeForm.reset();
+                openModal('snoozeModal');
+            }
         }
+
     });
 
     /** Handles the submission of the "Add/Edit Rule" form. */

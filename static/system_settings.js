@@ -122,7 +122,7 @@ function setupSettingsPage() {
     // <<< --- ELEMENT SELECTORS --- >>>
 
     // General & Floating Actions
-    const saveBtn = document.getElementById('saveSettingsBtn');
+    const saveSystemNameBtn = document.getElementById('saveSystemNameBtn');
     const powerOffBtn = document.getElementById('powerOffBtn');
     const systemNameInput = document.getElementById('systemName');
 
@@ -179,33 +179,38 @@ function setupSettingsPage() {
         }
     }
 
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async () => {
-            saveBtn.classList.add('saving');
+    saveSystemNameBtn.addEventListener('click', async () => {
+        saveSystemNameBtn.classList.add('saving');
+        try {
+            await apiFetch('/api/system/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ systemName: systemNameInput.value })
+            });
+            showToastModal('System name saved!', svgSuccess);
+        } catch (error) {
+            // apiFetch handles error toast
+        } finally {
+            setTimeout(() => {
+                saveSystemNameBtn.classList.remove('saving');
+            }, 1500);
+        }
+    });
 
-            try {
-                // Step 1: Save the new setting to the database
-                const settingsData = {
-                    systemName: systemNameInput.value,
-                    showMlConfidence: showMlConfidenceToggle.checked
-                };
-                localStorage.setItem('showMlConfidence', showMlConfidenceToggle.checked);
-                await apiFetch('/api/system/settings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(settingsData)
-                });
-
-            } catch (error) {
-                // Error is handled by apiFetch
-            } finally {
-                setTimeout(() => {
-                    saveBtn.classList.remove('saving');
-                }, 1500);
-                showToastModal('Settings saved!', svgSuccess);
-            }
-        });
-    }
+    // Auto-save ML Confidence setting when toggled
+    showMlConfidenceToggle.addEventListener('change', async () => {
+        try {
+            await apiFetch('/api/system/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ showMlConfidence: showMlConfidenceToggle.checked })
+            });
+            localStorage.setItem('showMlConfidence', showMlConfidenceToggle.checked);
+            showToastModal('ML Confidence setting updated!', svgSuccess);
+        } catch (error) {
+            // handled by apiFetch
+        }
+    });
 
     function loadUiSettings() {
         const savedSettings = localStorage.getItem('bantayTubigUiSettings');

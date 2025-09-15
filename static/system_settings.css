@@ -204,7 +204,7 @@ hr.form-divider {
 
 /* Scan and Connect Button Styles */
 #scanWifiBtn,
-.connect-btn {
+.connect-btn, #showLcdModalBtn {
     color: white;
     background: linear-gradient(45deg, #007bff, #0056b3);
     box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
@@ -297,9 +297,9 @@ hr.form-divider {
     z-index: 1000;
 }
 
-#saveSettingsBtn {
-    padding: 15px 30px;
-    font-size: 1.2em;
+#saveSystemNameBtn {
+    padding: 10px 20px;
+    font-size: 0.8em;
     border-radius: 30px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
@@ -338,7 +338,7 @@ hr.form-divider {
 }
 
 
-/* <<< --- NEW LOGOUT BUTTON STYLES START --- >>> */
+/* <<< --- LOGOUT BUTTON STYLES START --- >>> */
 
 /* This styles the SVG icon inside the logout button. */
 .logout-icon {
@@ -433,80 +433,127 @@ hr.form-divider {
     margin-top: 20px;
 }
 
-/* --- LCD Instruction Modal Styles --- */
+/* ======================================================================== */
+/* == MODAL STYLES (for LCD Instructions) ================================= */
+/* ======================================================================== */
 .lcd-modal-overlay {
-    display: none; /* Hidden by default */
     position: fixed;
-    z-index: 1000;
-    left: 0;
     top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
     justify-content: center;
     align-items: center;
-    animation: fadeIn 0.3s ease-out;
+    z-index: 1000;
 }
 
 .lcd-modal-content {
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(15px);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-    padding: 30px;
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
     width: 90%;
     max-width: 500px;
-    text-align: left;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-out;
     color: #333;
-    animation: fadeInScale 0.3s ease-out;
-    position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .lcd-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #e9ecef;
-    padding-bottom: 15px;
-    margin-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
 }
 
 .lcd-modal-title {
-    font-size: 1.5em;
+    font-size: 1.5rem;
     font-weight: 600;
-    margin: 0;
-    color: #212529;
+    color: #004d40;
+}
+
+.lcd-modal-body {
+    line-height: 1.6;
+    font-size: 1em;
 }
 
 .lcd-modal-body p {
-    font-size: 1.1em;
-    line-height: 1.6;
     margin-bottom: 15px;
-}
-
-.lcd-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    padding-top: 20px;
-    border-top: 1px solid #e9ecef;
-    margin-top: 20px;
 }
 
 .lcd-close-modal-btn {
     background: none;
     border: none;
-    font-size: 2em;
-    font-weight: 300;
+    font-size: 2rem;
     cursor: pointer;
-    color: #555;
-    transition: color 0.2s ease;
+    color: #999;
+    line-height: 1;
+    transition: color 0.2s;
 }
 
 .lcd-close-modal-btn:hover {
-    color: #000;
+    color: #333;
+}
+
+#lcdInstructionsContainer .lcd-modal-content {
+    /* Allows content to be taller than the viewport and scroll */
+    max-height: 90vh; 
+    overflow-y: auto;
+}
+
+/* New CSS rule for the image */
+.lcd-instruction-image {
+    display: block;
+    max-width: 100%; /* Ensures the image fits the container */
+    height: auto; /* Maintains the image's aspect ratio */
+    margin: 15px auto; /* Centers the image and adds vertical spacing */
+    border-radius: 8px; /* Adds a slight rounded border to the image */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow */
+}
+
+/* This is the full-screen overlay */
+#lcdInstructionsContainer  .toast-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex; /* Enables Flexbox */
+    justify-content: center; /* Centers horizontally */
+    align-items: center; /* Centers vertically */
+    z-index: 1000;
+}
+
+/* This is the content box inside the modal */
+#lcdInstructionsContainer .toast-content {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-out;
+    color: #333;
+    
+    /* These properties are crucial for making it scrollable */
+    max-height: 90vh; /* Limits height to 90% of the viewport height */
+    overflow-y: auto; /* Adds a vertical scrollbar if content exceeds max-height */
+}
+
+/* Keyframe animation for modal entry */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 /* --- Taglish and Translation Styles --- */
@@ -574,6 +621,7 @@ hr.form-divider {
     display: inline-block;
     width: 60px;
     height: 34px;
+    margin-right: 10px;
 }
 
 /* Hides the default HTML checkbox. */
@@ -592,9 +640,10 @@ hr.form-divider {
     right: 0;
     bottom: 0;
     background-color: #ccc;
-    -webkit-transition: .4s;
     transition: .4s;
     border-radius: 34px;
+    padding: 4px; /* added padding so knob sits properly */
+    box-sizing: border-box;
 }
 
 /* This is the sliding knob. */
@@ -603,10 +652,9 @@ hr.form-divider {
     content: "";
     height: 26px;
     width: 26px;
-    left: 4px;
+    left: 4px; /* no more negative offset */
     bottom: 4px;
     background-color: white;
-    -webkit-transition: .4s;
     transition: .4s;
     border-radius: 50%;
 }
@@ -621,7 +669,7 @@ input:checked+.slider {
 /* Slides the knob to the right when the switch is on. */
 input:checked+.slider:before {
     -webkit-transform: translateX(26px);
-    -ms-transform: translateX(26px);
+    -ms-transform: translateX(16px);
     transform: translateX(26px);
 }
 
