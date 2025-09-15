@@ -41,38 +41,40 @@
 
     <!-- MAIN CONTENT -->
     <div class="main-content about-page">
-        <!-- Documentation & Support Card -->
         <div class="content-card">
             <div class="card-header">
-                <h2>Documentation & Support</h2>
+                <h2>Meet the Developers</h2>
+            </div>
+            <div class="developers-container">
+                </div>
+        </div>
+        
+        <div class="content-card">
+            <div class="card-header">
+                <h2>FAQs</h2>
             </div>
             
-            <!-- FAQ Section (populated dynamically via about.js) -->
             <div id="faq-container">
-                <!-- JS will inject accordion items here -->
-            </div>
+                </div>
             
-            <!-- Contact Support Accordion -->
             <div class="settings-accordion-item">
-                <button class="settings-toggle-btn">Contact Support <span class="arrow-icon">▼</span></button>
+                <button class="settings-toggle-btn">Contact Support <span class="arrow-icon"></span></button>
                 <div class="settings-content-panel">
                     <div class="content-card-inner">
                         <p>If you encounter an issue you can't resolve, please contact our support team:</p>
                         <ul>
-                            <li><strong>Email:</strong> support@bantaytubig.ph</li>
-                            <li><strong>Phone:</strong> +63 917 123 4567</li>
+                            <li><strong>Email:</strong>*****</li>
+                            <li><strong>Phone:</strong> +63 *** *** ****</li>
                             <li><strong>Hours:</strong> 9:00 AM - 5:00 PM PHT, Mon-Fri</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <!-- System Information Accordion -->
             <div class="settings-accordion-item">
-                <button class="settings-toggle-btn">System Information <span class="arrow-icon">▼</span></button>
+                <button class="settings-toggle-btn">System Information <span class="arrow-icon"></span></button>
                 <div class="settings-content-panel">
                     <div class="content-card-inner">
-                        <!-- Example system info (static) -->
                         <p><strong>Software Version:</strong> 1.0.0</p>
                         <p><strong>Build Date:</strong> 2025-09-03</p>
                         <p><strong>Device ID:</strong> dev-1</p>
@@ -80,15 +82,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- Meet the Developers Section -->
-        <div class="content-card">
-            <div class="card-header">
-                <h2>Meet the Developers</h2>
-            </div>
-            <div class="developers-container"></div>
-        </div>
-        </div>
+    </div>
 
     <!-- CV Modal (hidden by default, opened via JS when clicking a developer card) -->
     <div id="cvModal" class="modal-overlay">
@@ -105,5 +99,7 @@
     
     <!-- Page-specific script -->
     <script src="{{ url_for('static', filename='about.js') }}"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='global_alerter.js') }}"></script>
 </body>
 </html>

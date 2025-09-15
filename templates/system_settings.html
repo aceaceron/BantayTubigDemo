@@ -46,10 +46,16 @@
                         </div>
                     </div>
                     <div class="settings-form">
-                        <div class="form-group"><label for="systemName">System Name</label><input type="text"
-                                id="systemName" placeholder="Loading..."><small>Set a custom name for the monitoring
-                                platform.</small></div>
+                        <div class="form-group">
+                            <label for="systemName">System Name</label>
+                            <input type="text" id="systemName" placeholder="Loading...">
+                            <small>Set a custom name for the monitoring platform.</small>
                         </div>
+                        <!-- Save button is now inside General Settings -->
+                        <div class="form-actions">
+                            <button id="saveSystemNameBtn" class="action-button">Save System Name</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -180,9 +186,6 @@
         <button id="powerOffBtn" class="action-button danger" title="Stop Application & Shut Down">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="power-icon"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
         </button>
-        
-        <!-- This button saves any changes made on the settings page. -->
-        <button id="saveSettingsBtn" class="action-button">Save Changes</button>
     </div>
 
     
@@ -191,20 +194,21 @@
     <div id="lcdInstructionModal" class="lcd-modal-overlay">
         <div class="lcd-modal-content">
             <div class="lcd-modal-header">
-                <h5 class="lcd-modal-title">Mga Tagubilin sa LCD Display <span class="english-translation">(LCD Display Instructions)</span></h5>
+                <h5 class="lcd-modal-title">LCD Display Instructions</h5>
                 <button class="lcd-close-modal-btn">&times;</button>
             </div>
             <div class="lcd-modal-body">
                 <p>
-                    Pagkatapos magtagumpay na kumonekta sa WiFi network, ang LCD screen ng device ay magpapakita ng isang link o IP address.
+                    Pagkatapos magtagumpay na kumonekta sa WiFi network, ang LCD screen ng device ay magpapakita ng isang link o IP address.<br>
                     <span class="english-translation">
-                        (After successfully connecting to a WiFi network, the device's LCD screen will display a link or IP address.)
+                        After successfully connecting to a WiFi network, the device's LCD screen will display a link or IP address.
                     </span>
                 </p>
+                <img src="static/lcd_instructions/viewDashboard.jpg" alt="LCD screen showing dashboard IP address" class="lcd-instruction-image">
                 <p>
-                    **Paki-check ang LCD screen para mahanap ang tamang address para ma-access ang web dashboard.**
+                    Paki-check ang LCD screen para mahanap ang tamang address para ma-access ang web dashboard.<br>
                     <span class="english-translation">
-                        (Please check the LCD screen to find the correct address for accessing the web dashboard.)
+                        Please check the LCD screen to find the correct address for accessing the web dashboard.
                     </span>
                 </p>
             </div>
