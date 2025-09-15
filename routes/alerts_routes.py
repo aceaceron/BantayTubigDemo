@@ -5,7 +5,7 @@ Handles all API endpoints for alert rules, notification groups, and alert histor
 from flask import Blueprint, jsonify, request, abort, session
 from database import * # Imports all functions from the database package
 from auth.decorators import role_required
-from database.alerts_manager import get_all_thresholds, restore_default_thresholds, update_threshold
+from database.alerts_manager import get_all_thresholds, restore_default_thresholds, unsnooze_alert_rule, update_threshold
 import sqlite3
 import json
 
@@ -421,6 +421,32 @@ def api_snooze_rule(rule_id):
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
         
+@alerts_bp.route('/alerts/rules/<int:rule_id>/unsnooze', methods=['POST'])
+def api_unsnooze_rule(rule_id):
+    """Unsnoozes a specific alert rule immediately (clears snoozed_until)."""
+    try:
+        unsnooze_alert_rule(rule_id)
+        add_audit_log(
+            user_id=session.get('user_id'),
+            component='Alert Rules',
+            action='Rule Unsnoozed',
+            target=f"Rule ID: {rule_id}",
+            status='Success',
+            ip_address=request.remote_addr
+        )
+        return jsonify({"status": "success", "message": f"Rule {rule_id} unsnoozed."})
+    except Exception as e:
+        add_audit_log(
+            user_id=session.get('user_id'),
+            component='Alert Rules',
+            action='Rule Unsnoozed',
+            target=f"Rule ID: {rule_id}",
+            status='Failure',
+            ip_address=request.remote_addr,
+            details={'error': str(e)}
+        )
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 # --- Utility API Endpoint ---
 
 @alerts_bp.route('/alerts/users_for_groups', methods=['GET'])
