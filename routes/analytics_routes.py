@@ -19,8 +19,8 @@ from database import (
 )
 from water_quality import predict_water_quality, get_feature_importances
 from static_analyzer import get_detailed_water_analysis
-from llm_analyzer import generate_llm_analysis
-from llm_reasoning import generate_reasoning_for_range
+from ml_models.llm_analyzer import generate_llm_analysis
+from ml_models.llm_reasoning import generate_reasoning_for_range
 from auth.decorators import role_required
 
 analytics_bp = Blueprint('analytics_bp', __name__)
