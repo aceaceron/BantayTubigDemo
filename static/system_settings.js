@@ -407,7 +407,6 @@ function setupSettingsPage() {
                 'The device will power off and the application will become unresponsive. This action requires a physical restart.',
                 () => { // This function runs only if the user clicks "Confirm"
                     powerOffBtn.disabled = true;
-                    if (saveBtn) saveBtn.disabled = true;
 
                     showToastModal('System will power off shortly.', svgPower, 10000);
 
