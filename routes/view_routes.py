@@ -118,14 +118,11 @@ def unauthorized():
 @view_bp.route('/setup')
 def setup():
     """
-    Renders the first-time setup page for WiFi.
-    If the device is already connected to a Wi-Fi network, this page is blocked.
+    Demo mode: Always render the setup page.
+    No Wi-Fi or permission checks.
     """
-    if is_on_wifi_client_mode():
-        flash("The device is already connected to a Wi-Fi network. Setup is not available.", "error")
-        return redirect(url_for('view_bp.login'))
-    
     return render_template('setup.html')
+
 
 # --- Protected Routes (Login Required) ---
 
