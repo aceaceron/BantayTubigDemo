@@ -44,12 +44,7 @@ def is_on_wifi_client_mode():
 @view_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Handles the login process and the initial admin registration."""
-    # If the device is not yet connected to a Wi-Fi network, redirect to setup.
-    # We do this check first before any other login logic.
-    if not is_on_wifi_client_mode():
-        flash("Please connect the device to a Wi-Fi network first.", "error")
-        return redirect(url_for('view_bp.setup'))
-    
+
     if 'user_id' in session:
         return redirect(url_for('view_bp.index'))
 
