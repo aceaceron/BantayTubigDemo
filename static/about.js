@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
         {
             category: "General & Getting Started",
             question: "Nakalimutan ko ang password ko. Paano ko ito i-reset? <span class='english-translation'>I forgot my password. How do I reset it?</span>",
-            answer: "Sa <strong>Login</strong> page, i-click ang 'Forgot Password' link. Ikaw ay igagabay sa isang proseso para i-reset ang inyong password at makabalik sa inyong account. <span class='english-translation'>On the <strong>Login</strong> page, click the 'Forgot Password' link. You will be guided through a process to reset your password and regain access to your account.</span>"
+            answer: "Kung ikaw ay isang <strong>Admin</strong>, maaari mong gamitin ang 'Forgot Password' link sa <strong>Login</strong> page upang i-reset ang iyong password. Para sa mga hindi admin na user, mangyaring makipag-ugnayan sa inyong Administrator kung nakalimutan ninyo ang inyong password. <span class='english-translation'>If you are an <strong>Admin</strong>, you can use the 'Forgot Password' link on the <strong>Login</strong> page to reset your password. For non-admin users, please contact your Administrator if you have forgotten your password.</span>"
         },
         {
             category: "General & Getting Started",
@@ -214,19 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         {
             category: "Glossary & Others",
-            question: "Ano ang EC at ano ang sinusukat nito? <span class='english-translation'>What is EC and what does it measure?</span>",
-            answer: "<strong>EC (Electrical Conductivity)</strong> ay sumusukat sa kakayahan ng tubig na mag-conduct ng kuryente, na isang indicator ng presensya ng dissolved inorganic compounds tulad ng salts. <span class='english-translation'><strong>EC (Electrical Conductivity)</strong> measures the ability of the water to conduct electricity, which is an indicator of the presence of dissolved inorganic compounds like salts.</span>"
-        },
-        {
-            category: "Glossary & Others",
             question: "Para saan ang Machine Learning page? <span class='english-translation'>What is the Machine Learning page for?</span>",
             answer: "Ang <strong>Machine Learning</strong> page ay kung saan pwede mong i-explore ang predictive analytics at trends sa inyong water quality data. <span class='english-translation'>The <strong>Machine Learning</strong> page is where you can explore predictive analytics and trends in your water quality data.</span>"
         },
-        {
-            category: "Glossary & Others",
-            question: "Ano ang purpose ng background video? <span class='english-translation'>What is the purpose of the background video?</span>",
-            answer: "Ang looping background video (BantayTubig.mp4) ay isang visual element na dinisenyo para i-enhance ang user interface at magbigay ng consistent aesthetic sa lahat ng pages. <span class='english-translation'>The looping background video (BantayTubig.mp4) is a visual element designed to enhance the user interface and provide a consistent aesthetic across all pages.</span>"
-        }
     ];
 
     /**

@@ -133,6 +133,27 @@ hr.form-divider {
     font-size: 1em;
 }
 
+/* Style the turbidity display <select> to match other inputs */
+.form-group-toggle select {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1em;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-right: 20px;
+}
+
+.form-group-toggle select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
+    outline: none;
+}
+
+
 .form-group small {
     color: #666;
     font-size: 0.9em;

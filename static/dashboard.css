@@ -748,6 +748,22 @@
     #water_quality {
         font-size: 1.5em;
     }
+    .gauge-tooltip {
+        bottom: 20;
+        top: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-left: 0;
+        position: fixed;
+        width: 90%;
+        max-width: 300px;
+        z-index: 2000;
+        font-size: 0.8em;
+    }
+
+    .gauge-tooltip::after {
+        display: none;
+    }
 }
 
 /* For screens smaller than 576px (small mobile). */

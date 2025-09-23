@@ -650,22 +650,45 @@ function renderCalibrationLogs(logs) {
                 };
                 break;
 
-            case 1: // Enter Buffer Values
+            case 1: // Enter Buffer Values + Temperature
                 body.innerHTML = `
-                    <h3>Step 1: Enter Buffer Values</h3>
-                    <p>Enter the known values of your buffer solutions, separated by commas (e.g., 4.01, 7.0, 10.0).</p>
-                    <div class="form-group">
-                        <input type="text" id="buffer-values-input" placeholder="4.01, 7.0, 10.0">
-                    </div>
+                    <h3>Step 1: Enter Buffer Solutions</h3>
+                    <p>Enter the calibration values and select their reference temperature.</p>
+                    <div id="buffer-list"></div>
+                    <button id="add-buffer-btn" class="action-button">+ Add Buffer</button>
                     <div class="form-actions">
                         <button id="cal-buffers-next" class="action-button">Next</button>
                     </div>
                 `;
+
+                const bufferList = document.getElementById('buffer-list');
+                function addBufferRow(value = '', temp = '25') {
+                    const row = document.createElement('div');
+                    row.className = 'form-group buffer-row';
+                    row.innerHTML = `
+                        <input type="number" step="0.01" placeholder="Buffer Value (e.g., 7.00)" value="${value}">
+                        <select>
+                            <option value="20" ${temp==='20'?'selected':''}>20°C</option>
+                            <option value="25" ${temp==='25'?'selected':''}>25°C</option>
+                            <option value="30" ${temp==='30'?'selected':''}>30°C</option>
+                            <option value="35" ${temp==='35'?'selected':''}>35°C</option>
+                        </select>
+                    `;
+                    bufferList.appendChild(row);
+                }
+                addBufferRow(); // start with one row
+
+                document.getElementById('add-buffer-btn').onclick = () => addBufferRow();
+
                 document.getElementById('cal-buffers-next').onclick = () => {
-                    const input = document.getElementById('buffer-values-input').value;
-                    wizard.bufferPoints = input.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+                    wizard.bufferPoints = [];
+                    bufferList.querySelectorAll('.buffer-row').forEach(row => {
+                        const value = parseFloat(row.querySelector('input').value.trim());
+                        const temp = parseFloat(row.querySelector('select').value);
+                        if (!isNaN(value)) wizard.bufferPoints.push({ buffer: value, temperature: temp });
+                    });
                     if (wizard.bufferPoints.length < 2) {
-                        showToastModal('Please enter at least two valid buffer values.', svgError, 5000);
+                        showToastModal('Please enter at least two valid buffer solutions.', svgError, 5000);
                         return;
                     }
                     wizard.currentStep = 2;
@@ -673,11 +696,12 @@ function renderCalibrationLogs(logs) {
                 };
                 break;
 
+
             case 2: // Soaking and Analysis Loop
-                const bufferValue = wizard.bufferPoints[wizard.collectedData.length];
+                const currentPoint = wizard.bufferPoints[wizard.collectedData.length];
                 body.innerHTML = `
                     <h3>Step 2: Analysis (${wizard.collectedData.length + 1}/${wizard.bufferPoints.length})</h3>
-                    <p>Place the sensor in the <strong>${bufferValue.toFixed(2)}</strong> buffer solution and wait for the reading to stabilize.</p>
+                    <p>Fill the tube with <strong>${currentPoint.buffer.toFixed(2)} (at ${currentPoint.temperature}°C)</strong> buffer solution.</p>
                     <p>The system will analyze the sensor output for 30 seconds.</p>
                     <div class="progress-bar-container"><div id="cal-progress-bar"></div></div>
                     <p>Live Voltage: <strong id="live-voltage-display">Reading...</strong></p>
@@ -688,9 +712,10 @@ function renderCalibrationLogs(logs) {
                 document.getElementById('cal-soak-start').onclick = (e) => {
                     e.target.disabled = true;
                     e.target.textContent = "Analyzing...";
-                    runCalibrationAnalysis(bufferValue);
+                    runCalibrationAnalysis(currentPoint);
                 };
                 break;
+
 
             case 3: // Final Confirmation
                 body.innerHTML = `
@@ -709,16 +734,18 @@ function renderCalibrationLogs(logs) {
 
     /**
      * Runs the 30-second analysis for a single calibration point.
-     * @param {number} bufferValue - The known value of the buffer solution.
+     * @param {number|object} bufferValue - The known value of the buffer solution or an object with {buffer, temperature}.
      */
     function runCalibrationAnalysis(bufferValue) {
         let readings = [];
         let duration = 30; // 30 seconds
         let elapsed = 0;
+        let finished = false; // 👈 guard
         const progressBar = document.getElementById('cal-progress-bar');
         const voltageDisplay = document.getElementById('live-voltage-display');
 
         calibrationWizard.timer = setInterval(async () => {
+            if (finished) return; // 👈 prevent re-entry
             elapsed++;
             progressBar.style.width = `${(elapsed / duration) * 100}%`;
 
@@ -730,35 +757,63 @@ function renderCalibrationLogs(logs) {
                 voltageDisplay.textContent = "Error";
             }
 
-            if (elapsed >= duration) {
+            if (elapsed >= duration && !finished) {
+                finished = true;
                 clearInterval(calibrationWizard.timer);
-                // Average the last half of the readings for stability.
+
                 const stableReadings = readings.slice(Math.floor(readings.length / 2));
                 const avgVoltage = stableReadings.reduce((a, b) => a + b, 0) / stableReadings.length;
 
-                calibrationWizard.collectedData.push({ buffer: bufferValue, voltage: avgVoltage });
+                // ✅ Handle both number and object input
+                let finalBufferValue;
+                if (typeof bufferValue === "object" && bufferValue !== null) {
+                    finalBufferValue = bufferValue.buffer;
+                } else {
+                    finalBufferValue = parseFloat(bufferValue);
+                }
 
-                // ... inside runCalibrationAnalysis function
-                // If more points need to be collected, go back to the analysis step.
+                if (isNaN(finalBufferValue)) {
+                    console.error("Invalid buffer value! Got:", bufferValue);
+                } else {
+                    calibrationWizard.collectedData.push({
+                        buffer: finalBufferValue,
+                        voltage: avgVoltage
+                    });
+                    console.log("Added calibration point:", finalBufferValue, avgVoltage);
+                }
+
+                console.log("Calibration points:", calibrationWizard.collectedData);
+
                 if (calibrationWizard.collectedData.length < calibrationWizard.bufferPoints.length) {
-                    calibrationWizard.currentStep = 2; // Corrected
-                    showToastModal('New sensor calibration saved successfully!', svgSuccess);
+                    showToastModal(
+                        `Calibration point for ${Number(finalBufferValue).toFixed(2)} completed. Please load the next buffer.`,
+                        svgSuccess
+                    );
+                    calibrationWizard.currentStep = 2;
                     updateCalibrationModalUI();
                 } else {
-                    // Otherwise, calculate and save the final formula.
-                    const result = await calculateAndSaveFormula();
-                    if (result) {
-                        calibrationWizard.currentStep = 3; // Corrected
-                        showToastModal('New sensor calibration saved successfully!', svgSuccess);
-                        updateCalibrationModalUI();
-                    } else {
-                        showToastModal('An error occurred while saving the calibration. Please try again.', svgError, 5000);
+                    try {
+                        const result = await calculateAndSaveFormula();
+                        if (result) {
+                            calibrationWizard.currentStep = 3;
+                            showToastModal('New sensor calibration saved successfully!', svgSuccess);
+                            updateCalibrationModalUI();
+                        } else {
+                            showToastModal(
+                                'An error occurred while saving the calibration. Please try again.',
+                                svgError,
+                                5000
+                            );
+                        }
+                    } catch (err) {
+                        console.error("Error finalizing calibration:", err);
+                        showToastModal('Unexpected error occurred.', svgError, 5000);
                     }
                 }
             }
+
         }, 1000);
     }
-
 
     // --- EVENT HANDLERS ---
 

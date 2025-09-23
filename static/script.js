@@ -268,8 +268,32 @@ function initializeCharts() {
                     fill: false
                 }]
             },
-            options: { ...commonChartOptions, scales: { y: { title: { display: true, text: 'TDS (ppm)' } } } }
+            options: {
+                ...commonChartOptions,
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 10, // initial range
+                        title: { display: true, text: 'TDS (ppm)' }
+                    }
+                },
+                animation: false,
+                plugins: {
+                    ...commonChartOptions.plugins
+                }
+            }
         });
+
+        // Dynamically adjust Y-axis every update
+        tdsChart.options.animation = false;
+        tdsChart.update = (function (origUpdate) {
+            return function () {
+                const values = tdsChart.data.datasets[0].data;
+                const maxValue = values.length ? Math.max(...values) : 10;
+                tdsChart.options.scales.y.max = Math.max(10, Math.ceil(maxValue));
+                return origUpdate.apply(this, arguments);
+            };
+        })(tdsChart.update);
     }
 
     // Initialize Turbidity Chart
@@ -287,8 +311,32 @@ function initializeCharts() {
                     fill: false
                 }]
             },
-            options: { ...commonChartOptions, scales: { y: { min: 0, max: gaugeConfigs.turb.max, title: { display: true, text: 'Turbidity (NTU)' } } } }
+            options: {
+                ...commonChartOptions,
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 10, // initial range
+                        title: { display: true, text: 'Turbidity (NTU)' }
+                    }
+                },
+                animation: false, // keeps updates snappy
+                plugins: {
+                    ...commonChartOptions.plugins
+                }
+            }
         });
+
+        // Dynamically adjust Y-axis every update
+        turbChart.options.animation = false;
+        turbChart.update = (function (origUpdate) {
+            return function () {
+                const values = turbChart.data.datasets[0].data;
+                const maxValue = values.length ? Math.max(...values) : 10;
+                turbChart.options.scales.y.max = Math.max(10, Math.ceil(maxValue));
+                return origUpdate.apply(this, arguments);
+            };
+        })(turbChart.update);
     }
 }
 
@@ -339,7 +387,55 @@ function updateDashboard() {
                 updateGauge(gaugeConfigs.temp.id, data.temperature, gaugeConfigs.temp.min, gaugeConfigs.temp.max, gaugeConfigs.temp.unit, gaugeConfigs.temp.thresholds);
                 updateGauge(gaugeConfigs.ph.id, data.ph, gaugeConfigs.ph.min, gaugeConfigs.ph.max, gaugeConfigs.ph.unit, gaugeConfigs.ph.thresholds);
                 updateGauge(gaugeConfigs.tds.id, data.tds, gaugeConfigs.tds.min, gaugeConfigs.tds.max, gaugeConfigs.tds.unit, gaugeConfigs.tds.thresholds);
-                updateGauge(gaugeConfigs.turb.id, data.turbidity, gaugeConfigs.turb.min, gaugeConfigs.turb.max, gaugeConfigs.turb.unit, gaugeConfigs.turb.thresholds);
+
+                let turbidityDisplay = (localStorage.getItem('turbidityDisplay') || 'ntu').toLowerCase().trim();
+                let turbValue = parseFloat(data.turbidity);
+
+                if (turbidityDisplay === 'clarity') {
+                    turbValue = 100 - (turbValue / 250 * 100);
+
+                    // ✅ Map clarity % → existing classes
+                    let clarityClass = 'bad'; // default grey
+                    if (turbValue >= 91) clarityClass = 'good';      // green
+                    else if (turbValue >= 61) clarityClass = 'average'; // yellow
+                    else if (turbValue >= 41) clarityClass = 'poor';    // red
+                    else clarityClass = 'bad';                       // grey
+
+                    // Pass thresholds with only one entry using the mapped class
+                    updateGauge(
+                        gaugeConfigs.turb.id,
+                        turbValue,
+                        0,
+                        100,
+                        '%',
+                        [{ value: 100, colorClass: clarityClass }]
+                    );
+                } else {
+                    // NTU mode → use your normal thresholds
+                    updateGauge(
+                        gaugeConfigs.turb.id,
+                        turbValue,
+                        gaugeConfigs.turb.min,
+                        gaugeConfigs.turb.max,
+                        '',
+                        gaugeConfigs.turb.thresholds
+                    );
+                }
+
+                // ✅ Update the gauge label below
+                const turbGaugeElement = document.getElementById(gaugeConfigs.turb.id);
+                if (turbGaugeElement) {
+                    const parentCard = turbGaugeElement.closest('.gauge-card');
+                    if (parentCard) {
+                        const labelElement = parentCard.querySelector('.gauge-label');
+                        if (labelElement) {
+                            labelElement.textContent = turbidityDisplay === 'clarity'
+                                ? 'Water Clarity (%)'
+                                : 'Turbidity (NTU)';
+                        }
+                    }
+                }
+
             }
 
             // Update the water quality status and explanation text.
@@ -385,9 +481,20 @@ function updateGauge(gaugeId, value, minVal, maxVal, unit, thresholds) {
     progressArc.style.strokeDasharray = `${dashLength} ${circumference - dashLength}`;
 
     // Format and update the value text.
-    let formattedValue = (gaugeId === 'gauge-ph' || gaugeId === 'gauge-turb') ? displayValue.toFixed(2) :
-                         (gaugeId === 'gauge-tds') ? displayValue.toFixed(0) : displayValue.toFixed(1);
-    valueTextInsideGauge.textContent = `${formattedValue} ${unit}`;
+    if (gaugeId === 'gauge-ph') {
+        formattedValue = displayValue.toFixed(2);
+    } else if (gaugeId === 'gauge-turb') {
+        const turbidityDisplay = localStorage.getItem('turbidityDisplay') || 'ntu';
+        formattedValue = turbidityDisplay === 'clarity'
+            ? displayValue.toFixed(1)  
+            : displayValue.toFixed(2);  
+    } else if (gaugeId === 'gauge-tds') {
+        formattedValue = displayValue.toFixed(0);
+    } else {
+        formattedValue = displayValue.toFixed(1);
+    }
+
+    valueTextInsideGauge.textContent = `${formattedValue}${unit}`;
 
     // Determine and apply the color class based on thresholds.
     let colorClass = 'bad';

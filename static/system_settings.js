@@ -145,6 +145,7 @@ function setupSettingsPage() {
     const ssidNameLabel = document.getElementById('ssidNameLabel');
     const wifiSsidInput = document.getElementById('wifiSsidInput');
     const wifiPasswordInput = document.getElementById('wifiPasswordInput');
+    const savedSetting = localStorage.getItem('showMlConfidence');
 
     // Universal Toast Notifications
     const toastModal = document.getElementById('toastModal');
@@ -173,7 +174,6 @@ function setupSettingsPage() {
         try {
             const data = await apiFetch('/api/system/settings');
             if (systemNameInput) systemNameInput.value = data.systemName;
-            if (showMlConfidenceToggle) showMlConfidenceToggle.checked = (data.showMlConfidence === 'true');
         } catch (error) {
             console.error("Could not load system settings:", error);
         }
@@ -198,18 +198,9 @@ function setupSettingsPage() {
     });
 
     // Auto-save ML Confidence setting when toggled
-    showMlConfidenceToggle.addEventListener('change', async () => {
-        try {
-            await apiFetch('/api/system/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ showMlConfidence: showMlConfidenceToggle.checked })
-            });
-            localStorage.setItem('showMlConfidence', showMlConfidenceToggle.checked);
-            showToastModal('ML Confidence setting updated!', svgSuccess);
-        } catch (error) {
-            // handled by apiFetch
-        }
+    showMlConfidenceToggle.addEventListener('change', () => {
+        localStorage.setItem('showMlConfidence', showMlConfidenceToggle.checked);
+        showToastModal('ML Confidence setting updated!', svgSuccess);
     });
 
     function loadUiSettings() {
@@ -398,6 +389,25 @@ function setupSettingsPage() {
         });
     }
 
+    function initTurbidityDisplaySetting() {
+        const select = document.getElementById('turbidityDisplaySelect');
+        if (!select) return;
+
+        // Load saved value
+        const saved = localStorage.getItem('turbidityDisplay') || 'ntu';
+        select.value = saved;
+
+        // Save on change
+        select.addEventListener('change', () => {
+            localStorage.setItem('turbidityDisplay', select.value);
+            showToastModal(
+                `Turbidity display set to ${select.value === 'ntu' ? 'Turbidity (NTU)' : 'Water Clarity (%)'}`,
+                svgSuccess
+            );
+        });
+    }
+
+
     // --- POWER OFF LOGIC ---
     // Handles the device shutdown process.
     if (powerOffBtn) {
@@ -458,10 +468,32 @@ function setupSettingsPage() {
     loadUiSettings();
     getNetworkStatus();
     if (scanWifiBtn) scanWifiBtn.click();
+    initTurbidityDisplaySetting();
+
 }
 
 // --- SCRIPT EXECUTION START ---
 document.addEventListener('DOMContentLoaded', function() {
     setupGlobalNavigation();
     setupSettingsPage();
+    
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.getElementById('showMlConfidenceToggle'); 
+    if (!toggle) return; // element not found
+
+    const savedSetting = localStorage.getItem('showMlConfidence');
+    if (savedSetting !== null) {
+        toggle.checked = (savedSetting === 'true');
+    } else {
+        toggle.checked = true;
+        localStorage.setItem('showMlConfidence', 'true');
+    }
+
+    // Attach listener
+    toggle.addEventListener('change', () => {
+        localStorage.setItem('showMlConfidence', toggle.checked);
+        showToastModal('ML Confidence setting updated!', svgSuccess);
+    });
 });

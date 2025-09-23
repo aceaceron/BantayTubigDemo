@@ -1,0 +1,265 @@
+/* static/dev.css */
+
+/* --- MAIN LAYOUT --- */
+.main-content {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 60px;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* --- DEV CARDS --- */
+.dev-card {
+    background-color: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 15px;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.dev-card h2 {
+    font-size: 1.4em;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: white;
+}
+
+#turbidityCard {
+    display: none;
+}
+
+/* --- FORMS --- */
+#turbidityForm label {
+    display: block;
+    margin-top: 10px;
+    font-size: 1em;
+    font-weight: 600;
+    color: white;
+}
+
+#turbidityForm input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 6px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+}
+
+#turbidityForm button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#turbidityForm button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.6);
+}
+
+/* --- CONSOLE LOG --- */
+#consoleLog {
+    background: #1e1e1e;
+    color: #ddd;
+    font-family: monospace;
+    font-size: 0.85em;
+    padding: 12px;
+    border-radius: 10px;
+    height: 250px;
+    overflow-y: auto;
+    text-align: left;
+    font-family: Cambria Math;
+}
+
+#zoomOut, #zoomIn {
+    font-size: 1.1em;
+    padding: 10px 16px;
+    margin-right: 6px;
+    border: none;
+    border-radius: 8px;
+    background: #444;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#zoomOut:hover, #zoomIn:hover {
+    background: #666;
+}
+
+/* --- DATABASE MANAGEMENT --- */
+#devControls select,
+#tableSearch {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1em;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+#devControls button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #007bff;
+    color: white;
+    font-weight: 600;
+    margin: 5px 3px;
+    transition: background 0.2s;
+}
+
+#devControls button:hover {
+    background: #0056b3;
+}
+
+/* Insert Form Styling */
+#insertForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+#insertForm input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1em;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#insertForm input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 4px rgba(0,123,255,0.4);
+}
+
+#insertForm input::placeholder {
+  color: #aaa;
+  font-style: italic;
+}
+
+#insertForm label {
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: block;
+}
+
+#insertForm + button {
+  margin-top: 15px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #28a745;
+  color: white;
+  font-weight: 600;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#insertForm + button:hover {
+  background: #1e7e34;
+}
+
+/* Export Dropdown */
+.export-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+#exportBtn {
+    padding: 10px 20px;
+    border-radius: 20px;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#exportMenu {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-width: 160px;
+    z-index: 1;
+}
+
+#exportMenu a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #333;
+}
+
+#exportMenu a:hover {
+    background-color: #f2f2f2;
+}
+
+/* --- TABLE STYLING --- */
+#devTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#devTable th,
+#devTable td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+#devTable th {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+}
+
+
+
+/* --- RESPONSIVE DESIGN --- */
+@media (max-width: 998px) {
+    .dev-card h2 {
+        font-size: 1.2em;
+    }
+
+    #consoleLog {
+        font-size: 0.75em;
+        height: 200px;
+    }
+
+    #zoomOut, #zoomIn, 
+    #devControls button, 
+    #exportBtn {
+        font-size: 0.9em;
+        padding: 8px 12px;
+    }
+
+    #devTable th {
+        font-size: 1.1em; /* bigger headers on mobile */
+    }
+
+    #devTable td {
+        font-size: 0.9em;
+    }
+}

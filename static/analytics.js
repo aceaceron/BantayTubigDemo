@@ -564,7 +564,6 @@ document.addEventListener('DOMContentLoaded', function() {
             new Date(item.timestamp).toLocaleString(),
             isNaN(item.temperature) ? 'N/A' : item.temperature.toFixed(2),
             isNaN(item.ph) ? 'N/A' : item.ph.toFixed(2),
-            // **THE FIX:** Applied .toFixed(2) to the TDS value
             isNaN(item.tds) ? 'N/A' : item.tds.toFixed(2),
             isNaN(item.turbidity) ? 'N/A' : item.turbidity.toFixed(2),
             item.water_quality || 'Unknown'
@@ -586,7 +585,6 @@ document.addEventListener('DOMContentLoaded', function() {
         link.click();
         document.body.removeChild(link);
     }
-
 
     // --- AI REASONING MODAL FUNCTIONS ---
 
@@ -634,7 +632,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeModal() {
         llmReasoningModal.style.display = 'none';
     }
-
 
     // --- UTILITY FUNCTIONS ---
 
@@ -926,7 +923,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const tableColumn = Object.keys(previewData.full[0]);
         
-        // **THE FIX:** This logic now checks each value.
         // If it's a number, it's formatted to 2 decimal places.
         const tableRows = previewData.full.map(item => {
             return tableColumn.map(col => {
