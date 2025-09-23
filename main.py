@@ -94,7 +94,7 @@ def run_monitoring_app():
         from water_quality import predict_water_quality, train_machine_learning
     except ImportError:
         from water_quality import predict_water_quality
-        def train_decision_tree():
+        def train_machine_learning():
             print("train_decision_tree not available (mock).")
 
     # --- Function Definitions ---
@@ -144,7 +144,7 @@ def run_monitoring_app():
     create_tables()
 
     update_status("Training ML model")
-    train_decision_tree()
+    train_machine_learning()
 
     update_status("Initializing alerter")
     if CLOUD_MODE:
