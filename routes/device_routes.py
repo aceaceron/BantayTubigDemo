@@ -2,10 +2,17 @@
 """
 Handles all API endpoints related to device management, sensor data, and calibration.
 """
-from flask import Blueprint, jsonify, request, abort, session
+from flask import Blueprint, jsonify, request, abort, session, send_file
 from datetime import datetime
 import numpy as np
 import json
+import os
+import csv
+import io
+import sqlite3
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'bantaytubig.db')
 
 # Import shared config and database functions
 from config import DEVICE_ID
@@ -190,3 +197,261 @@ def api_get_calibration_logs():
         import traceback
         traceback.print_exc()  # print full error to console
         return jsonify({"status": "error", "message": str(e)}), 500
+# --- Turbidity Reference Management (JSON API) ---
+
+@device_bp.route('/dev/settings/turbidity', methods=['GET'])
+def api_get_turbidity():
+    """
+    Return current turbidity reference voltages as JSON.
+    Front-end can use this to prefill the form dynamically.
+    """
+    try:
+        refs = get_turbidity_references(DEVICE_ID)
+        return jsonify({
+            "V_REF_HIGH": refs.get("v_ref_high", 0.49),
+            "V_REF_LOW": refs.get("v_ref_low", 0.06)
+        })
+    except Exception as e:
+        return jsonify({"message": f"Error fetching turbidity references: {str(e)}"}), 500
+
+@device_bp.route('/dev/settings/turbidity', methods=['POST'])
+def api_update_turbidity():
+    """
+    Update turbidity voltage references (V_REF_HIGH, V_REF_LOW) via JSON.
+    Returns success or error message.
+    """
+    data = request.get_json()
+    if not data or "V_REF_HIGH" not in data or "V_REF_LOW" not in data:
+        return jsonify({"message": "Invalid input"}), 400
+
+    try:
+        v_high = float(data["V_REF_HIGH"])
+        v_low = float(data["V_REF_LOW"])
+        update_turbidity_references(DEVICE_ID, v_high, v_low)  # DB function
+        add_audit_log(
+            user_id=session.get('user_id'),
+            component='Developer Settings',
+            action='Updated Turbidity References',
+            target=f"Device: {DEVICE_ID}",
+            status='Success',
+            ip_address=request.remote_addr,
+            details={'v_ref_high': v_high, 'v_ref_low': v_low}
+        )
+        return jsonify({"message": "Turbidity references updated successfully!"})
+    except Exception as e:
+        add_audit_log(
+            user_id=session.get('user_id'),
+            component='Developer Settings',
+            action='Updated Turbidity References',
+            target=f"Device: {DEVICE_ID}",
+            status='Failure',
+            ip_address=request.remote_addr,
+            details={'error': str(e)}
+        )
+        return jsonify({"message": f"Error updating references: {str(e)}"}), 500
+
+
+@device_bp.route('/dev/logs', methods=['GET'])
+def api_get_dev_logs():
+    """
+    Returns the current contents of the console log file.
+    If the file doesn't exist, returns an empty list.
+    """
+    log_file = os.path.join(os.path.dirname(__file__), "../console.log") 
+    logs = []
+    if os.path.exists(log_file):
+        try:
+            with open(log_file, "r") as f:
+                # Split lines, remove trailing newlines
+                logs = [line.rstrip() for line in f.readlines()]
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Could not read log file: {str(e)}"}), 500
+    return jsonify({"status": "success", "logs": logs})
+
+
+# Get all table names
+@device_bp.route('/dev/tables', methods=['GET'])
+def api_get_tables():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    tables = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return jsonify({"tables": tables})
+
+# Fetch table rows
+@device_bp.route('/dev/table/<table_name>')
+def get_table(table_name):
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 10))
+    sort_col = request.args.get("sort_col")
+    sort_dir = request.args.get("sort_dir", "asc")
+    search = request.args.get("search", "").strip()
+
+    offset = (page - 1) * per_page
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # Get columns
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    columns = [info[1] for info in cursor.fetchall()]
+
+    # Build query
+    query = f"SELECT * FROM {table_name}"
+    params = []
+    if search:
+        search_conditions = " OR ".join([f"{col} LIKE ?" for col in columns])
+        query += f" WHERE {search_conditions}"
+        params = [f"%{search}%"] * len(columns)
+
+    if sort_col and sort_col in columns:
+        query += f" ORDER BY {sort_col} {sort_dir.upper()}"
+
+    query += f" LIMIT {per_page} OFFSET {offset}"
+
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+
+    return jsonify({"columns": columns, "rows": rows})
+
+# Insert row
+@device_bp.route('/dev/table/<table_name>/row', methods=['POST'])
+def api_insert_row(table_name):
+    data = request.json
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        columns = ', '.join(data.keys())
+        placeholders = ', '.join(['?']*len(data))
+        cursor.execute(f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})", tuple(data.values()))
+        conn.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
+
+# Update row
+@device_bp.route('/dev/table/<table_name>/row/<int:row_id>', methods=['PUT'])
+def api_update_row(table_name, row_id):
+    data = request.json
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        set_clause = ', '.join([f"{k}=?" for k in data.keys()])
+        cursor.execute(f"UPDATE {table_name} SET {set_clause} WHERE id=?", (*data.values(), row_id))
+        conn.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
+
+# Delete row
+@device_bp.route('/dev/table/<table_name>/row/<int:row_id>', methods=['DELETE'])
+def api_delete_row(table_name, row_id):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f"DELETE FROM {table_name} WHERE id=?", (row_id,))
+        conn.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
+
+@device_bp.route('/dev/table/<table_name>/delete_all', methods=['POST'])
+def api_delete_all(table_name):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f"DELETE FROM {table_name}")
+        conn.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
+
+@device_bp.route('/dev/table/<table_name>/drop', methods=['POST'])
+def api_drop_table(table_name):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+        conn.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
+
+
+# --- Exporting Methods ---
+
+@device_bp.route('/dev/export/database', methods=['GET'])
+def api_export_database():
+    """Download the full SQLite database file."""
+    try:
+        return send_file(DB_PATH, as_attachment=True, download_name="bantaytubig.db")
+    except Exception as e:
+        return jsonify({"error": f"Failed to export database: {str(e)}"}), 500
+
+
+@device_bp.route('/dev/export/table/<table_name>', methods=['GET'])
+def api_export_table(table_name):
+    """Export a single table as SQL dump."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        # Extract table schema + inserts
+        schema = cursor.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table_name,)).fetchone()
+        if not schema:
+            return jsonify({"error": f"Table '{table_name}' not found."}), 404
+        sql_dump = schema[0] + ";\n"
+        rows = cursor.execute(f"SELECT * FROM {table_name}").fetchall()
+        columns = [desc[0] for desc in cursor.description]
+
+        for row in rows:
+            values = ', '.join([f"'{str(v)}'" if v is not None else "NULL" for v in row])
+            sql_dump += f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({values});\n"
+
+        conn.close()
+        return send_file(
+            io.BytesIO(sql_dump.encode("utf-8")),
+            as_attachment=True,
+            download_name=f"{table_name}.sql",
+            mimetype="text/sql"
+        )
+    except Exception as e:
+        return jsonify({"error": f"Failed to export table: {str(e)}"}), 500
+
+
+@device_bp.route('/dev/export/table/<table_name>/csv', methods=['GET'])
+def api_export_table_csv(table_name):
+    """Export a single table as CSV."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT * FROM {table_name}")
+        rows = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+        conn.close()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(columns)  # write header
+        writer.writerows(rows)
+
+        return send_file(
+            io.BytesIO(output.getvalue().encode("utf-8")),
+            as_attachment=True,
+            download_name=f"{table_name}.csv",
+            mimetype="text/csv"
+        )
+    except Exception as e:
+        return jsonify({"error": f"Failed to export CSV: {str(e)}"}), 500
+    

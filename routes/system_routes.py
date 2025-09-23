@@ -25,10 +25,10 @@ def get_db_connection():
 @system_bp.route('/system/settings', methods=['GET', 'POST'])
 def manage_system_settings():
     """
-    GET: Fetches all relevant system settings from the database.
-    POST: Updates system settings in the database.
+    GET: Fetches all relevant system settings from the database (excluding ML Confidence).
+    POST: Updates system settings in the database (excluding ML Confidence).
     """
-    device_id = 'dev-1' # Assuming a single device system for now
+    device_id = 'dev-1'  # Assuming a single device system for now
 
     if request.method == 'GET':
         try:
@@ -44,8 +44,8 @@ def manage_system_settings():
             response_data = {
                 'systemName': device['name'] if device else 'BantayTubig',
                 'sessionTimeout': settings.get('session_timeout', '15'),
-                'dataRetention': settings.get('data_retention_days', '365'),
-                'showMlConfidence': settings.get('show_ml_confidence', 'true') 
+                'dataRetention': settings.get('data_retention_days', '365')
+                # 🚫 Removed show_ml_confidence (handled in localStorage only)
             }
             return jsonify(response_data)
         except Exception as e:
@@ -66,10 +66,9 @@ def manage_system_settings():
             if 'sessionTimeout' in data:
                 conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", 
                              ('session_timeout', str(data['sessionTimeout'])))
-            if 'showMlConfidence' in data:
-                conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", 
-                             ('show_ml_confidence', str(data['showMlConfidence']).lower()))
             
+            # 🚫 Removed showMlConfidence handling
+
             conn.commit()
             conn.close()
             return jsonify({'status': 'success', 'message': 'Settings updated successfully.'})
