@@ -91,7 +91,7 @@ def run_monitoring_app():
 
     update_status("Loading ML model...")
     try:
-        from water_quality import predict_water_quality, train_decision_tree
+        from water_quality import predict_water_quality, train_machine_learning
     except ImportError:
         from water_quality import predict_water_quality
         def train_decision_tree():
