@@ -141,6 +141,30 @@ def restore_default_calibration(device_id, sensor_type):
         conn.commit()
         conn.close()
 
+def get_turbidity_references(device_id):
+    """Fetch current turbidity reference voltages from DB."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT v_ref_high, v_ref_low FROM turbidity_references WHERE device_id=?", (device_id,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return {"v_ref_high": row[0], "v_ref_low": row[1]}
+    return {"v_ref_high": 0.49, "v_ref_low": 0.06}
+
+
+def update_turbidity_references(device_id, v_high, v_low):
+    """Update turbidity reference voltages in DB."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("""
+        UPDATE turbidity_references
+        SET v_ref_high=?, v_ref_low=?, updated_at=CURRENT_TIMESTAMP
+        WHERE device_id=?
+    """, (v_high, v_low, device_id))
+    conn.commit()
+    conn.close()
+
 # --- Device Log Functions ---
 
 def add_device_log(device_id, user_id, notes):

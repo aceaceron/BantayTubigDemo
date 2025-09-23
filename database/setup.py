@@ -254,8 +254,24 @@ def create_tables():
                 generated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Table 19: Stores turbidity sensor voltage reference values per device
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS turbidity_references (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                device_id TEXT NOT NULL,
+                v_ref_high REAL NOT NULL,
+                v_ref_low REAL NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        cursor.execute("""
+            INSERT OR IGNORE INTO turbidity_references (device_id, v_ref_high, v_ref_low)
+            VALUES (?, ?, ?)
+        """, ('dev-1', 0.49, 0.06))
             
-         # <<< FIX: Define the default permissions for each role as a dictionary >>>
+         # <<< Define the default permissions for each role as a dictionary >>>
         # This structure is based directly on your @role_required decorators.
         admin_perms = {
             "dashboard": True, "analytics": True, "devices": True, 
@@ -291,8 +307,7 @@ def create_tables():
 
         default_settings = [
             ('data_retention_days', '365'),
-            ('buzzer_duration_seconds', '1'),
-            ('show_ml_confidence', 'true') 
+            ('buzzer_duration_seconds', '1')
         ]
         cursor.executemany("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", default_settings)
 

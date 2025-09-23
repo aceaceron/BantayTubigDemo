@@ -33,8 +33,10 @@ from .device_manager import (
     get_calibrations_for_device,
     get_device_info,
     get_logs_for_device,
+    get_turbidity_references,
     restore_default_calibration,
     update_sensor_calibration,
+    update_turbidity_references
 )
 
 

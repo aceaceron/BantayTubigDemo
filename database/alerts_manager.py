@@ -116,7 +116,7 @@ def snooze_alert_rule(rule_id, duration_minutes):
         conn.commit()
         conn.close()
     
-def unsnooze_alert_rule(rule_id):
+def unsnooze_alert_rule(rule_id): 
     """Clears the snooze (snoozed_until) for the given alert rule."""
     with DB_LOCK:
         conn = sqlite3.connect(DB_PATH)
