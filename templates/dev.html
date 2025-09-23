@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Developer Settings</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='dev.css') }}">
+</head>
+<body>
+
+    <!-- Background looping video -->
+    <video autoplay muted loop id="backgroundVideo">
+        <source src="{{ url_for('static', filename='BantayTubig.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+  <div class="header-top-right">
+    <h1>Developer Settings</h1>
+    <div id="timestamp"></div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- Live Sensor Readings -->
+    <div class="dev-card" id="liveSensorCard">
+      <h2>Live Sensor Data</h2>
+      <div>Temperature: <span id="temperature">--</span> °C</div>
+      <div>pH: <span id="ph">--</span> (Voltage: <span id="ph_voltage">--</span> V)</div>
+      <div>TDS: <span id="tds">--</span> (Voltage: <span id="tds_voltage">--</span> V)</div>
+      <div>Turbidity: <span id="turbidity">--</span> NTU (Voltage: <span id="turbidity_voltage">--</span> V)</div>
+      <div>Water Quality: <span id="water_quality">--</span></div>
+    </div>
+
+    <!-- Turbidity Voltage Adjustment -->
+    <div class="dev-card" id="turbidityCard">
+      <h2>Turbidity Voltage References</h2>
+      <form id="turbidityForm">
+        <label for="vHigh">Clear Water Voltage (V_REF_HIGH)</label>
+        <input type="number" id="vHigh" step="0.001" placeholder="e.g. 0.49" required>
+
+        <label for="vLow">Turbid Water Voltage (V_REF_LOW)</label>
+        <input type="number" id="vLow" step="0.001" placeholder="e.g. 0.06" required>
+
+        <button type="submit">Save Changes</button>
+      </form>
+      <div id="saveMessage"></div>
+    </div>
+
+    <!-- Console Log -->
+    <div class="dev-card">
+      <h2>Console Log</h2>
+      <div style="margin-bottom: 10px;">
+        <button id="zoomOut" style="padding:5px 10px;">-</button>
+        <button id="zoomIn" style="padding:5px 10px;">+</button>
+      </div>
+      <div id="consoleLog" style="
+            background: #1e1e1e; 
+            color: #fff; 
+            font-family: monospace; 
+            padding: 10px; 
+            height: 300px; 
+            overflow-y: scroll;
+            border-radius: 8px;">
+        Loading logs...
+      </div>
+    </div>
+
+    <div class="dev-card" id="devControls">
+        <h2>Database Table Management</h2>
+
+        <!-- Controls -->
+        <div class="table-controls">
+            <select id="tableSelect"></select>
+            <button onclick="prevPage()">Prev</button>
+            <button onclick="nextPage()">Next</button>
+            <button onclick="deleteAll()">Delete All Rows</button>
+            <button onclick="dropTable()">Drop Table</button>
+            <div class="export-dropdown">
+              <button id="exportBtn">Export ▼</button>
+              <div id="exportMenu" class="export-menu">
+                <a href="#" onclick="exportDatabase()">Export Database</a>
+                <a href="#" onclick="exportSQL()">Export SQL</a>
+                <a href="#" onclick="exportTableCSV()">Export CSV</a>
+                <a href="#" onclick="exportTablePDF()">Export PDF</a>
+              </div>
+            </div>
+
+
+
+        </div>
+
+        <!-- Search -->
+        <div style="margin-top:10px;">
+            <input type="text" id="tableSearch" placeholder="Search...">
+        </div>
+
+        <!-- Insert Row -->
+        <div style="margin-top:15px;">
+            <h3>Insert New Row</h3>
+            <div id="insertForm"></div>
+            <button onclick="insertRow()">Insert</button>
+        </div>
+
+        <!-- Table -->
+        <div style="margin-top:20px; overflow-x:auto;">
+            <table id="devTable">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+
+  </div>
+
+  <script src="{{ url_for('static', filename='dev.js') }}"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- jsPDF AutoTable plugin -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+</body>
+</html>
