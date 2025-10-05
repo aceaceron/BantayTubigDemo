@@ -86,8 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.status === 'connected') {
                 hideNetworkWarning();
-            } else {
-                showNetworkWarning('Device is offline. Displayed data may not be live.');
             }
 
         } catch (error) {

@@ -26,6 +26,27 @@ let gaugeConfigs = {};
 // Interval ID for periodically updating the dashboard.
 let dashboardInterval = null;
 
+// --- MODAL FUNCTIONS ---
+
+/**
+ * Displays the sensor disclaimer modal.
+ */
+function showModal() {
+    const modal = document.getElementById('disclaimerModal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+/**
+ * Hides the sensor disclaimer modal.
+ */
+function closeModal() {
+    const modal = document.getElementById('disclaimerModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
 // --- INITIALIZATION ---
 
 
@@ -54,6 +75,8 @@ async function init() {
 
         // Set up an interval to automatically update the dashboard every 2 seconds.
         dashboardInterval = setInterval(updateDashboard, 2000);
+
+        showModal(); 
 
     } catch (error) {
         console.error('Initialization error:', error);

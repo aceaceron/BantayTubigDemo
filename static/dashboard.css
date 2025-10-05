@@ -575,6 +575,93 @@
     line-height: 1.6;
 }
 
+/* --- SENSOR DISCLAIMER MODAL STYLES --- */
+
+/* The Modal (main wrapper) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 5000; /* Sit on top of everything */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 500px;
+    text-align: center;
+    position: relative;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Close Button */
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #333;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Icon and Heading */
+.modal-icon {
+    font-size: 3em;
+    color: #ffc107; /* Warning color */
+    margin-bottom: 10px;
+}
+
+.modal-content h2 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.modal-content p {
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+/* Button */
+.modal-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.modal-button:hover {
+    background-color: #0056b3;
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
 /* (The styles for .llm-parameters, .llm-output-section h3, etc., remain the same) */
 
 /* The rotation animation for the spinner. */
