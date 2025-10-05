@@ -114,7 +114,7 @@ def run_monitoring_app():
             return
     
         # Use environment variable if available, else default to local
-        base_url = os.getenv("SERVER_URL", "http://127.0.0.1:5000")
+        base_url = os.getenv("SERVER_URL", "[http://127.0.0.1:5000](http://127.0.0.1:5000)")
         url = f"{base_url}/api/system_device/heartbeat"
     
         payload = {"deviceId": DEVICE_ID, "sensor_values": current_sensor_values}
@@ -288,22 +288,32 @@ def run_monitoring_app():
         alerter.stop_buzzer()
         alerter.destroy_gpio()
         alerter.close_serial()
-        sys.exit(0)
+        # Note: We rely on the main thread exit to stop the daemon server thread.
+
 
 # === Step 3: Entry point ===
 if __name__ == "__main__":
     start_status("Initializing...")
     time.sleep(2)
 
+    port = int(os.getenv("PORT", 5000))
+
+    # 🚀 Start the Web Server in a separate daemon thread
+    server_thread = threading.Thread(
+        target=lambda: socketio.run(app, host="0.0.0.0", port=port), daemon=True
+    )
+    server_thread.start()
+    print(f"Web server started on 0.0.0.0:{port}")
+
     if CLOUD_MODE:
-        print("Running in CLOUD MODE (Render). Skipping WiFi setup...")
-        port = int(os.getenv("PORT", 5000))
-        server_thread = threading.Thread(
-            target=lambda: socketio.run(app, host="0.0.0.0", port=port), daemon=True
-        )
-        server_thread.start()
+        print("Running in CLOUD MODE (Render). Skipping network setup...")
+        # In cloud mode, the main process runs the monitoring app
         run_monitoring_app()
     else:
-        # Your existing WiFi/hotspot setup flow
+        # Local (Raspberry Pi) Mode: Handle Network/Hotspot setup flow
         update_status("Checking Network...")
         time.sleep(2)
+        # network_manager.ensure_network_or_hotspot() # Assuming this function handles network setup
+        
+        # Then, run the monitoring application in the main thread (blocking)
+        run_monitoring_app()
