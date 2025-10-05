@@ -12,8 +12,9 @@
     <!-- 'main.css' is for styles that apply to all pages (e.g., header, sidebar). -->
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     <!-- 'dashboard.css' is for styles specific to this dashboard page. -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
-    
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}"> -->
+    <link rel="stylesheet" href="../static/dashboard.css">
+    <link rel="stylesheet" href="../static/main.css">
     <!-- // FONTS // -->
     <!-- Imports the 'Poppins' font from Google Fonts. -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -281,6 +282,17 @@
     <div id="networkStatusBanner" class="network-status-banner">
         <span id="networkStatusIcon">⚠️</span>
         <span id="networkStatusText">No network connection. Displayed data may not be live.</span>
+    </div>
+
+    <div id="disclaimerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <div class="modal-icon">⚠️</div>
+            <h2>Development Mode Warning</h2>
+            <p>The <b>live sensor data</b> displayed on this dashboard is <b>simulated and generated randomly</b> for demonstration and showcasing purposes.</p>
+            <p>In a real-world deployment, these values would be read directly from the physical sensors.</p>
+            <button onclick="closeModal()" class="modal-button">Acknowledge & Continue</button>
+        </div>
     </div>
     
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
