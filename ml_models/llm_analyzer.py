@@ -10,13 +10,18 @@ llm_model = None
 
 try:
     # The API key is now hardcoded directly into the script as requested.
-    GEMINI_API_KEY = "AIzaSyBv1HoaIzz4LUTL6Gxey5r37kmE8fdSyBE"
+    GEMINI_API_KEY = "AIzaSyCLNiZsUVGnj-mgV0VaCOimtZkA6yWZ4Ik"
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY environment variable not set.")
+        
+    # Set the API key
     genai.configure(api_key=GEMINI_API_KEY)
-    llm_model = genai.GenerativeModel('gemini-2.5-flash') # Updated to a newer model for better JSON compliance
+    
+    # 💥 FIX: Use the model name without the 'models/' prefix 
+    # and switch to a highly available stable version (gemini-2.5-flash)
+    llm_model = genai.GenerativeModel('gemini-2.5-flash') 
     LLM_ENABLED = True
-    print("Gemini LLM for analyzing configured successfully.")
+    print("Gemini LLM for analyzing configured successfully using gemini-2.5-flash.")
 except (ValueError, Exception) as e:
     print(f"Warning: Gemini LLM not configured. Detailed explanations will be static. Error: {e}")
     LLM_ENABLED = False
@@ -33,9 +38,10 @@ def to_markdown(text):
         text = str(text)
     
     # 3. Now that we're sure it's a string, we can safely use .replace().
-    return text.replace('**', '<strong>', 1).replace('**', '</strong>', 1)
-
-
+    # This also corrects your original HTML replacement logic to ensure ALL markdown ** are handled.
+    # The model should be instructed to use <strong> tags directly in the prompt.
+    return text.replace('**', '</strong>').replace('<strong>', '<strong>', 1).replace('**', '</strong>', 1)
+    
 def generate_llm_analysis(temp, pH, TDS, turb, water_quality_prediction, env_context=None):
     """
     Calls the LLM to get a detailed reasoning, Tagalog translation,

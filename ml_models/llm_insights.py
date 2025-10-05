@@ -10,11 +10,11 @@ llm_model = None
 
 try:
     # The API key is now hardcoded directly into the script as requested.
-    GEMINI_API_KEY = "AIzaSyBv1HoaIzz4LUTL6Gxey5r37kmE8fdSyBE"
+    GEMINI_API_KEY = "AIzaSyCLNiZsUVGnj-mgV0VaCOimtZkA6yWZ4Ik"
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY environment variable not set.")
     genai.configure(api_key=GEMINI_API_KEY)
-    llm_model = genai.GenerativeModel('gemini-1.5-flash')
+    llm_model = genai.GenerativeModel('gemini-2.5-flash')
     LLM_ENABLED = True
     print("Gemini LLM for insights configured successfully.")
 except Exception as e:
