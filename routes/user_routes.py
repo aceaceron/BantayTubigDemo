@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request, abort, session
 from database import * 
 import secrets
 import time
-from auth.decorators import role_required
+# REMOVED: from auth.decorators import role_required 
 from alerter import send_generic_sms
 from database.user_manager import set_new_password_for_user, create_first_admin
 from lcd_display import stop_status
@@ -17,17 +17,17 @@ user_bp = Blueprint('user_bp', __name__)
 # In-memory store for reset codes. Format: {'email': {'code': '123456', 'expires': timestamp}}
 _password_reset_codes = {}
 
-# --- User Management API (Now Secured) ---
+# --- User Management API (Now Unsecured by Role) ---
 
 @user_bp.route('/users', methods=['GET'])
-@role_required('Administrator', 'Technician') # Allow Admins and Techs to view user lists
+# @role_required('Administrator', 'Technician') # REMOVED ROLE CHECK
 def api_get_users():
     """Fetches a list of all users with their role names."""
     users = get_all_users_with_roles()
     return jsonify(users)
 
 @user_bp.route('/users/<int:user_id>', methods=['GET'])
-@role_required('Administrator')
+# @role_required('Administrator') # REMOVED ROLE CHECK
 def api_get_user(user_id):
     """Fetches details for a single user."""
     user = get_user_by_id(user_id)
@@ -36,7 +36,7 @@ def api_get_user(user_id):
     abort(404, "User not found")
 
 @user_bp.route('/users/add', methods=['POST'])
-@role_required('Administrator')
+# @role_required('Administrator') # REMOVED ROLE CHECK
 def api_add_user():
     """Adds a new user to the system."""
     data = request.json
@@ -50,7 +50,7 @@ def api_add_user():
         abort(400, f"Error creating user: {e}")
 
 @user_bp.route('/users/update', methods=['POST'])
-@role_required('Administrator')
+# @role_required('Administrator') # REMOVED ROLE CHECK
 def api_update_user():
     """Updates an existing user's details."""
     data = request.json
@@ -60,7 +60,7 @@ def api_update_user():
     return jsonify({"status": "success", "message": "User updated."})
 
 @user_bp.route('/users/set_status', methods=['POST'])
-@role_required('Administrator')
+# @role_required('Administrator') # REMOVED ROLE CHECK
 def api_set_user_status():
     """Changes a user's status between 'Active' and 'Inactive'."""
     data = request.json
@@ -71,7 +71,7 @@ def api_set_user_status():
     return jsonify({"status": "success", "message": "User status updated."})
 
 @user_bp.route('/users/reset_password', methods=['POST'])
-@role_required('Administrator')
+# @role_required('Administrator') # REMOVED ROLE CHECK
 def api_reset_user_password():
     """Resets a user's password and returns the new temporary password."""
     data = request.json
@@ -86,7 +86,7 @@ def api_reset_user_password():
 
 
 @user_bp.route('/users/change_password', methods=['POST'])
-@role_required('Administrator', 'Technician', 'Data Scientist', 'Viewer')
+# @role_required('Administrator', 'Technician', 'Data Scientist', 'Viewer') # REMOVED ROLE CHECK
 def api_change_password():
     """Changes the password for the currently logged-in user."""
     user_id = session.get('user_id')
@@ -114,13 +114,13 @@ def api_change_password():
     
 
 @user_bp.route('/technicians', methods=['GET'])
-@role_required('Administrator', 'Technician')
+# @role_required('Administrator', 'Technician') # REMOVED ROLE CHECK
 def api_get_technicians():
     """Provides a list of users who are Administrators or Technicians."""
     users = get_technicians_and_admins()
     return jsonify(users)
 
-# --- Role Management API (Now Secured) ---
+# --- Role Management API (Now Unsecured by Role) ---
 @user_bp.route('/roles/setup', methods=['GET'])
 def api_get_roles_for_setup():
     """
@@ -133,14 +133,14 @@ def api_get_roles_for_setup():
     return jsonify(roles)
 
 @user_bp.route('/roles', methods=['GET'])
-@role_required('Administrator')
+# @role_required('Administrator') # REMOVED ROLE CHECK
 def api_get_roles():
     """Fetches a list of all user roles."""
     roles = get_all_roles()
     return jsonify(roles)
 
 @user_bp.route('/roles/<int:role_id>', methods=['GET'])
-@role_required('Administrator')
+# @role_required('Administrator') # REMOVED ROLE CHECK
 def api_get_role(role_id):
     """Fetches details for a single user role."""
     role = get_role_by_id(role_id)
@@ -298,7 +298,7 @@ def set_new_password():
     # <<< FIX: Use the correct function to get user details. >>>
     user_info = get_user_for_login(email=email)
     if not user_info:
-         return jsonify({"status": "error", "message": "User not found."}), 404
+          return jsonify({"status": "error", "message": "User not found."}), 404
     
     # Set the new password in the database
     set_new_password_for_user(user_info['id'], new_password)

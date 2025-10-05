@@ -15,8 +15,8 @@ from flask import Blueprint, jsonify, request, session  # Core Flask components:
                                   # JSON responses, and request to access incoming data.
 
 # --- Local Application Imports ---
-# Imports the application's Socket.IO instance for real-time, non-blocking communication.
-from app import socketio
+from socketio_instance import socketio
+
 
 # Imports the path to the database file from the configuration.
 from database.config import DB_PATH
