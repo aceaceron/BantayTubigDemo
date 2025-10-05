@@ -1,7 +1,6 @@
 # routes/view_routes.py
 from flask import render_template, Blueprint, redirect, url_for, request, flash, session, get_flashed_messages
 from database import get_user_for_login, verify_password, update_last_login, add_audit_log, get_all_users_with_roles
-from auth.decorators import role_required
 import subprocess
 import platform
 
@@ -39,6 +38,7 @@ def is_on_wifi_client_mode():
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
         return False
     
+
 # --- Public Routes (No Login Required) ---
 
 @view_bp.route('/login', methods=['GET', 'POST'])
@@ -84,6 +84,7 @@ def login():
     get_flashed_messages()
     return render_template('login.html', users_exist=users_exist)
 
+
 @view_bp.route('/logout')
 def logout():
     """Clears the session and logs the user out."""
@@ -103,75 +104,47 @@ def logout():
     flash('You have been successfully logged out.', 'success')
     return redirect(url_for('view_bp.login'))
 
-@view_bp.route('/unauthorized')
-@role_required('Administrator', 'Technician', 'Data Scientist', 'Viewer') 
-def unauthorized():
-    """Renders the custom 'Access Denied' page."""
-    return render_template('unauthorized.html')
-
 
 @view_bp.route('/setup')
 def setup():
-    """
-    Demo mode: Always render the setup page.
-    No Wi-Fi or permission checks.
-    """
+    """Demo mode: Always render the setup page."""
     return render_template('setup.html')
 
 
-# --- Protected Routes (Login Required) ---
+# --- All Routes Now Public ---
 
 @view_bp.route('/')
-@role_required('Administrator', 'Technician', 'Data Scientist', 'Viewer')
 def index():
-    """Renders the main dashboard page."""
-    # <<< Tell the template that 'dashboard' is the active page >>>
     return render_template('index.html', active_page='dashboard')
 
 @view_bp.route('/analytics')
-@role_required('Administrator', 'Data Scientist')
 def analytics():
-    # <<< Tell the template that 'analytics' is the active page >>>
     return render_template('analytics.html', active_page='analytics')
 
 @view_bp.route('/devices')
-@role_required('Administrator', 'Technician')
 def devices():
-    # <<< Tell the template that 'devices' is the active page >>>
     return render_template('devices.html', active_page='devices')
 
 @view_bp.route('/alerts')
-@role_required('Administrator', 'Technician')
 def alerts():
-    # <<< Tell the template that 'alerts' is the active page >>>
     return render_template('alerts.html', active_page='alerts')
 
 @view_bp.route('/machine-learning')
-@role_required('Administrator', 'Data Scientist')
 def machine_learning():
-    # <<< Tell the template that 'machine_learning' is the active page >>>
     return render_template('machine_learning.html', active_page='machine_learning')
 
 @view_bp.route('/users')
-@role_required('Administrator')
 def users():
-    # <<< Tell the template that 'users' is the active page >>>
     return render_template('user_management.html', active_page='users')
 
 @view_bp.route('/settings')
-@role_required('Administrator', 'Technician', 'Data Scientist', 'Viewer')
 def settings():
-    # <<< Tell the template that 'settings' is the active page >>>
     return render_template('system_settings.html', active_page='settings')
 
 @view_bp.route('/about')
-@role_required('Administrator', 'Technician', 'Data Scientist', 'Viewer') 
 def about():
-    """Renders the About/Help page."""
     return render_template('about.html', active_page='about')
 
 @view_bp.route('/dev')
-@role_required('Administrator')
 def dev_page():
-    """Renders the Developer Page for sensor calibration and testing."""
     return render_template('dev.html')
