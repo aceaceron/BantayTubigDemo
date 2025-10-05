@@ -66,11 +66,16 @@ def _safe_lcd_command(command, *args):
             lcd = None
 
 # ================== HELPERS ==================
-def clear_lcd(): _safe_lcd_command("clear")
+def clear_lcd(): 
+    _safe_lcd_command("clear")
+
+def _fit(text: str) -> str:
+    """Ensure text fits the LCD width by truncating or padding."""
+    return str(text).ljust(_LCD_WIDTH)[:_LCD_WIDTH]
 
 def _write_row(row: int, text: str):
     _safe_lcd_command("cursor_pos", row, 0)
-    _safe_lcd_command("write_string", text.ljust(_LCD_WIDTH)[:_LCD_WIDTH])
+    _safe_lcd_command("write_string", _fit(text))
 
 def show_startup_banner():
     clear_lcd()
